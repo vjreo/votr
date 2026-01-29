@@ -48,26 +48,23 @@ cd backend
 npm install
 ```
 
-3. Create a `.env` file based on `.env.example`:
+3. Create a `.env` file in the backend directory based on the root `.env.example`:
 ```bash
-cp .env.example .env
+cp .env.example backend/.env
 ```
 
-4. Update `.env` with your configuration:
-   - Database credentials
-   - Google Civic Information API key
-   - Other API keys (optional)
+4. Update `backend/.env` with your configuration (see Environment Variables section below)
 
 5. Set up the database:
 ```bash
 # Create PostgreSQL database
 createdb votr
 
-# Run schema
-psql votr < db/schema.sql
+# Run migrations
+npm run db:migrate
 ```
 
-6. Start the server:
+6. Start the backend server:
 ```bash
 npm run dev
 ```
@@ -112,6 +109,9 @@ npm run android
 
 ## API Endpoints
 
+### Health Check
+- `GET /health` - Server health check
+
 ### Users
 - `POST /api/users` - Create a new user
 - `GET /api/users/:id` - Get user by ID
@@ -129,6 +129,20 @@ npm run android
 ### Elections
 - `GET /api/elections` - Get elections (query: state, district)
 - `GET /api/elections/upcoming` - Get upcoming elections (query: userId)
+
+## Environment Variables
+
+The backend requires the following environment variables (see `.env.example` for template):
+
+- `PORT` - Server port (default: 3000)
+- `DATABASE_URL` - PostgreSQL connection string
+- `GOOGLE_CIVIC_API_KEY` - Google Civic Information API key
+- `JWT_SECRET` - Secret key for JWT token generation
+- `JWT_EXPIRES_IN` - JWT token expiration time (default: 15m)
+- `HUGGINGFACE_API_KEY` - Hugging Face API key (optional)
+- `OPENAI_API_KEY` - OpenAI API key (optional)
+- `MEDIA_BIAS_API_KEY` - Media Bias Fact Check API key (optional)
+- `ALLSIDES_API_KEY` - AllSides API key (optional)
 
 ## Tech Stack
 
