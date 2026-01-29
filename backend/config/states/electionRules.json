@@ -1,0 +1,34 @@
+{
+  "default": {
+    "registrationDeadlineDays": 30,
+    "sameDayRegistration": false,
+    "earlyVotingDays": null,
+    "mailInBallotDeadlineDays": null
+  },
+  "NC": {
+    "earlyVotingDays": 17,
+    "registrationDeadlineDays": 25,
+    "earlyVotingStartDays": 17,
+    "sameDayRegistration": false
+  },
+  "CA": {
+    "mailInBallotDeadlineDays": 7,
+    "sameDayRegistration": true,
+    "earlyVotingDays": 29
+  },
+  "CO": {
+    "mailInBallotDeadlineDays": 8,
+    "sameDayRegistration": true,
+    "earlyVotingDays": 15
+  },
+  "OR": {
+    "mailInBallotDeadlineDays": 7,
+    "sameDayRegistration": true,
+    "earlyVotingDays": null
+  },
+  "WA": {
+    "mailInBallotDeadlineDays": 7,
+    "sameDayRegistration": true,
+    "earlyVotingDays": 18
+  }
+}

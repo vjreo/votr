@@ -5,7 +5,7 @@ node_modules/
 # Environment variables
 .env
 .env.local
-.env.*.local
+.env.*.localgit 
 .env.*
 !.env.example
 

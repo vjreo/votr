@@ -16,6 +16,12 @@ VOTR is a mobile application that gamifies civic engagement by helping users dis
 ```
 votr/
 ├── mobile/          # React Native app (Expo)
+│   ├── App.tsx      # Root component
+│   ├── screens/     # Screen components
+│   ├── components/  # Reusable components
+│   ├── services/    # API services
+│   ├── context/     # React context providers
+│   └── utils/       # Utility functions
 ├── backend/         # Node.js/Express API
 ├── shared/          # Shared TypeScript types
 └── idea.md          # Project documentation
@@ -75,12 +81,14 @@ The API will run on `http://localhost:3000`
 cd mobile
 ```
 
-2. Install dependencies (should already be done):
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-3. Update API URL in `services/api.ts` if needed
+3. Configure API URL in `services/api.ts`:
+   - For development: `http://localhost:3000/api`
+   - For production: `https://api.votr.app/api`
 
 4. Start the Expo development server:
 ```bash
@@ -93,6 +101,14 @@ npm run ios
 # or
 npm run android
 ```
+
+**Mobile Features:**
+- Onboarding with preference selection
+- Tinder-style candidate swiping
+- Candidate detail views
+- Gamification (points, streaks, badges)
+- Location-based candidate discovery
+- Bias-ranked source lists
 
 ## API Endpoints
 

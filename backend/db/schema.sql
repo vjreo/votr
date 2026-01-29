@@ -73,7 +73,8 @@ CREATE TABLE IF NOT EXISTS candidates (
     positions JSONB DEFAULT '[]'::jsonb,
     api_source VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(name, office, state, COALESCE(district, ''))
 );
 
 -- Candidate sources table
@@ -144,7 +145,8 @@ CREATE TABLE IF NOT EXISTS elections (
     early_voting_start DATE,
     early_voting_end DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(name, date, state, COALESCE(district, ''))
 );
 
 -- User locations table (for location tracking)
@@ -161,6 +163,29 @@ CREATE TABLE IF NOT EXISTS user_locations (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- State configuration table (for state-specific settings)
+CREATE TABLE IF NOT EXISTS state_config (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    state_code VARCHAR(2) NOT NULL,
+    config_key VARCHAR(255) NOT NULL,
+    config_value JSONB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(state_code, config_key)
+);
+
+-- State data sources table (for preferred data sources per state)
+CREATE TABLE IF NOT EXISTS state_data_sources (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    state_code VARCHAR(2) NOT NULL,
+    source_type VARCHAR(100) NOT NULL,
+    source_config JSONB,
+    priority INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(state_code, source_type)
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
 CREATE INDEX IF NOT EXISTS idx_candidates_state ON candidates(state);
@@ -175,4 +200,15 @@ CREATE INDEX IF NOT EXISTS idx_bias_analysis_url_hash ON bias_analysis_cache(url
 CREATE INDEX IF NOT EXISTS idx_elections_date ON elections(date);
 CREATE INDEX IF NOT EXISTS idx_elections_state ON elections(state);
 CREATE INDEX IF NOT EXISTS idx_user_locations_user_id ON user_locations(user_id);
+
+-- Composite indexes for state-based queries
+CREATE INDEX IF NOT EXISTS idx_elections_state_date ON elections(state, date);
+CREATE INDEX IF NOT EXISTS idx_elections_state_district ON elections(state, district) WHERE district IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_candidates_state_office_level ON candidates(state, office_level);
+CREATE INDEX IF NOT EXISTS idx_candidates_state_office ON candidates(state, office);
+
+-- Indexes for state configuration tables
+CREATE INDEX IF NOT EXISTS idx_state_config_state_code ON state_config(state_code);
+CREATE INDEX IF NOT EXISTS idx_state_data_sources_state_code ON state_data_sources(state_code);
+CREATE INDEX IF NOT EXISTS idx_state_data_sources_priority ON state_data_sources(state_code, priority);
 
