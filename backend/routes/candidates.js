@@ -1,8 +1,13 @@
 import express from 'express';
 import pool from '../db/connection.js';
-import civicApi from '../services/civicApi.js';
 import { calculateMatchScore } from '../services/matchScoring.js';
 import { rankSources } from '../services/sourceRanking.js';
+import { DEFAULTS } from '../constants.js';
+import { getStateHandler } from '../services/stateHandlers/stateRegistry.js';
+import candidateRepository from '../repositories/candidateRepository.js';
+import electionRepository from '../repositories/electionRepository.js';
+import candidateCache from '../services/cache/candidateCache.js';
+import adapterFactory from '../integrations/stateAdapters/adapterFactory.js';
 
 const router = express.Router();
 
@@ -13,77 +18,75 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const { office, location, state = 'NC' } = req.query;
+    const { office, location, state = DEFAULTS.STATE } = req.query;
+    const stateCode = state.toUpperCase();
 
-    // Try to get from database first
-    let query = 'SELECT * FROM candidates WHERE state = $1';
-    const params = [state];
-
-    if (office) {
-      query += ' AND office ILIKE $2';
-      params.push(`%${office}%`);
+    // Check cache first
+    const cacheKey = office || 'all';
+    const cached = candidateCache.get(stateCode, cacheKey);
+    if (cached) {
+      return res.json(cached);
     }
 
-    query += ' ORDER BY created_at DESC';
+    // Get state handler
+    const stateHandler = getStateHandler(stateCode);
 
-    const dbResult = await pool.query(query, params);
+    // Try database first
+    const dbCandidates = await candidateRepository.findByStateWithSources(stateCode, {
+      office,
+    });
 
-    if (dbResult.rows.length > 0) {
-      // Enhance with sources
-      const candidatesWithSources = await Promise.all(
-        dbResult.rows.map(async (candidate) => {
-          const sourcesResult = await pool.query(
-            'SELECT * FROM candidate_sources WHERE candidate_id = $1 ORDER BY bias_score ASC',
-            [candidate.id]
-          );
-          return {
-            ...candidate,
-            sources: sourcesResult.rows,
-          };
-        })
-      );
-
-      return res.json(candidatesWithSources);
+    if (dbCandidates.length > 0) {
+      // Cache and return
+      candidateCache.set(stateCode, dbCandidates, cacheKey);
+      return res.json(dbCandidates);
     }
 
     // If no candidates in DB, fetch from API
     if (location) {
       try {
-        const elections = await civicApi.getElections();
-        const upcomingElection = elections.elections?.find(e => 
-          e.ocdDivisionId?.includes(state.toLowerCase())
+        const dataSources = stateHandler.getDataSources();
+        const adapter = adapterFactory.getAdapter(dataSources.primary);
+
+        // Get elections and find upcoming one for this state
+        const electionsData = await adapter.getElections();
+        const filteredElections = stateHandler.filterElections(electionsData);
+        const upcomingElection = filteredElections.find(e => 
+          new Date(e.electionDay) >= new Date()
         );
 
         if (upcomingElection) {
-          const candidates = await civicApi.getCandidatesForElection(
+          const candidates = await adapter.getCandidatesForElection(
             location,
             upcomingElection.id
           );
 
+          // Normalize district using state handler
+          const normalizedCandidates = candidates.map(candidate => ({
+            name: candidate.name,
+            office: candidate.office,
+            officeLevel: stateHandler.determineOfficeLevel(candidate.office),
+            party: candidate.party,
+            photoUrl: candidate.photoUrl,
+            bio: null,
+            district: stateHandler.normalizeDistrict(candidate.district),
+            state: stateCode,
+            positions: [],
+            apiSource: adapter.getSourceType(),
+          }));
+
           // Store in database
-          const storedCandidates = await Promise.all(
-            candidates.map(async (candidate) => {
-              const result = await pool.query(
-                `INSERT INTO candidates (name, office, office_level, party, photo_url, district, state, api_source)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                 ON CONFLICT DO NOTHING
-                 RETURNING *`,
-                [
-                  candidate.name,
-                  candidate.office,
-                  candidate.level,
-                  candidate.party,
-                  candidate.photoUrl,
-                  candidate.district,
-                  state,
-                  'google_civic_api',
-                ]
-              );
-              return result.rows[0] || candidate;
-            })
+          const storedCandidates = await candidateRepository.bulkUpsert(normalizedCandidates);
+
+          // Fetch with sources
+          const candidatesWithSources = await candidateRepository.findByStateWithSources(
+            stateCode,
+            { office }
           );
 
-          return res.json(storedCandidates);
+          // Cache and return
+          candidateCache.set(stateCode, candidatesWithSources, cacheKey);
+          return res.json(candidatesWithSources);
         }
       } catch (apiError) {
         console.error('Error fetching from API:', apiError);
@@ -105,24 +108,14 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const candidateResult = await pool.query(
-      'SELECT * FROM candidates WHERE id = $1',
-      [id]
-    );
+    const candidate = await candidateRepository.findByIdWithSources(id);
 
-    if (candidateResult.rows.length === 0) {
+    if (!candidate) {
       return res.status(404).json({ error: 'Candidate not found' });
     }
 
-    const candidate = candidateResult.rows[0];
-
-    // Get sources and rank them
-    const sourcesResult = await pool.query(
-      'SELECT * FROM candidate_sources WHERE candidate_id = $1',
-      [id]
-    );
-
-    const rankedSources = await rankSources(sourcesResult.rows);
+    // Rank sources
+    const rankedSources = await rankSources(candidate.sources || []);
 
     res.json({
       ...candidate,
