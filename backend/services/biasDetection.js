@@ -194,7 +194,6 @@ async function analyzeWithML(content, url) {
     const result = await analyzeText(content);
     return result;
   } catch (error) {
-    console.error('ML analysis error:', error.message);
     return null;
   }
 }
@@ -209,7 +208,6 @@ async function analyzeWithOpenAI(content, url) {
     const result = await analyzeContentBias(content, '', domain);
     return result;
   } catch (error) {
-    console.error('OpenAI analysis error:', error.message);
     return null;
   }
 }
@@ -230,7 +228,7 @@ async function checkBiasDatabases(url, sourceType) {
     const apiResult = await getMediaBiasRating(url);
     return apiResult;
   } catch (error) {
-    console.error('Database lookup error:', error.message);
+    logger.error('Database lookup error:', error.message);
     return null;
   }
 }
@@ -255,7 +253,6 @@ async function getUserFeedbackScore(urlHash) {
     }
     return null;
   } catch (error) {
-    console.error('Error getting user feedback score:', error);
     return null;
   }
 }
@@ -272,7 +269,6 @@ async function getCachedBiasAnalysis(urlHash) {
     );
     return result.rows[0] || null;
   } catch (error) {
-    console.error('Error getting cached bias analysis:', error);
     return null;
   }
 }
@@ -301,7 +297,7 @@ async function cacheBiasAnalysis(urlHash, biasScore, biasTier, analysisData) {
       [urlHash, biasScore, biasTier, JSON.stringify(analysisData)]
     );
   } catch (error) {
-    console.error('Error caching bias analysis:', error);
+    // Silently fail caching - non-critical
   }
 }
 

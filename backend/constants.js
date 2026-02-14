@@ -2,7 +2,7 @@
  * Application constants and configuration values
  */
 
-// Default values
+// Default values - NC focus for upcoming elections
 export const DEFAULTS = {
   STATE: 'NC',
   ELECTION_TYPE: 'general',

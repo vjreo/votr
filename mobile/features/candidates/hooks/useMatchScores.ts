@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { candidateApi } from '../services/candidateApi';
-import { Candidate } from '../../../../shared/types';
+import { Candidate } from '../../../shared/types';
 
 interface UseMatchScoresOptions {
   candidates: Candidate[];

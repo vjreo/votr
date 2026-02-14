@@ -12,12 +12,12 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { TabBar, Button, Card } from '../../../../shared/components/ui';
-import SourceList from '../../../../shared/components/SourceList';
+import { TabBar, Button, Card } from '../../../shared/components/ui';
+import SourceList from '../../../shared/components/SourceList';
 import { candidateApi } from '../services/candidateApi';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { useGamification } from '../../../features/gamification/context/GamificationContext';
-import { colors, shadows, borderRadius } from '../../../../shared/theme/colors';
+import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -106,73 +106,8 @@ const CandidateDetailScreen: React.FC = () => {
       const response = await candidateApi.getById(candidateId);
       setCandidate(response.data);
     } catch (error) {
-      console.error('Error loading candidate:', error);
-      // NC-specific mock data based on candidateId
-      const ncCandidates: Record<string, CandidateData> = {
-        'nc-gov-stein': {
-          id: 'nc-gov-stein',
-          name: 'Josh Stein',
-          party: 'Democratic Party',
-          photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Josh_Stein_official_photo.jpg/440px-Josh_Stein_official_photo.jpg',
-          office: 'Governor of North Carolina',
-          currentPosition: 'NC Attorney General',
-          partyAffiliation: 'Democrat',
-          religion: 'Jewish',
-          previousProfession: 'Attorney',
-          bio: 'Josh Stein has served as North Carolina\'s Attorney General since 2017. Before that, he served in the NC State Senate from 2009 to 2016, representing Wake County. He has focused on consumer protection, fighting the opioid epidemic, and criminal justice reform.\n\nAs Attorney General, he has taken on pharmaceutical companies over the opioid crisis, protected consumers from fraud, and worked to keep communities safe.',
-          topInitiatives: [
-            'Expand Medicaid to cover 600,000 more North Carolinians',
-            'Protect public education and increase teacher pay',
-            'Defend reproductive rights',
-            'Combat the opioid crisis',
-          ],
-          positions: [
-            { issueName: 'Healthcare', stance: 'Supports Medicaid expansion, protecting coverage for pre-existing conditions, and lowering prescription drug costs' },
-            { issueName: 'Education', stance: 'Advocates for increased public school funding, higher teacher pay, and opposing private school vouchers' },
-            { issueName: 'Environment', stance: 'Supports clean energy transition, offshore wind development, and environmental protections' },
-            { issueName: 'Economy', stance: 'Focus on workforce development, supporting small businesses, and bringing clean energy jobs to NC' },
-            { issueName: 'Criminal Justice', stance: 'Supports criminal justice reform, addressing root causes of crime, and smart-on-crime policies' },
-          ],
-          career: [
-            { title: 'NC Attorney General', period: '2017 - Present', description: 'Elected as the state\'s top law enforcement officer' },
-            { title: 'NC State Senator', period: '2009 - 2016', description: 'Represented District 16 (Wake County)' },
-            { title: 'Senior Deputy Attorney General', period: '2001 - 2008', description: 'Consumer Protection Division' },
-          ],
-        },
-        'nc-gov-robinson': {
-          id: 'nc-gov-robinson',
-          name: 'Mark Robinson',
-          party: 'Republican Party',
-          photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Mark_Robinson_official_photo_%28cropped%29.jpg/440px-Mark_Robinson_official_photo_%28cropped%29.jpg',
-          office: 'Governor of North Carolina',
-          currentPosition: 'NC Lieutenant Governor',
-          partyAffiliation: 'Republican',
-          religion: 'Christian',
-          previousProfession: 'Business Owner, Factory Worker',
-          bio: 'Mark Robinson became North Carolina\'s first Black Lieutenant Governor in 2021. Before entering politics, he worked in furniture manufacturing and owned a business.\n\nHe gained national attention in 2018 after a speech at a Greensboro City Council meeting about gun rights went viral, launching his political career.',
-          topInitiatives: [
-            'Support law enforcement and public safety',
-            'Promote school choice and parental rights in education',
-            'Lower taxes and reduce government regulations',
-            'Protect Second Amendment rights',
-          ],
-          positions: [
-            { issueName: 'Healthcare', stance: 'Supports market-based healthcare solutions, opposes government-run healthcare' },
-            { issueName: 'Education', stance: 'Strong advocate for school choice, parental rights, and curriculum transparency' },
-            { issueName: 'Environment', stance: 'Supports balanced approach between environment and economic development' },
-            { issueName: 'Economy', stance: 'Supports tax cuts, reducing regulations, and pro-business policies' },
-            { issueName: 'Criminal Justice', stance: 'Strong support for law enforcement, tough-on-crime policies' },
-          ],
-          career: [
-            { title: 'NC Lieutenant Governor', period: '2021 - Present', description: 'First Black Lt. Governor in NC history' },
-            { title: 'Political Activist', period: '2018 - 2020', description: 'Rose to prominence after viral gun rights speech' },
-            { title: 'Business Owner', period: '2000s - 2018', description: 'Various business ventures' },
-          ],
-        },
-      };
-
-      // Return NC candidate if matched, otherwise default
-      setCandidate(ncCandidates[candidateId] || ncCandidates['nc-gov-stein']);
+      console.warn('Error loading candidate:', error);
+      setCandidate(null);
     } finally {
       setLoading(false);
     }
@@ -192,12 +127,7 @@ const CandidateDetailScreen: React.FC = () => {
     }
   };
 
-  const getPartyColor = () => {
-    const partyLower = candidate?.party?.toLowerCase() || '';
-    if (partyLower.includes('democrat')) return colors.democrat;
-    if (partyLower.includes('republican')) return colors.republican;
-    return colors.other;
-  };
+  const getPartyColor = () => colors.textSecondary;
 
   if (loading) {
     return (
@@ -210,7 +140,12 @@ const CandidateDetailScreen: React.FC = () => {
   if (!candidate) {
     return (
       <View style={[styles.errorContainer, { paddingTop: insets.top }]}>
-        <Text style={styles.errorText}>Candidate not found</Text>
+        <Ionicons name="cloud-offline-outline" size={48} color={colors.textTertiary} />
+        <Text style={styles.errorText}>Couldn&apos;t load this candidate</Text>
+        <Text style={styles.errorSubtext}>Check your connection and try again</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.retryButtonText}>Go back</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -397,10 +332,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background,
+    paddingHorizontal: 24,
   },
   errorText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginTop: 16,
+  },
+  errorSubtext: {
+    fontSize: 14,
     color: colors.textSecondary,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.white,
   },
   header: {
     backgroundColor: colors.secondary,

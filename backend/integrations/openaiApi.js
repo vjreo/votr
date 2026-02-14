@@ -3,18 +3,34 @@
  * Uses GPT for deep content analysis and bias detection
  */
 
-import OpenAI from 'openai';
+import logger from '../utils/logger.js';
 
 let openaiClient = null;
+let OpenAI = null;
 
 /**
  * Get or create OpenAI client
+ * Uses dynamic import to avoid requiring openai package if not installed
  */
-function getClient() {
-  if (!openaiClient && process.env.OPENAI_API_KEY) {
-    openaiClient = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+async function getClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+
+  if (!openaiClient) {
+    try {
+      // Dynamic import - only load if needed
+      if (!OpenAI) {
+        const openaiModule = await import('openai');
+        OpenAI = openaiModule.default;
+      }
+      openaiClient = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+    } catch (error) {
+      logger.warn('OpenAI package not installed. Install with: npm install openai');
+      return null;
+    }
   }
   return openaiClient;
 }
@@ -27,9 +43,9 @@ function getClient() {
  * @returns {Promise<Object|null>} Bias analysis result
  */
 export async function analyzeContentBias(content, headline = '', sourceName = '') {
-  const client = getClient();
+  const client = await getClient();
   if (!client) {
-    console.warn('OPENAI_API_KEY not set, skipping OpenAI analysis');
+    logger.warn('OPENAI_API_KEY not set or OpenAI package not installed, skipping OpenAI analysis');
     return null;
   }
 
@@ -93,7 +109,6 @@ ${truncatedContent}`
       analyzed: true,
     };
   } catch (error) {
-    console.error('OpenAI analysis error:', error.message);
     return null;
   }
 }
@@ -105,7 +120,7 @@ ${truncatedContent}`
  * @returns {Promise<Object|null>} Source credibility analysis
  */
 export async function analyzeSourceCredibility(sourceName, domain) {
-  const client = getClient();
+  const client = await getClient();
   if (!client) {
     return null;
   }
@@ -148,7 +163,6 @@ Domain: ${domain}`
 
     return JSON.parse(responseText);
   } catch (error) {
-    console.error('OpenAI source analysis error:', error.message);
     return null;
   }
 }
@@ -160,7 +174,7 @@ Domain: ${domain}`
  * @returns {Promise<Object|null>} Extracted positions
  */
 export async function extractCandidatePositions(content, candidateName) {
-  const client = getClient();
+  const client = await getClient();
   if (!client) {
     return null;
   }
@@ -203,7 +217,6 @@ ${content.slice(0, 3000)}`
 
     return JSON.parse(responseText);
   } catch (error) {
-    console.error('OpenAI position extraction error:', error.message);
     return null;
   }
 }

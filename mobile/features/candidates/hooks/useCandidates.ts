@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Candidate } from '../../../../shared/types';
+import { Candidate } from '../../../shared/types';
 import { candidateApi } from '../services/candidateApi';
 
 interface UseCandidatesOptions {

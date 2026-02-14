@@ -14,24 +14,19 @@ const router = express.Router();
  * Body: { url: string, content?: string, sourceType?: string }
  */
 router.post('/analyze', optionalAuth, async (req, res) => {
-  try {
-    const { url, content, sourceType = 'news_article' } = req.body;
+  const { url, content, sourceType = 'news_article' } = req.body;
 
-    if (!url) {
-      return res.status(400).json({ error: 'URL is required' });
-    }
-
-    const result = await analyzeSourceBias(url, sourceType, content);
-
-    res.json({
-      success: true,
-      url,
-      ...result,
-    });
-  } catch (error) {
-    console.error('Bias analysis error:', error);
-    res.status(500).json({ error: 'Failed to analyze source' });
+  if (!url) {
+    return res.status(400).json({ error: 'URL is required' });
   }
+
+  const result = await analyzeSourceBias(url, sourceType, content);
+
+  res.json({
+    success: true,
+    url,
+    ...result,
+  });
 });
 
 /**
@@ -40,32 +35,27 @@ router.post('/analyze', optionalAuth, async (req, res) => {
  * Query: url
  */
 router.get('/quick', async (req, res) => {
-  try {
-    const { url } = req.query;
+  const { url } = req.query;
 
-    if (!url) {
-      return res.status(400).json({ error: 'URL is required' });
-    }
-
-    const result = await quickBiasCheck(url);
-
-    if (!result) {
-      return res.status(404).json({
-        error: 'Source not found in database',
-        url,
-        suggestion: 'Use POST /api/bias/analyze for full analysis',
-      });
-    }
-
-    res.json({
-      success: true,
-      url,
-      ...result,
-    });
-  } catch (error) {
-    console.error('Quick bias check error:', error);
-    res.status(500).json({ error: 'Failed to check source' });
+  if (!url) {
+    return res.status(400).json({ error: 'URL is required' });
   }
+
+  const result = await quickBiasCheck(url);
+
+  if (!result) {
+    return res.status(404).json({
+      error: 'Source not found in database',
+      url,
+      suggestion: 'Use POST /api/bias/analyze for full analysis',
+    });
+  }
+
+  res.json({
+    success: true,
+    url,
+    ...result,
+  });
 });
 
 /**
@@ -74,28 +64,23 @@ router.get('/quick', async (req, res) => {
  * Body: { sources: Array<{ url: string, content?: string }> }
  */
 router.post('/batch', optionalAuth, async (req, res) => {
-  try {
-    const { sources } = req.body;
+  const { sources } = req.body;
 
-    if (!sources || !Array.isArray(sources) || sources.length === 0) {
-      return res.status(400).json({ error: 'Sources array is required' });
-    }
-
-    if (sources.length > 10) {
-      return res.status(400).json({ error: 'Maximum 10 sources per batch' });
-    }
-
-    const results = await batchAnalyze(sources);
-
-    res.json({
-      success: true,
-      count: results.length,
-      results,
-    });
-  } catch (error) {
-    console.error('Batch analysis error:', error);
-    res.status(500).json({ error: 'Failed to analyze sources' });
+  if (!sources || !Array.isArray(sources) || sources.length === 0) {
+    return res.status(400).json({ error: 'Sources array is required' });
   }
+
+  if (sources.length > 10) {
+    return res.status(400).json({ error: 'Maximum 10 sources per batch' });
+  }
+
+  const results = await batchAnalyze(sources);
+
+  res.json({
+    success: true,
+    count: results.length,
+    results,
+  });
 });
 
 /**

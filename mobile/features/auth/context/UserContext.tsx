@@ -22,14 +22,14 @@ interface UserContextType {
   roster: RosterCandidate[];
   setUser: (user: User | null) => void;
   setTokens: (accessToken: string, refreshToken: string) => void;
-  createAnonymousUser: () => Promise<void>;
+  createAnonymousUser: () => Promise<User | null>;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   oauthLogin: (provider: 'google' | 'apple', providerId: string, email?: string, name?: string) => Promise<void>;
   linkAnonymousAccount: (anonymousUserId: string) => Promise<void>;
   logout: () => Promise<void>;
   updatePreferences: (preferences: any[]) => Promise<void>;
-  updateLocation: (location: any) => Promise<void>;
+  updateLocation: (location: any, userId?: string) => Promise<void>;
   refreshGamification: () => Promise<void>;
   addToRoster: (candidate: RosterCandidate) => Promise<void>;
   removeFromRoster: (candidateId: string) => Promise<void>;
@@ -47,6 +47,15 @@ const STORAGE_KEYS = {
   ROSTER: 'roster',
 };
 
+const minimalUser = (id: string): User =>
+  ({
+    id,
+    preferences: [],
+    gamification: { points: 0, streak: 0, lastActiveDate: '', level: 1, badges: [] },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }) as User;
+
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUserState] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,6 +70,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     loadStoredUser();
     loadRoster();
+    const safety = setTimeout(() => setLoading(false), 12000);
+    return () => clearTimeout(safety);
   }, []);
 
   const loadRoster = async () => {
@@ -83,6 +94,21 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [accessToken]);
 
+  const persistAuth = useCallback(
+    (userId: string, access: string, refresh: string, anonymous: boolean) => {
+      setAccessToken(access);
+      setRefreshToken(refresh);
+      setIsAnonymous(anonymous);
+      return Promise.all([
+        AsyncStorage.setItem(STORAGE_KEYS.USER_ID, String(userId)),
+        AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, access),
+        AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh),
+        AsyncStorage.setItem(STORAGE_KEYS.IS_ANONYMOUS, anonymous ? 'true' : 'false'),
+      ]);
+    },
+    []
+  );
+
   const loadStoredUser = async () => {
     try {
       const [storedUserId, storedAccessToken, storedRefreshToken, storedIsAnonymous] = await Promise.all([
@@ -96,26 +122,22 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setAccessToken(storedAccessToken);
         setRefreshToken(storedRefreshToken);
         setIsAnonymous(storedIsAnonymous === 'true');
+        setUserState(minimalUser(storedUserId));
 
-        // Load user data
         try {
           const response = await userApi.get(storedUserId);
           setUserState(response.data);
-        } catch (error) {
-          // Token might be expired, try refresh
+        } catch {
           if (storedRefreshToken) {
             await refreshAccessToken(storedRefreshToken);
           } else {
-            // No refresh token, create anonymous user
             await createAnonymousUser();
           }
         }
       } else {
-        // No stored user, create anonymous
         await createAnonymousUser();
       }
-    } catch (error) {
-      console.error('Error loading stored user:', error);
+    } catch {
       await createAnonymousUser();
     } finally {
       setLoading(false);
@@ -124,41 +146,33 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const refreshAccessToken = async (refreshTokenValue: string) => {
     try {
-      const response = await authApi.refresh(refreshTokenValue);
-      const newAccessToken = response.data.accessToken;
-      setAccessToken(newAccessToken);
-      await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
-      
-      // Reload user data
+      const { data } = await authApi.refresh(refreshTokenValue);
+      setAccessToken(data.accessToken);
+      await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.accessToken);
       if (user?.id) {
-        const userResponse = await userApi.get(user.id);
-        setUserState(userResponse.data);
+        const { data: userData } = await userApi.get(user.id);
+        setUserState(userData);
       }
-    } catch (error) {
-      console.error('Error refreshing token:', error);
-      // Refresh failed, create new anonymous user
+    } catch {
       await createAnonymousUser();
     }
   };
 
-  const createAnonymousUser = async () => {
+  const createAnonymousUser = async (): Promise<User | null> => {
     try {
       const response = await authApi.createAnonymous();
       const { user: newUser, accessToken: token, refreshToken: refresh } = response.data;
-
       setUserState(newUser);
-      setAccessToken(token);
-      setRefreshToken(refresh);
-      setIsAnonymous(true);
-
-      await Promise.all([
-        AsyncStorage.setItem(STORAGE_KEYS.USER_ID, newUser.id),
-        AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token),
-        AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh),
-        AsyncStorage.setItem(STORAGE_KEYS.IS_ANONYMOUS, 'true'),
-      ]);
-    } catch (error) {
-      console.error('Error creating anonymous user:', error);
+      await persistAuth(String(newUser.id), token, refresh, true);
+      return newUser;
+    } catch (err: any) {
+      const unreachable =
+        err?.code === 'ERR_NETWORK' ||
+        err?.code === 'ECONNABORTED' ||
+        err?.message === 'Network Error' ||
+        err?.message?.includes('timeout');
+      if (!unreachable) console.error('Error creating anonymous user:', err);
+      return null;
     }
   };
 
@@ -186,54 +200,21 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const login = async (email: string, password: string) => {
-    const response = await authApi.login(email, password);
-    const { user: loggedInUser, accessToken: token, refreshToken: refresh } = response.data;
-
-    setUserState(loggedInUser);
-    setAccessToken(token);
-    setRefreshToken(refresh);
-    setIsAnonymous(false);
-
-    await Promise.all([
-      AsyncStorage.setItem(STORAGE_KEYS.USER_ID, loggedInUser.id),
-      AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token),
-      AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh),
-      AsyncStorage.setItem(STORAGE_KEYS.IS_ANONYMOUS, 'false'),
-    ]);
+    const { data } = await authApi.login(email, password);
+    setUserState(data.user);
+    await persistAuth(String(data.user.id), data.accessToken, data.refreshToken, false);
   };
 
   const register = async (email: string, password: string) => {
-    const response = await authApi.register(email, password);
-    const { user: newUser, accessToken: token, refreshToken: refresh } = response.data;
-
-    setUserState(newUser);
-    setAccessToken(token);
-    setRefreshToken(refresh);
-    setIsAnonymous(false);
-
-    await Promise.all([
-      AsyncStorage.setItem(STORAGE_KEYS.USER_ID, newUser.id),
-      AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token),
-      AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh),
-      AsyncStorage.setItem(STORAGE_KEYS.IS_ANONYMOUS, 'false'),
-    ]);
+    const { data } = await authApi.register(email, password);
+    setUserState(data.user);
+    await persistAuth(String(data.user.id), data.accessToken, data.refreshToken, false);
   };
 
   const oauthLogin = async (provider: 'google' | 'apple', providerId: string, email?: string, name?: string) => {
-    const response = await authApi.oauth(provider, providerId, email, name);
-    const { user: loggedInUser, accessToken: token, refreshToken: refresh } = response.data;
-
-    setUserState(loggedInUser);
-    setAccessToken(token);
-    setRefreshToken(refresh);
-    setIsAnonymous(false);
-
-    await Promise.all([
-      AsyncStorage.setItem(STORAGE_KEYS.USER_ID, loggedInUser.id),
-      AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token),
-      AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh),
-      AsyncStorage.setItem(STORAGE_KEYS.IS_ANONYMOUS, 'false'),
-    ]);
+    const { data } = await authApi.oauth(provider, providerId, email, name);
+    setUserState(data.user);
+    await persistAuth(String(data.user.id), data.accessToken, data.refreshToken, false);
   };
 
   const linkAnonymousAccount = async (anonymousUserId: string) => {
@@ -287,11 +268,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const updateLocation = async (location: any) => {
-    if (!user) return;
+  const updateLocation = async (location: any, userId?: string) => {
+    const targetUserId = userId ?? user?.id;
+    if (!targetUserId) return;
     try {
-      await userApi.updateLocation(user.id, location);
-      const updatedUser = { ...user, location };
+      await userApi.updateLocation(targetUserId, location);
+      const updatedUser = user ? { ...user, location } : { ...minimalUser(targetUserId), location };
       setUserState(updatedUser);
     } catch (error) {
       console.error('Error updating location:', error);
@@ -346,8 +328,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <UserContext.Provider
       value={{
         user,
-        loading,
-        isAnonymous,
+        loading: Boolean(loading),
+        isAnonymous: Boolean(isAnonymous),
         accessToken,
         hasLocation,
         roster,

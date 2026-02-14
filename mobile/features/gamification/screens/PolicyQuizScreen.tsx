@@ -11,13 +11,13 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, Card } from '../../../../shared/components/ui';
+import { Button, Card } from '../../../shared/components/ui';
 import {
   useGamification,
   POLICY_QUESTIONS,
   POLICY_CATEGORIES,
 } from '../context/GamificationContext';
-import { colors, shadows, borderRadius } from '../../../../shared/theme/colors';
+import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
 
 const { width, height } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.25;

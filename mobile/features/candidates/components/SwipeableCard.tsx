@@ -8,9 +8,9 @@ import {
   Animated,
   PanResponder,
 } from 'react-native';
-import { Candidate } from '../../../../shared/types';
+import { Candidate } from '../../../shared/types';
 import MatchScoreIndicator from './MatchScoreIndicator';
-import { colors } from '../../../../shared/theme/colors';
+import { colors } from '../../../shared/theme/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
@@ -22,6 +22,8 @@ interface SwipeableCardProps {
   onSwipeRight?: () => void;
   onSwipeUp?: () => void;
   index: number;
+  cardWidth?: number;
+  cardHeight?: number;
 }
 
 const SwipeableCard: React.FC<SwipeableCardProps> = ({
@@ -31,6 +33,8 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
   onSwipeRight,
   onSwipeUp,
   index,
+  cardWidth = SCREEN_WIDTH - 40,
+  cardHeight = 520,
 }) => {
   const position = useRef(new Animated.ValueXY()).current;
   const opacity = useRef(new Animated.Value(1)).current;
@@ -112,6 +116,10 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
       style={[
         styles.card,
         {
+          width: cardWidth,
+          height: cardHeight,
+          left: 0,
+          top: 0,
           transform: [
             { translateX: position.x },
             { translateY: position.y },
@@ -182,8 +190,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    width: SCREEN_WIDTH - 40,
-    height: 600,
+    position: 'absolute',
     borderRadius: 20,
     backgroundColor: colors.white,
     position: 'absolute',
@@ -281,7 +288,7 @@ const styles = StyleSheet.create({
     top: 50,
     left: 20,
     borderWidth: 4,
-    borderColor: colors.swipePass,
+    borderColor: colors.textSecondary,
     padding: 8,
     borderRadius: 8,
     transform: [{ rotate: '-15deg' }],
@@ -289,7 +296,7 @@ const styles = StyleSheet.create({
   nopeText: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: colors.swipePass,
+    color: colors.textSecondary,
   },
 });
 

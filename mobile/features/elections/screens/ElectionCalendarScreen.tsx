@@ -14,9 +14,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
-import { Card, Button } from '../../../../shared/components/ui';
+import { Card, Button } from '../../../shared/components/ui';
 import { useUser } from '../../../features/auth/context/UserContext';
-import { colors, shadows, borderRadius } from '../../../../shared/theme/colors';
+import { openUrlSafely } from '../../../shared/utils/openUrl';
+import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
 
 // NC Election Data - 2024/2025
 const NC_ELECTIONS = [
@@ -81,7 +82,7 @@ const NC_ELECTIONS = [
     date: '2026-03-03',
     type: 'primary',
     isKeyElection: false,
-    icon: '🔵🔴',
+    icon: '🗳️',
     description: 'Party primaries for US Senate, House, and state offices',
     deadlines: [
       { name: 'Voter Registration Deadline', date: '2026-02-06', icon: '📝', critical: true },
@@ -210,7 +211,7 @@ const ElectionCalendarScreen: React.FC = () => {
   };
 
   const openResource = (url: string) => {
-    Linking.openURL(url);
+    openUrlSafely(url);
   };
 
   const getUpcomingDeadlines = () => {
@@ -327,7 +328,13 @@ const ElectionCalendarScreen: React.FC = () => {
                 <TouchableOpacity
                   key={index}
                   style={styles.resourceButton}
-                  onPress={() => openResource(resource.url)}
+                  onPress={() => {
+                    if (resource.name === 'View Sample Ballot') {
+                      navigation.navigate('SampleBallot');
+                    } else {
+                      openResource(resource.url);
+                    }
+                  }}
                 >
                   <Ionicons name="open-outline" size={20} color={colors.primary} />
                   <Text style={styles.resourceText}>{resource.name}</Text>

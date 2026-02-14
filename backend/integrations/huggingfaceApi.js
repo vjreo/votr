@@ -3,6 +3,8 @@
  * Uses pre-trained models for political bias and sentiment detection
  */
 
+import logger from '../utils/logger.js';
+
 const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models';
 const API_KEY = process.env.HUGGINGFACE_API_KEY;
 
@@ -24,7 +26,7 @@ const MODELS = {
  */
 async function queryModel(model, text) {
   if (!API_KEY) {
-    console.warn('HUGGINGFACE_API_KEY not set, skipping ML analysis');
+    logger.warn('HUGGINGFACE_API_KEY not set, skipping ML analysis');
     return null;
   }
 
@@ -42,7 +44,7 @@ async function queryModel(model, text) {
       // Model might be loading (503) - this is common with free tier
       if (response.status === 503) {
         const data = await response.json();
-        console.log(`Model ${model} is loading, estimated time: ${data.estimated_time}s`);
+        logger.info(`Model ${model} is loading, estimated time: ${data.estimated_time}s`);
         return null;
       }
       throw new Error(`HuggingFace API error: ${response.status}`);
@@ -50,7 +52,6 @@ async function queryModel(model, text) {
 
     return await response.json();
   } catch (error) {
-    console.error(`Error querying HuggingFace model ${model}:`, error.message);
     return null;
   }
 }

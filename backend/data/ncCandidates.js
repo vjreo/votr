@@ -127,27 +127,10 @@ export const NC_CANDIDATES = {
     },
   ],
 
-  // State Legislature - Charlotte Area
-  stateLegislature: [
-    {
-      id: 'nc-house-d92',
-      name: 'Sample State Rep',
-      party: 'Democratic Party',
-      office: 'NC House District 92',
-      officeLevel: 'state_legislature',
-      currentPosition: 'NC State Representative',
-      bio: 'Represents parts of Mecklenburg County in the NC House of Representatives.',
-      positions: [
-        { issueName: 'Education', issueId: 'education', stance: 'Supports increased funding for Charlotte-Mecklenburg Schools' },
-        { issueName: 'Transportation', issueId: 'economy', stance: 'Advocates for expanded public transit in Charlotte' },
-      ],
-      career: [
-        { title: 'NC State Representative', period: '2021 - Present', description: 'District 92' },
-      ],
-    },
-  ],
+  // State Legislature - populated from Civic API or DB when available
+  stateLegislature: [],
 
-  // Local - Charlotte/Mecklenburg
+  // Local - Charlotte/Mecklenburg (real candidates only)
   local: [
     {
       id: 'nc-clt-mayor',
@@ -175,42 +158,10 @@ export const NC_CANDIDATES = {
         { title: 'Assistant City Manager', period: '2004 - 2011', description: 'City of Charlotte' },
       ],
     },
-    {
-      id: 'nc-meck-commission',
-      name: 'Sample Commissioner',
-      party: 'Democratic Party',
-      office: 'Mecklenburg County Commission',
-      officeLevel: 'local',
-      currentPosition: 'County Commissioner',
-      bio: 'Serves on the Mecklenburg County Board of Commissioners, overseeing county services, budget, and policies affecting Charlotte and surrounding communities.',
-      positions: [
-        { issueName: 'Healthcare', issueId: 'healthcare', stance: 'Supports expanded community health services and mental health funding' },
-        { issueName: 'Education', issueId: 'education', stance: 'Advocates for school construction funding' },
-      ],
-      career: [
-        { title: 'County Commissioner', period: '2020 - Present', description: 'Mecklenburg County' },
-      ],
-    },
   ],
 
-  // School Board - CMS
-  schoolBoard: [
-    {
-      id: 'nc-cms-board-1',
-      name: 'Sample School Board Member',
-      party: 'Nonpartisan',
-      office: 'Charlotte-Mecklenburg Schools Board of Education',
-      officeLevel: 'local',
-      currentPosition: 'School Board Member',
-      bio: 'Serves on the CMS Board of Education, which governs one of the largest school districts in the Southeast with over 140,000 students.',
-      positions: [
-        { issueName: 'Education', issueId: 'education', stance: 'Focus on teacher retention, school safety, and student achievement' },
-      ],
-      career: [
-        { title: 'CMS Board of Education', period: '2021 - Present', description: 'District Representative' },
-      ],
-    },
-  ],
+  // School Board - populated from Civic API or DB when available
+  schoolBoard: [],
 };
 
 // Election dates and info for NC

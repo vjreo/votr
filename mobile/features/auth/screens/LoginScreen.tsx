@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useUser } from '../context/UserContext';
-import { colors } from '../../../../shared/theme/colors';
+import { colors } from '../../../shared/theme/colors';
 
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation();

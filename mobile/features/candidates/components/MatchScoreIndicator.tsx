@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../../../../shared/theme/colors';
+import { colors } from '../../../shared/theme/colors';
 
 interface MatchScoreIndicatorProps {
   score: number; // 0-100

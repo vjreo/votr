@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { BadgeType } from '../../../../shared/types';
-import { colors } from '../../../../shared/theme/colors';
+import { BadgeType } from '../../../shared/types';
+import { colors } from '../../../shared/theme/colors';
 
 interface AchievementBadgeProps {
   type: BadgeType;
@@ -105,6 +105,53 @@ const styles = StyleSheet.create({
   },
   lockedText: {
     color: colors.textTertiary,
+  },
+});
+
+// StreakDisplay component
+interface StreakDisplayProps {
+  streak: number;
+  size?: 'small' | 'medium' | 'large';
+}
+
+export const StreakDisplay: React.FC<StreakDisplayProps> = ({ streak, size = 'medium' }) => {
+  const getSizeStyles = () => {
+    switch (size) {
+      case 'small':
+        return { fontSize: 14, iconSize: 16, padding: 6 };
+      case 'large':
+        return { fontSize: 24, iconSize: 28, padding: 12 };
+      default:
+        return { fontSize: 18, iconSize: 22, padding: 8 };
+    }
+  };
+
+  const sizeStyles = getSizeStyles();
+
+  return (
+    <View style={[streakStyles.container, { padding: sizeStyles.padding }]}>
+      <Text style={{ fontSize: sizeStyles.iconSize }}>🔥</Text>
+      <Text style={[streakStyles.text, { fontSize: sizeStyles.fontSize }]}>{streak}</Text>
+      <Text style={streakStyles.label}>day streak</Text>
+    </View>
+  );
+};
+
+const streakStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    borderRadius: 20,
+    gap: 4,
+  },
+  text: {
+    fontWeight: '700',
+    color: '#E65100',
+  },
+  label: {
+    fontSize: 12,
+    color: '#F57C00',
   },
 });
 

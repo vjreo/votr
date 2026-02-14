@@ -1,5 +1,6 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
+import logger from '../utils/logger.js';
 
 dotenv.config();
 
@@ -14,7 +15,7 @@ class CivicApiService {
   constructor() {
     this.apiKey = GOOGLE_CIVIC_API_KEY;
     if (!this.apiKey) {
-      console.warn('Warning: GOOGLE_CIVIC_API_KEY not set');
+      logger.warn('Warning: GOOGLE_CIVIC_API_KEY not set');
     }
   }
 
@@ -38,7 +39,7 @@ class CivicApiService {
       const response = await axios.get(`${BASE_URL}/representatives?${params}`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching representatives:', error.response?.data || error.message);
+      logger.error('Error fetching representatives:', error.response?.data || error.message);
       throw error;
     }
   }
@@ -52,7 +53,6 @@ class CivicApiService {
       const response = await axios.get(`${BASE_URL}/elections?key=${this.apiKey}`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching elections:', error.response?.data || error.message);
       throw error;
     }
   }
@@ -74,7 +74,25 @@ class CivicApiService {
       const response = await axios.get(`${BASE_URL}/voterinfo?${params}`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching voter info:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Get voter info without specifying election (returns ballot for primary/next election)
+   * @param {string} address - Voter's address
+   * @returns {Promise<Object>}
+   */
+  async getVoterInfoByAddress(address) {
+    try {
+      const params = new URLSearchParams({
+        address,
+        key: this.apiKey,
+      });
+
+      const response = await axios.get(`${BASE_URL}/voterinfo?${params}`);
+      return response.data;
+    } catch (error) {
       throw error;
     }
   }
@@ -112,7 +130,6 @@ class CivicApiService {
 
       return candidates;
     } catch (error) {
-      console.error('Error fetching candidates:', error);
       throw error;
     }
   }
@@ -138,13 +155,87 @@ class CivicApiService {
   }
 
   /**
-   * Normalize address for API calls
+   * Get current representatives/officials by address (no election needed)
+   * Maps to candidate-like format for display
+   * @param {string} address - Voter's address
+   * @returns {Promise<Array>} Array of officials as candidates
+   */
+  async getRepresentativesAsCandidates(address) {
+    try {
+      const data = await this.getRepresentatives(address);
+      const candidates = [];
+      const offices = data.offices || [];
+      const officials = data.officials || [];
+
+      for (const office of offices) {
+        const officeName = office.name;
+        const level = this._determineOfficeLevel(officeName);
+
+        for (const idx of office.officialIndices || []) {
+          const official = officials[idx];
+          if (!official) continue;
+
+          candidates.push({
+            name: official.name || 'Unknown',
+            party: official.party || 'Unknown',
+            photoUrl: official.photoUrl || null,
+            email: official.emails?.[0],
+            phone: official.phones?.[0],
+            website: official.urls?.[0],
+            office: officeName,
+            district: office.divisionId?.match(/district:(.+)/)?.[1] || null,
+            level,
+          });
+        }
+      }
+
+      return candidates;
+    } catch (error) {
+      logger.error('getRepresentativesAsCandidates failed:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Extract candidates from voterinfo response (contests)
+   * @param {Object} voterInfo - Response from getVoterInfo or getVoterInfoByAddress
+   * @returns {Array}
+   */
+  extractCandidatesFromVoterInfo(voterInfo) {
+    const candidates = [];
+    if (!voterInfo?.contests) return candidates;
+
+    for (const contest of voterInfo.contests) {
+      if (contest.candidates) {
+        for (const c of contest.candidates) {
+          candidates.push({
+            name: c.name,
+            party: c.party || '',
+            photoUrl: c.photoUrl,
+            email: c.email,
+            phone: c.phone,
+            website: c.candidateUrl,
+            office: contest.office,
+            district: contest.district?.name,
+            level: this._determineOfficeLevel(contest.office),
+          });
+        }
+      }
+    }
+    return candidates;
+  }
+
+  /**
+   * Normalize address for Civic API (improves match rate)
    * @param {string} address - Raw address
    * @returns {string} Normalized address
    */
   normalizeAddress(address) {
-    // Basic normalization - can be enhanced
-    return address.trim();
+    if (!address) return '';
+    return address
+      .trim()
+      .replace(/\s+/g, ' ')
+      .replace(/\b(St|Dr|Ave|Blvd|Rd|Ln|Ct|Pl)\./gi, '$1'); // Remove periods from common abbreviations
   }
 }
 

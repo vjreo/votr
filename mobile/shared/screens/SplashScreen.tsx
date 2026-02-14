@@ -59,10 +59,10 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
           },
         ]}
       >
-        {/* VOTER Logo */}
+        {/* VOTR Logo */}
         <View style={styles.logoWrapper}>
           <Text style={styles.logoV}>V</Text>
-          <Text style={styles.logoText}>OTER</Text>
+          <Text style={styles.logoText}>OTR</Text>
         </View>
 
         {/* Tagline */}

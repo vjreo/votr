@@ -159,6 +159,25 @@ The backend requires the following environment variables (see `.env.example` for
 - Expo Location
 - AsyncStorage
 
+## Real Election Data (North Carolina)
+
+To pull live candidates and elections for NC:
+
+1. **Get a Google Civic API key** (free tier available):
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create/select a project → APIs & Services → Enable **Civic Information API**
+   - Create credentials (API key) and copy the key
+   - Add to `backend/.env`: `GOOGLE_CIVIC_API_KEY=your-actual-key`
+
+2. **Enter your voting address** when the app prompts during onboarding. The address is used to fetch your district-specific ballot from the Civic API.
+
+3. **Test the integration**:
+   ```bash
+   cd backend && node test-civic-api.js
+   ```
+
+4. **Flow**: FeedScreen passes your address to the API when loading candidates. If the DB is empty, the backend fetches from Google Civic, stores candidates, and returns them. Subsequent loads use the cache/database.
+
 ## Development Notes
 
 - The bias detection system is set up with placeholder functions. Integrate with actual ML services (Hugging Face, AWS Comprehend) and bias databases (Media Bias Fact Check, AllSides) for production.

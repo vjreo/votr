@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import { openUrlSafely } from '../../../shared/utils/openUrl';
 
 // NC County data with election office info
 const NC_COUNTIES = [
@@ -157,11 +158,11 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
   };
 
   const openNCVoterSearch = () => {
-    Linking.openURL('https://vt.ncsbe.gov/RegLkup/');
+    openUrlSafely('https://vt.ncsbe.gov/RegLkup/');
   };
 
   const openNCPollingPlaceLookup = () => {
-    Linking.openURL('https://vt.ncsbe.gov/PPLkup/');
+    openUrlSafely('https://vt.ncsbe.gov/PPLkup/');
   };
 
   const renderLocationCard = (location: any) => (
@@ -298,7 +299,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
 
             <TouchableOpacity
               style={styles.quickLinkCard}
-              onPress={() => Linking.openURL('https://www.ncsbe.gov/voting/vote-mail')}
+              onPress={() => openUrlSafely('https://www.ncsbe.gov/voting/vote-mail')}
             >
               <View style={[styles.quickLinkIcon, { backgroundColor: '#DCFCE7' }]}>
                 <Ionicons name="mail" size={24} color="#16A34A" />
@@ -309,10 +310,10 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
 
             <TouchableOpacity
               style={styles.quickLinkCard}
-              onPress={() => Linking.openURL('https://vt.ncsbe.gov/BallotLkup/')}
+              onPress={() => navigation.navigate('SampleBallot')}
             >
-              <View style={[styles.quickLinkIcon, { backgroundColor: '#FEE2E2' }]}>
-                <Ionicons name="document-text" size={24} color="#DC2626" />
+              <View style={[styles.quickLinkIcon, { backgroundColor: '#EEF2FF' }]}>
+                <Ionicons name="document-text" size={24} color="#6366F1" />
               </View>
               <Text style={styles.quickLinkTitle}>Sample Ballot</Text>
               <Text style={styles.quickLinkSubtitle}>Preview your races</Text>
@@ -400,7 +401,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
                   </Text>
                   <TouchableOpacity
                     style={styles.infoButton}
-                    onPress={() => Linking.openURL('https://www.ncsbe.gov/voting/vote-mail')}
+                    onPress={() => openUrlSafely('https://www.ncsbe.gov/voting/vote-mail')}
                   >
                     <Text style={styles.infoButtonText}>Learn About Absentee Voting</Text>
                     <Ionicons name="open-outline" size={16} color="#6366F1" />
@@ -427,7 +428,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
               <TouchableOpacity
                 key={county.name}
                 style={styles.countyCard}
-                onPress={() => Linking.openURL(county.website)}
+                onPress={() => openUrlSafely(county.website)}
               >
                 <Text style={styles.countyName}>{county.name}</Text>
                 <Text style={styles.countySeat}>{county.seat}</Text>

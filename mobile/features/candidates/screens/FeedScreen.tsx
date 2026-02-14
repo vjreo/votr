@@ -6,23 +6,31 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { SearchBar, TabBar, CategorySection, Button } from '../../../../shared/components/ui';
-import { CandidateCard } from '../components/CandidateCard';
+import { CategorySection, Button } from '../../../shared/components/ui';
+import CandidateCard from '../components/CandidateCard';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { candidateApi } from '../services/candidateApi';
-import { electionApi } from '../../../features/elections/services/electionApi';
-import { colors, shadows, borderRadius } from '../../../../shared/theme/colors';
+import { getNextElection, getUpcomingDeadlines } from '../../../shared/data/upcomingElections';
+import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
+import { DEFAULT_STATE } from '../../../shared/constants';
 
-// Election level categories
-const CATEGORIES = [
-  { key: 'ballot', label: 'Ballot', icon: 'document-text-outline' },
-  { key: 'administration', label: 'Administration', icon: 'business-outline' },
-  { key: 'policy', label: 'Policy', icon: 'newspaper-outline' },
-];
+const getDaysUntil = (dateString: string): number => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateString);
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+const formatDate = (dateString: string): string => {
+  const d = new Date(dateString);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
 
 // Office levels
 const OFFICE_LEVELS = [
@@ -66,25 +74,30 @@ const FeedScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { user } = useUser();
 
-  const [activeTab, setActiveTab] = useState('ballot');
-  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [candidates, setCandidates] = useState<Record<string, Candidate[]>>({});
   const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
 
-  const userState = user?.location?.state || 'NC';
+  const userState = user?.location?.state || DEFAULT_STATE;
+  const userAddress = user?.location?.address;
+  const nextElection = getNextElection(userState);
+  const upcomingDeadlines = getUpcomingDeadlines(userState, 3);
 
-  useEffect(() => {
-    loadCandidates();
-  }, [userState]);
+  const loadInProgressRef = React.useRef(false);
 
-  const loadCandidates = async () => {
+  const loadCandidates = React.useCallback(async () => {
+    if (loadInProgressRef.current) return;
+    loadInProgressRef.current = true;
     try {
       setLoading(true);
-      const response = await candidateApi.getAll({ state: userState });
+      setLoadError(false);
+      const response = await candidateApi.getAll({
+        state: userState,
+        location: userAddress || undefined,
+      });
 
-      // Group candidates by office level
       const grouped: Record<string, Candidate[]> = {
         federal: [],
         state: [],
@@ -93,39 +106,40 @@ const FeedScreen: React.FC = () => {
       };
 
       (response.data || []).forEach((candidate: any) => {
+        const normalized = {
+          ...candidate,
+          photo: candidate.photo || candidate.photo_url,
+        };
         const level = candidate.office_level || candidate.officeLevel || 'local';
         if (grouped[level]) {
-          grouped[level].push(candidate);
+          grouped[level].push(normalized);
         } else {
-          grouped.local.push(candidate);
+          grouped.local.push(normalized);
         }
       });
 
       setCandidates(grouped);
     } catch (error) {
-      console.error('Error loading candidates:', error);
-      // NC-specific mock data for demo
+      console.warn('Error loading candidates:', error);
+      setLoadError(true);
       setCandidates({
-        federal: [
-          { id: 'nc-sen-tillis', name: 'Thom Tillis', party: 'Republican Party', office: 'U.S. Senate', photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Thom_Tillis_official_photo.jpg/440px-Thom_Tillis_official_photo.jpg' },
-          { id: 'nc-sen-budd', name: 'Ted Budd', party: 'Republican Party', office: 'U.S. Senate', photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Ted_Budd_117th_Congress_portrait.jpg/440px-Ted_Budd_117th_Congress_portrait.jpg' },
-        ],
-        state: [
-          { id: 'nc-gov-stein', name: 'Josh Stein', party: 'Democratic Party', office: 'Governor of North Carolina', photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Josh_Stein_official_photo.jpg/440px-Josh_Stein_official_photo.jpg' },
-          { id: 'nc-gov-robinson', name: 'Mark Robinson', party: 'Republican Party', office: 'Governor of North Carolina', photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Mark_Robinson_official_photo_%28cropped%29.jpg/440px-Mark_Robinson_official_photo_%28cropped%29.jpg' },
-        ],
-        state_legislature: [
-          { id: 'nc-house-d92', name: 'Sample State Rep', party: 'Democratic Party', office: 'NC House District 92' },
-        ],
-        local: [
-          { id: 'nc-clt-mayor', name: 'Vi Lyles', party: 'Democratic Party', office: 'Mayor of Charlotte' },
-          { id: 'nc-meck-commission', name: 'Sample Commissioner', party: 'Democratic Party', office: 'Mecklenburg County Commission' },
-        ],
+        federal: [],
+        state: [],
+        state_legislature: [],
+        local: [],
       });
     } finally {
       setLoading(false);
+      loadInProgressRef.current = false;
     }
-  };
+  }, [userState, userAddress]);
+
+  // Single source: refetch on focus (includes initial mount). No separate useEffect.
+  useFocusEffect(
+    React.useCallback(() => {
+      loadCandidates();
+    }, [loadCandidates])
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -172,7 +186,7 @@ const FeedScreen: React.FC = () => {
         description={level.description}
         icon={<Text style={styles.categoryIcon}>{level.icon}</Text>}
         actionLabel={levelCandidates.length > 0 ? 'Tap image to compare candidates' : undefined}
-        defaultExpanded={level.key === 'state'}
+        defaultExpanded={levelCandidates.length > 0}
       >
         {levelCandidates.map((candidate) => (
           <CandidateCard
@@ -208,31 +222,23 @@ const FeedScreen: React.FC = () => {
         <View style={styles.headerContent}>
           <View style={styles.locationContainer}>
             <Ionicons name="location" size={20} color={colors.primary} />
-            <Text style={styles.locationText}>{userState || 'North Carolina'}</Text>
+            <Text style={styles.locationText}>{userState || DEFAULT_STATE}</Text>
           </View>
           <View style={styles.headerIcons}>
             <Ionicons name="notifications-outline" size={24} color={colors.textPrimary} />
           </View>
         </View>
 
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <SearchBar
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="What are you looking for?"
-          />
-        </View>
-
-        {/* Category Tabs */}
-        <TabBar
-          tabs={CATEGORIES.map((cat) => ({
-            key: cat.key,
-            label: cat.label,
-          }))}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+        {/* Search Bar - links to Search tab */}
+        <TouchableOpacity
+          style={styles.searchContainer}
+          onPress={() => navigation.navigate('Search')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="search" size={20} color={colors.textTertiary} />
+          <Text style={styles.searchPlaceholder}>Search candidates, offices...</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+        </TouchableOpacity>
       </View>
 
       {/* Content */}
@@ -251,37 +257,131 @@ const FeedScreen: React.FC = () => {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Loading your ballot...</Text>
+            <Text style={styles.loadingText}>Loading what&apos;s near you...</Text>
           </View>
         ) : (
           <>
-            {activeTab === 'ballot' && (
-              <>
-                {OFFICE_LEVELS.map(renderOfficeSection)}
+            {/* What's happening near you */}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>What&apos;s happening near you</Text>
+              <Text style={styles.sectionSubtitle}>
+                Upcoming elections and who&apos;s running in {userState || DEFAULT_STATE}
+              </Text>
+            </View>
 
-                {Object.values(candidates).every((arr) => arr.length === 0) && (
-                  <View style={styles.emptyState}>
-                    <Ionicons name="document-text-outline" size={48} color={colors.textTertiary} />
-                    <Text style={styles.emptyTitle}>No candidates found</Text>
-                    <Text style={styles.emptySubtitle}>
-                      We couldn't find candidates for your location. Try updating your address.
-                    </Text>
+            {nextElection && (
+              <View style={styles.nextElectionCard}>
+                <View style={styles.nextElectionTop}>
+                  <Text style={styles.nextElectionIcon}>{nextElection.icon}</Text>
+                  <View style={styles.nextElectionMeta}>
+                    <Text style={styles.nextElectionName}>{nextElection.name}</Text>
+                    <Text style={styles.nextElectionDate}>{formatDate(nextElection.date)}</Text>
                   </View>
-                )}
-              </>
-            )}
-
-            {activeTab === 'administration' && (
-              <View style={styles.comingSoon}>
-                <Ionicons name="business-outline" size={48} color={colors.textTertiary} />
-                <Text style={styles.comingSoonText}>Administration info coming soon</Text>
+                  <View style={styles.countdownBadge}>
+                    <Text style={styles.countdownNumber}>
+                      {getDaysUntil(nextElection.date)}
+                    </Text>
+                    <Text style={styles.countdownLabel}>days</Text>
+                  </View>
+                </View>
+                <Text style={styles.nextElectionDesc}>{nextElection.description}</Text>
+                <View style={styles.nextElectionOffices}>
+                  {nextElection.offices.slice(0, 3).map((office, i) => (
+                    <Text key={i} style={styles.officeChip}>{office}</Text>
+                  ))}
+                  {nextElection.offices.length > 3 && (
+                    <Text style={styles.officeChip}>+{nextElection.offices.length - 3} more</Text>
+                  )}
+                </View>
+                <View style={styles.feedCardActions}>
+                  <TouchableOpacity
+                    style={styles.viewCalendarRow}
+                    onPress={() => navigation.navigate('SampleBallot')}
+                  >
+                    <Text style={styles.viewCalendarText}>View sample ballot</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.viewCalendarRow}
+                    onPress={() => navigation.navigate('ElectionCalendar')}
+                  >
+                    <Text style={styles.viewCalendarText}>Full calendar</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
 
-            {activeTab === 'policy' && (
-              <View style={styles.comingSoon}>
-                <Ionicons name="newspaper-outline" size={48} color={colors.textTertiary} />
-                <Text style={styles.comingSoonText}>Policy comparisons coming soon</Text>
+            {upcomingDeadlines.length > 0 && (
+              <View style={styles.deadlinesSection}>
+                <Text style={styles.deadlinesTitle}>Key deadlines</Text>
+                {upcomingDeadlines.map(({ deadline, election }, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.deadlineRow,
+                      i === upcomingDeadlines.length - 1 && styles.deadlineRowLast,
+                    ]}
+                  >
+                    <Text style={styles.deadlineIcon}>{deadline.icon}</Text>
+                    <View style={styles.deadlineContent}>
+                      <Text style={styles.deadlineName}>{deadline.name}</Text>
+                      <Text style={styles.deadlineMeta}>
+                        {formatDate(deadline.date)} · {getDaysUntil(deadline.date)} days
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {!nextElection && upcomingDeadlines.length === 0 && (
+              <TouchableOpacity
+                style={styles.nextElectionCard}
+                onPress={() => navigation.navigate('ElectionCalendar')}
+              >
+                <Text style={styles.nextElectionIcon}>🗳️</Text>
+                <Text style={styles.nextElectionName}>Election calendar</Text>
+                <Text style={styles.nextElectionDesc}>
+                  View upcoming elections and deadlines for your area.
+                </Text>
+                <View style={styles.viewCalendarRow}>
+                  <Text style={styles.viewCalendarText}>Open calendar</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+                </View>
+              </TouchableOpacity>
+            )}
+
+            {/* Who's running */}
+            <View style={[styles.sectionHeader, { marginTop: 28 }]}>
+              <Text style={styles.sectionTitle}>Who&apos;s running</Text>
+              <Text style={styles.sectionSubtitle}>
+                {Object.values(candidates).some((arr) => arr.length > 0)
+                  ? 'Candidates on your ballot for upcoming races'
+                  : 'Add your address in Profile, or browse Search to discover candidates.'}
+              </Text>
+            </View>
+
+            {OFFICE_LEVELS.map(renderOfficeSection)}
+
+            {Object.values(candidates).every((arr) => arr.length === 0) && (
+              <View style={styles.emptyState}>
+                <Ionicons
+                  name={loadError ? 'cloud-offline-outline' : 'people-outline'}
+                  size={48}
+                  color={colors.textTertiary}
+                />
+                <Text style={styles.emptyTitle}>
+                  {loadError ? "Couldn't load candidates" : 'No candidates yet'}
+                </Text>
+                <Text style={styles.emptySubtitle}>
+                  {loadError
+                    ? 'Check your connection and pull to refresh.'
+                    : 'Browse the Search tab to discover candidates, or update your address in Profile.'}
+                </Text>
+                {!loadError && (
+                  <Text style={styles.searchTabHint}>→ Try Search to discover candidates</Text>
+                )}
               </View>
             )}
           </>
@@ -323,8 +423,23 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   searchContainer: {
-    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
     marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 10,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.small,
+  },
+  searchPlaceholder: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.textTertiary,
   },
   content: {
     flex: 1,
@@ -364,14 +479,148 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 40,
   },
-  comingSoon: {
-    alignItems: 'center',
-    paddingVertical: 60,
+  sectionHeader: {
+    marginBottom: 16,
   },
-  comingSoonText: {
-    marginTop: 16,
-    fontSize: 16,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
     color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  nextElectionCard: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: 16,
+    marginBottom: 16,
+    ...shadows.small,
+  },
+  nextElectionTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  nextElectionIcon: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  nextElectionMeta: {
+    flex: 1,
+  },
+  nextElectionName: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  nextElectionDate: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  countdownBadge: {
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+  },
+  countdownNumber: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.primary,
+  },
+  countdownLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.primary,
+    textTransform: 'uppercase',
+  },
+  nextElectionDesc: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  nextElectionOffices: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  officeChip: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    backgroundColor: colors.background,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: borderRadius.sm,
+  },
+  feedCardActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    marginTop: 4,
+  },
+  viewCalendarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewCalendarText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  deadlinesSection: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: 16,
+    marginBottom: 16,
+    ...shadows.small,
+  },
+  deadlinesTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: 12,
+  },
+  deadlineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  deadlineRowLast: {
+    borderBottomWidth: 0,
+  },
+  deadlineIcon: {
+    fontSize: 18,
+    marginRight: 12,
+  },
+  deadlineContent: {
+    flex: 1,
+  },
+  deadlineName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
+  deadlineMeta: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  searchTabHint: {
+    marginTop: 16,
+    fontSize: 15,
+    color: colors.primary,
+    fontWeight: '600',
   },
 });
 

@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, borderRadius, shadows } from '../../../../shared/theme/colors';
+import { colors, borderRadius, shadows } from '../../../shared/theme/colors';
 
 interface CandidateCardProps {
   id: string;
@@ -33,11 +33,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({
   size = 'medium',
 }) => {
   const getPartyColor = () => {
-    const partyLower = party?.toLowerCase() || '';
-    if (partyLower.includes('democrat')) return colors.democrat;
-    if (partyLower.includes('republican')) return colors.republican;
-    if (partyLower.includes('independent')) return colors.independent;
-    return colors.other;
+    return colors.textSecondary;
   };
 
   const getPhotoSize = () => {

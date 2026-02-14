@@ -10,9 +10,9 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, Card } from '../../../../shared/components/ui';
+import { Button, Card } from '../../../shared/components/ui';
 import { useUser } from '../../../features/auth/context/UserContext';
-import { colors, shadows, borderRadius } from '../../../../shared/theme/colors';
+import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
 
 interface RosterCandidate {
   id: string;
@@ -37,12 +37,7 @@ const RosterScreen: React.FC = () => {
     return acc;
   }, {});
 
-  const getPartyColor = (party: string) => {
-    const partyLower = party?.toLowerCase() || '';
-    if (partyLower.includes('democrat')) return colors.democrat;
-    if (partyLower.includes('republican')) return colors.republican;
-    return colors.other;
-  };
+  const getPartyColor = () => colors.textSecondary;
 
   const handleCandidatePress = (candidateId: string) => {
     navigation.navigate('CandidateDetail' as never, { candidateId } as never);
@@ -120,7 +115,7 @@ const RosterScreen: React.FC = () => {
 
                       <View style={styles.candidateInfo}>
                         <Text style={styles.candidateName}>{candidate.name}</Text>
-                        <Text style={[styles.candidateParty, { color: getPartyColor(candidate.party) }]}>
+                        <Text style={[styles.candidateParty, { color: getPartyColor() }]}>
                           {candidate.party}
                         </Text>
                       </View>

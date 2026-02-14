@@ -1,4 +1,4 @@
-import { BadgeType } from '../../../../shared/types';
+import { BadgeType } from '../../../shared/types';
 
 export interface GamificationConfig {
   pointsPerSwipe: number;

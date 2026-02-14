@@ -18,7 +18,6 @@ export class GoogleCivicAdapter {
       
       return elections.map(election => this._normalizeElection(election));
     } catch (error) {
-      console.error('Error fetching elections from Google Civic API:', error);
       throw error;
     }
   }
@@ -34,7 +33,6 @@ export class GoogleCivicAdapter {
       const candidates = await civicApi.getCandidatesForElection(address, electionId);
       return candidates.map(candidate => this._normalizeCandidate(candidate));
     } catch (error) {
-      console.error('Error fetching candidates from Google Civic API:', error);
       throw error;
     }
   }
@@ -50,7 +48,6 @@ export class GoogleCivicAdapter {
       const voterInfo = await civicApi.getVoterInfo(address, electionId);
       return this._normalizeVoterInfo(voterInfo);
     } catch (error) {
-      console.error('Error fetching voter info from Google Civic API:', error);
       throw error;
     }
   }

@@ -103,14 +103,20 @@ export class BaseStateHandler {
   }
 
   /**
-   * Filter elections for this state
+   * Filter elections for this state (state-specific + federal)
    * @param {Array} elections - Elections from API
    * @returns {Array} Filtered elections
    */
   filterElections(elections) {
-    return elections.filter(e => {
+    if (!elections || !Array.isArray(elections)) return [];
+    const stateLower = this.stateCode.toLowerCase();
+    return elections.filter((e) => {
       if (!e.ocdDivisionId) return false;
-      return e.ocdDivisionId.includes(this.stateCode.toLowerCase());
+      const ocd = e.ocdDivisionId.toLowerCase();
+      return (
+        ocd.includes(`state:${stateLower}`) ||
+        ocd === 'ocd-division/country:us'
+      );
     });
   }
 

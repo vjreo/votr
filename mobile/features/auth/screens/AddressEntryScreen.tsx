@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,30 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Input } from '../../../../shared/components/ui';
+import { useNavigation } from '@react-navigation/native';
+import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
+import { Button, Input } from '../../../shared/components/ui';
 import { useUser } from '../context/UserContext';
-import { colors, shadows, borderRadius } from '../../../../shared/theme/colors';
+import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
+
+// Parse "Street, City, ST ZIP" format
+function parseAddress(fullAddress: string): { address: string; city: string; state: string; zipCode: string } {
+  const parts = fullAddress.split(',').map((s) => s.trim()).filter(Boolean);
+  if (parts.length < 3) {
+    return { address: fullAddress, city: '', state: '', zipCode: '' };
+  }
+  const street = parts.slice(0, -2).join(', ');
+  const city = parts[parts.length - 2] || '';
+  const lastPart = parts[parts.length - 1] || '';
+  const match = lastPart.match(/^([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/i);
+  const state = match ? match[1].toUpperCase() : '';
+  const zipCode = match ? match[2] : lastPart;
+  return { address: street, city, state, zipCode };
+}
 
 // US States for validation
 const US_STATES = [
@@ -23,9 +41,11 @@ const US_STATES = [
 ];
 
 const AddressEntryScreen: React.FC = () => {
-  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { updateLocation } = useUser();
+  const navigation = useNavigation();
+  const { user, updateLocation, createAnonymousUser } = useUser();
+
+  const isUpdateMode = navigation.canGoBack();
 
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -33,6 +53,16 @@ const AddressEntryScreen: React.FC = () => {
   const [zipCode, setZipCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (isUpdateMode && user?.location?.address) {
+      const parsed = parseAddress(user.location.address);
+      setAddress(parsed.address);
+      setCity(parsed.city);
+      setState(parsed.state || user.location.state || '');
+      setZipCode(parsed.zipCode || user.location.zipCode || '');
+    }
+  }, [isUpdateMode, user?.location?.address, user?.location?.state, user?.location?.zipCode]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -63,21 +93,51 @@ const AddressEntryScreen: React.FC = () => {
 
     setLoading(true);
     try {
-      // Save location
-      await updateLocation({
-        address: `${address}, ${city}, ${state.toUpperCase()} ${zipCode}`,
-        city,
-        state: state.toUpperCase(),
-        zipCode,
-      });
+      const fullAddress = `${address.trim()}, ${city.trim()}, ${state.toUpperCase()} ${zipCode.trim()}`;
+      const [geocodeResult] = await Location.geocodeAsync(fullAddress);
 
-      // Navigate to main app
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs' as never }],
-      });
-    } catch (error) {
+      if (!geocodeResult) {
+        setErrors({ address: 'Could not find this address. Please check and try again.' });
+        return;
+      }
+
+      const latitude = Number(geocodeResult.latitude);
+      const longitude = Number(geocodeResult.longitude);
+      const stateAbbr = state.toUpperCase();
+
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        setErrors({ address: 'Could not resolve coordinates for this address.' });
+        return;
+      }
+
+      let targetUserId = user?.id;
+      if (!targetUserId) {
+        const newUser = await createAnonymousUser();
+        if (!newUser) {
+          setErrors({ address: "Couldn't connect. Check that the backend is running and try again." });
+          return;
+        }
+        targetUserId = newUser.id;
+      }
+
+      await updateLocation(
+        {
+          latitude,
+          longitude,
+          address: fullAddress,
+          district: null,
+          state: stateAbbr,
+          zipCode: zipCode.trim(),
+        },
+        targetUserId
+      );
+      if (isUpdateMode) {
+        (navigation as any).goBack();
+      }
+    } catch (error: any) {
       console.error('Error saving location:', error);
+      const msg = error?.response?.data?.error || error?.message || 'Unable to save location. Please try again.';
+      setErrors({ address: msg });
     } finally {
       setLoading(false);
     }
@@ -96,6 +156,15 @@ const AddressEntryScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {isUpdateMode && (
+          <TouchableOpacity
+            style={[styles.backButton, { top: insets.top + 8 }]}
+            onPress={() => (navigation as any).goBack()}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+        )}
         {/* Illustration */}
         <View style={styles.illustrationContainer}>
           <View style={styles.illustration}>
@@ -125,7 +194,9 @@ const AddressEntryScreen: React.FC = () => {
         {/* Form Card */}
         <View style={[styles.card, shadows.medium as any]}>
           <Text style={styles.title}>
-            Enter the address where you are registered to vote to view your ballot.
+            {isUpdateMode
+              ? 'Update your voting address to change your ballot.'
+              : 'Enter the address where you are registered to vote to view your ballot.'}
           </Text>
 
           <Input
@@ -165,14 +236,14 @@ const AddressEntryScreen: React.FC = () => {
                 value={zipCode}
                 onChangeText={setZipCode}
                 error={errors.zipCode}
-                keyboardType="number-pad"
+                keyboardType="numeric"
                 maxLength={10}
               />
             </View>
           </View>
 
           <Button
-            title="Compare"
+            title={isUpdateMode ? 'Save address' : 'Compare'}
             onPress={handleCompare}
             loading={loading}
             fullWidth
@@ -192,6 +263,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
+  },
+  backButton: {
+    position: 'absolute',
+    left: 20,
+    zIndex: 10,
   },
   illustrationContainer: {
     alignItems: 'center',

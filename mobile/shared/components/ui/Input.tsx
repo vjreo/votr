@@ -7,7 +7,7 @@ import {
   TextInputProps,
   ViewStyle,
 } from 'react-native';
-import { colors, borderRadius } from '../../../shared/theme/colors';
+import { colors, borderRadius } from '../../theme/colors';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -43,6 +43,8 @@ const Input: React.FC<InputProps> = ({
     </View>
   );
 };
+
+Input.displayName = 'Input';
 
 const styles = StyleSheet.create({
   container: {

@@ -6,7 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { colors, borderRadius, shadows } from '../../../shared/theme/colors';
+import { colors, borderRadius, shadows } from '../../theme/colors';
 
 interface Tab {
   key: string;

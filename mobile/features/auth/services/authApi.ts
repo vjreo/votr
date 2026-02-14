@@ -3,7 +3,7 @@ import api from '../../../shared/services/api';
 // Auth endpoints
 export const authApi = {
   createAnonymous: () =>
-    api.post('/auth/anonymous'),
+    api.post('/auth/anonymous', {}, { timeout: 10000 }),
 
   register: (email: string, password: string) =>
     api.post('/auth/register', { email, password }),

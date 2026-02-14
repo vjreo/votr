@@ -1,0 +1,17 @@
+export const ISSUES = [
+  { id: 'education', name: 'Education' },
+  { id: 'healthcare', name: 'Healthcare' },
+  { id: 'economy', name: 'Economy' },
+  { id: 'environment', name: 'Environment' },
+  { id: 'immigration', name: 'Immigration' },
+  { id: 'criminal_justice', name: 'Criminal Justice' },
+  { id: 'gun_control', name: 'Gun Control' },
+  { id: 'abortion', name: 'Abortion' },
+  { id: 'taxes', name: 'Taxes' },
+  { id: 'infrastructure', name: 'Infrastructure' },
+  { id: 'housing', name: 'Housing' },
+  { id: 'climate', name: 'Climate Change' },
+  { id: 'voting_rights', name: 'Voting Rights' },
+  { id: 'social_security', name: 'Social Security' },
+  { id: 'foreign_policy', name: 'Foreign Policy' },
+];

@@ -4,13 +4,14 @@
  */
 
 import { BaseStateHandler } from '../baseStateHandler.js';
+import logger from '../../../utils/logger.js';
 
 export class NCStateHandler extends BaseStateHandler {
   constructor(stateCode = 'NC') {
     super(stateCode);
     // Ensure it's always NC
     if (this.stateCode !== 'NC') {
-      console.warn(`NCStateHandler initialized with state ${this.stateCode}, but will use NC-specific logic`);
+      logger.warn(`NCStateHandler initialized with state ${this.stateCode}, but will use NC-specific logic`);
     }
   }
 
@@ -60,6 +61,22 @@ export class NCStateHandler extends BaseStateHandler {
       ],
       local: ['mayor', 'city_council', 'school_board', 'county_commissioner', 'sheriff'],
     };
+  }
+
+  /**
+   * Filter elections for NC - include both state-specific and federal (country:us) races
+   */
+  filterElections(elections) {
+    if (!elections || !Array.isArray(elections)) return [];
+    return elections.filter((e) => {
+      if (!e.ocdDivisionId) return false;
+      const ocd = e.ocdDivisionId.toLowerCase();
+      return (
+        ocd.includes('state:nc') ||
+        ocd === 'ocd-division/country:us' ||
+        ocd.includes('country:us/state:nc')
+      );
+    });
   }
 
   /**

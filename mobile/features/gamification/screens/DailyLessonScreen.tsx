@@ -12,7 +12,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Card, Button } from '../../../../shared/components/ui';
+import { Card, Button } from '../../../shared/components/ui';
 import { StreakDisplay } from '../components/AchievementBadge';
 import { useGamification } from '../context/GamificationContext';
 import {
@@ -21,8 +21,8 @@ import {
   LESSON_CATEGORIES,
   CivicLesson,
   CIVIC_LESSONS,
-} from '../../../../shared/data/civicLessons';
-import { colors, shadows, borderRadius } from '../../../../shared/theme/colors';
+} from '../../../shared/data/civicLessons';
+import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
 
 const COMPLETED_LESSONS_KEY = 'completed_lessons';
 

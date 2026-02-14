@@ -10,7 +10,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, Card } from '../../../../shared/components/ui';
+import { Button, Card } from '../../../shared/components/ui';
 import {
   useGamification,
   LEVELS,
@@ -18,7 +18,7 @@ import {
   POLICY_CATEGORIES,
 } from '../context/GamificationContext';
 import { useUser } from '../../../features/auth/context/UserContext';
-import { colors, shadows, borderRadius } from '../../../../shared/theme/colors';
+import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
 
 const JourneyScreen: React.FC = () => {
   const navigation = useNavigation();

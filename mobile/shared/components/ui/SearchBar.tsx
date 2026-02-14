@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, borderRadius, shadows } from '../../../shared/theme/colors';
+import { colors, borderRadius, shadows } from '../../theme/colors';
 
 interface SearchBarProps {
   value: string;

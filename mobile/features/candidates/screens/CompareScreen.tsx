@@ -11,11 +11,11 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { TabBar, Button, Card } from '../../../../shared/components/ui';
+import { TabBar, Button, Card } from '../../../shared/components/ui';
 import { candidateApi } from '../services/candidateApi';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { useGamification } from '../../../features/gamification/context/GamificationContext';
-import { colors, shadows, borderRadius } from '../../../../shared/theme/colors';
+import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
 
 // Comparison categories
 const COMPARE_TABS = [
@@ -85,65 +85,14 @@ const CompareScreen: React.FC = () => {
       const responses = await Promise.all(promises);
       setCandidates(responses.map((r) => r.data));
     } catch (error) {
-      console.error('Error loading candidates:', error);
-      // NC-specific mock data for demo (Governor race)
-      setCandidates([
-        {
-          id: candidateIds[0] || 'nc-gov-stein',
-          name: 'Josh Stein',
-          party: 'Democratic Party',
-          office: 'Governor of North Carolina',
-          photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Josh_Stein_official_photo.jpg/440px-Josh_Stein_official_photo.jpg',
-          currentPosition: 'NC Attorney General',
-          religion: 'Jewish',
-          previousProfession: 'Attorney',
-          positions: [
-            { issueName: 'Healthcare', stance: 'Supports Medicaid expansion to cover 600,000 more North Carolinians' },
-            { issueName: 'Education', stance: 'Advocates for increased public school funding and higher teacher pay' },
-            { issueName: 'Environment', stance: 'Supports clean energy transition and offshore wind development' },
-            { issueName: 'Economy', stance: 'Focus on workforce development and bringing clean energy jobs to NC' },
-            { issueName: 'Criminal Justice', stance: 'Supports criminal justice reform and addressing root causes of crime' },
-          ],
-          career: [
-            { title: 'NC Attorney General', period: '2017 - Present' },
-            { title: 'NC State Senator', period: '2009 - 2016' },
-            { title: 'Senior Deputy Attorney General', period: '2001 - 2008' },
-          ],
-        },
-        {
-          id: candidateIds[1] || 'nc-gov-robinson',
-          name: 'Mark Robinson',
-          party: 'Republican Party',
-          office: 'Governor of North Carolina',
-          photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Mark_Robinson_official_photo_%28cropped%29.jpg/440px-Mark_Robinson_official_photo_%28cropped%29.jpg',
-          currentPosition: 'NC Lieutenant Governor',
-          religion: 'Christian',
-          previousProfession: 'Business Owner',
-          positions: [
-            { issueName: 'Healthcare', stance: 'Supports market-based healthcare solutions, opposes government-run healthcare' },
-            { issueName: 'Education', stance: 'Strong advocate for school choice and parental rights in education' },
-            { issueName: 'Environment', stance: 'Supports balanced approach between environment and economic development' },
-            { issueName: 'Economy', stance: 'Supports tax cuts, reducing regulations, and pro-business policies' },
-            { issueName: 'Criminal Justice', stance: 'Strong support for law enforcement and tough-on-crime policies' },
-          ],
-          career: [
-            { title: 'NC Lieutenant Governor', period: '2021 - Present' },
-            { title: 'Political Activist', period: '2018 - 2020' },
-            { title: 'Business Owner', period: '2000s - 2018' },
-          ],
-        },
-      ]);
+      console.warn('Error loading candidates:', error);
+      setCandidates([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const getPartyColor = (party: string) => {
-    const partyLower = party?.toLowerCase() || '';
-    if (partyLower.includes('democrat')) return colors.democrat;
-    if (partyLower.includes('republican')) return colors.republican;
-    return colors.other;
-  };
+  const getPartyColor = () => colors.textSecondary;
 
   const handleAddToRoster = async (candidate: CandidateData) => {
     await addToRoster?.(candidate);
@@ -163,6 +112,19 @@ const CompareScreen: React.FC = () => {
     );
   }
 
+  if (candidates.length < 2) {
+    return (
+      <View style={[styles.errorContainer, { paddingTop: insets.top }]}>
+        <Ionicons name="cloud-offline-outline" size={48} color={colors.textTertiary} />
+        <Text style={styles.errorText}>Couldn&apos;t load comparison</Text>
+        <Text style={styles.errorSubtext}>Check your connection and try again</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.retryButtonText}>Go back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   const [candidate1, candidate2] = candidates;
 
   const renderOverview = () => (
@@ -177,8 +139,8 @@ const CompareScreen: React.FC = () => {
         label="Party"
         value1={candidate1?.party}
         value2={candidate2?.party}
-        color1={getPartyColor(candidate1?.party || '')}
-        color2={getPartyColor(candidate2?.party || '')}
+        color1={getPartyColor()}
+        color2={getPartyColor()}
       />
       <CompareRow
         label="Religion"
@@ -211,7 +173,7 @@ const CompareScreen: React.FC = () => {
             </View>
             <View style={styles.issueComparison}>
               <View style={styles.issueStance}>
-                <Text style={[styles.stanceName, { color: getPartyColor(candidate1?.party || '') }]}>
+                <Text style={[styles.stanceName, { color: getPartyColor() }]}>
                   {candidate1?.name?.split(' ')[1]}
                 </Text>
                 <Text style={styles.stanceText}>
@@ -220,7 +182,7 @@ const CompareScreen: React.FC = () => {
               </View>
               <View style={styles.issueDivider} />
               <View style={styles.issueStance}>
-                <Text style={[styles.stanceName, { color: getPartyColor(candidate2?.party || '') }]}>
+                <Text style={[styles.stanceName, { color: getPartyColor() }]}>
                   {candidate2?.name?.split(' ')[1]}
                 </Text>
                 <Text style={styles.stanceText}>
@@ -239,12 +201,12 @@ const CompareScreen: React.FC = () => {
       <View style={styles.backgroundComparison}>
         {/* Candidate 1 Timeline */}
         <View style={styles.backgroundColumn}>
-          <Text style={[styles.backgroundName, { color: getPartyColor(candidate1?.party || '') }]}>
+          <Text style={[styles.backgroundName, { color: getPartyColor() }]}>
             {candidate1?.name}
           </Text>
           {candidate1?.career?.map((item, index) => (
             <View key={index} style={styles.careerItem}>
-              <View style={[styles.careerDot, { backgroundColor: getPartyColor(candidate1?.party || '') }]} />
+              <View style={[styles.careerDot, { backgroundColor: getPartyColor() }]} />
               <View>
                 <Text style={styles.careerTitle}>{item.title}</Text>
                 <Text style={styles.careerPeriod}>{item.period}</Text>
@@ -255,12 +217,12 @@ const CompareScreen: React.FC = () => {
 
         {/* Candidate 2 Timeline */}
         <View style={styles.backgroundColumn}>
-          <Text style={[styles.backgroundName, { color: getPartyColor(candidate2?.party || '') }]}>
+          <Text style={[styles.backgroundName, { color: getPartyColor() }]}>
             {candidate2?.name}
           </Text>
           {candidate2?.career?.map((item, index) => (
             <View key={index} style={styles.careerItem}>
-              <View style={[styles.careerDot, { backgroundColor: getPartyColor(candidate2?.party || '') }]} />
+              <View style={[styles.careerDot, { backgroundColor: getPartyColor() }]} />
               <View>
                 <Text style={styles.careerTitle}>{item.title}</Text>
                 <Text style={styles.careerPeriod}>{item.period}</Text>
@@ -292,12 +254,12 @@ const CompareScreen: React.FC = () => {
           {candidate1?.photo ? (
             <Image source={{ uri: candidate1.photo }} style={styles.candidatePhoto} />
           ) : (
-            <View style={[styles.photoPlaceholder, { borderColor: getPartyColor(candidate1?.party || '') }]}>
+            <View style={[styles.photoPlaceholder, { borderColor: getPartyColor() }]}>
               <Ionicons name="person" size={32} color={colors.textTertiary} />
             </View>
           )}
           <Text style={styles.candidateName}>{candidate1?.name}</Text>
-          <Text style={[styles.candidateParty, { color: getPartyColor(candidate1?.party || '') }]}>
+          <Text style={[styles.candidateParty, { color: getPartyColor() }]}>
             {candidate1?.party?.replace(' Party', '')}
           </Text>
           {!isInRoster?.(candidate1?.id) && (
@@ -321,12 +283,12 @@ const CompareScreen: React.FC = () => {
           {candidate2?.photo ? (
             <Image source={{ uri: candidate2.photo }} style={styles.candidatePhoto} />
           ) : (
-            <View style={[styles.photoPlaceholder, { borderColor: getPartyColor(candidate2?.party || '') }]}>
+            <View style={[styles.photoPlaceholder, { borderColor: getPartyColor() }]}>
               <Ionicons name="person" size={32} color={colors.textTertiary} />
             </View>
           )}
           <Text style={styles.candidateName}>{candidate2?.name}</Text>
-          <Text style={[styles.candidateParty, { color: getPartyColor(candidate2?.party || '') }]}>
+          <Text style={[styles.candidateParty, { color: getPartyColor() }]}>
             {candidate2?.party?.replace(' Party', '')}
           </Text>
           {!isInRoster?.(candidate2?.id) && (
@@ -401,6 +363,37 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     color: colors.textSecondary,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    paddingHorizontal: 24,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginTop: 16,
+  },
+  errorSubtext: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.white,
   },
   header: {
     flexDirection: 'row',

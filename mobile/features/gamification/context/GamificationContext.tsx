@@ -444,12 +444,21 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const loadState = async () => {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setState({ ...initialState, ...parsed });
-      }
-    } catch (error) {
-      console.error('Error loading gamification state:', error);
+      if (!stored) return;
+      const parsed = JSON.parse(stored) as Record<string, unknown>;
+      const n = (key: keyof GamificationState, def: number) =>
+        typeof parsed[key] === 'number' ? parsed[key] as number : def;
+      setState({
+        ...initialState,
+        ...parsed,
+        xp: n('xp', 0),
+        level: n('level', 1),
+        streak: n('streak', 0),
+        sourcesChecked: n('sourcesChecked', 0),
+        quizCompleted: parsed.quizCompleted === true || parsed.quizCompleted === 'true',
+      });
+    } catch (e) {
+      console.error('Error loading gamification state:', e);
     }
   };
 

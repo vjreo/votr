@@ -9,7 +9,7 @@ import {
   UIManager,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, borderRadius, shadows } from '../../../shared/theme/colors';
+import { colors, borderRadius, shadows } from '../../theme/colors';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {

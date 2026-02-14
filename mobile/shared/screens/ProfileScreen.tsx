@@ -8,9 +8,10 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import StreakCounter from '../../features/gamification/components/StreakCounter';
 import AchievementBadge from '../../features/gamification/components/AchievementBadge';
-import MatchScoreIndicator from '../../features/candidates/components/MatchScoreIndicator';
 import { useUser } from '../../features/auth/context/UserContext';
 import { userApi } from '../../features/auth/services/userApi';
 import { calculateLevel, getPointsForNextLevel } from '../../features/gamification/utils/gamification';
@@ -18,7 +19,8 @@ import { colors } from '../theme/colors';
 
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { user, loading: userLoading, isAnonymous, logout } = useUser();
+  const insets = useSafeAreaInsets();
+  const { user, loading: userLoading, logout } = useUser();
   const [gamification, setGamification] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,13 +35,14 @@ const ProfileScreen: React.FC = () => {
       const response = await userApi.getGamification(user.id);
       setGamification(response.data);
     } catch (error) {
-      console.error('Error loading gamification:', error);
+      console.warn('Gamification unavailable:', (error as any)?.message || 'Network error');
+      setGamification({ points: 0, streak: 0, badges: [] });
     } finally {
       setLoading(false);
     }
   };
 
-  if (userLoading || loading) {
+  if (userLoading || (loading && !gamification)) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -62,59 +65,87 @@ const ProfileScreen: React.FC = () => {
   const badges = gamification?.badges || [];
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Your Profile</Text>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
-      <View style={styles.statsSection}>
+      {/* Stats row - compact */}
+      <View style={styles.statsRow}>
         <View style={styles.statCard}>
           <Text style={styles.statValue}>{points}</Text>
           <Text style={styles.statLabel}>Points</Text>
         </View>
         <View style={styles.statCard}>
-          <StreakCounter streak={streak} size="large" />
+          <StreakCounter streak={streak} size="small" />
           <Text style={styles.statLabel}>Streak</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>Level {level}</Text>
-          <Text style={styles.statLabel}>{pointsToNext} to next</Text>
+          <Text style={styles.statValue}>{level}</Text>
+          <Text style={styles.statLabel}>Level · {pointsToNext} to next</Text>
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Achievements</Text>
-        {badges.length === 0 ? (
-          <Text style={styles.emptyText}>No achievements yet. Keep swiping!</Text>
-        ) : (
-          badges.map((badge: any) => (
-            <AchievementBadge
-              key={badge.id || badge.type}
-              type={badge.type}
-              name={badge.name}
-              description={badge.description}
-              unlocked={true}
-              unlockedAt={badge.unlockedAt ? new Date(badge.unlockedAt) : undefined}
-            />
-          ))
-        )}
+      {/* Voting address - compact */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Voting address</Text>
+        <Text style={styles.cardValue} numberOfLines={2}>
+          {user.location?.address || 'Not set'}
+        </Text>
+        <TouchableOpacity
+          onPress={() => (navigation as any).navigate('AddressEntry')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.linkText}>Change address</Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your Preferences</Text>
+      {/* Preferences - with edit */}
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitleCompact}>Preferences</Text>
+          <TouchableOpacity
+            onPress={() => (navigation as any).navigate('PreferencesEdit')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.linkText}>Edit</Text>
+          </TouchableOpacity>
+        </View>
         {user.preferences && user.preferences.length > 0 ? (
-          <View style={styles.preferencesContainer}>
+          <View style={styles.preferenceList}>
             {user.preferences.map((pref: any, idx: number) => (
-              <View key={idx} style={styles.preferenceItem}>
-                <Text style={styles.preferenceName}>{pref.issueName || pref.issueId}</Text>
-                <Text style={styles.preferenceImportance}>
-                  Importance: {pref.importance || 1}/5
-                </Text>
-              </View>
+              <Text key={idx} style={styles.preferenceItem}>
+                {pref.issueName || pref.issueId} · {pref.importance || 1}/5
+              </Text>
             ))}
           </View>
         ) : (
-          <Text style={styles.emptyText}>No preferences set</Text>
+          <Text style={styles.emptyText}>None yet. Tap Edit to add.</Text>
+        )}
+      </View>
+
+      {/* Achievements - compact */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Achievements</Text>
+        {badges.length === 0 ? (
+          <Text style={styles.emptyText}>Keep engaging to earn badges.</Text>
+        ) : (
+          <View style={styles.badgeRow}>
+            {badges.slice(0, 6).map((badge: any) => (
+              <AchievementBadge
+                key={badge.id || badge.type}
+                type={badge.type}
+                name={badge.name}
+                description={badge.description}
+                unlocked={true}
+                unlockedAt={badge.unlockedAt ? new Date(badge.unlockedAt) : undefined}
+              />
+            ))}
+          </View>
         )}
       </View>
     </ScrollView>
@@ -132,102 +163,110 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textSecondary,
   },
   header: {
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: colors.background,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
     color: colors.textPrimary,
   },
-  statsSection: {
+  statsRow: {
     flexDirection: 'row',
-    padding: 20,
-    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
   },
   statCard: {
     flex: 1,
     backgroundColor: colors.white,
-    padding: 16,
-    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 10,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.06,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 1,
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.primary,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textSecondary,
   },
-  section: {
-    padding: 20,
-    backgroundColor: colors.white,
+  card: {
+    marginHorizontal: 16,
     marginTop: 12,
+    padding: 14,
+    backgroundColor: colors.white,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 16,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: colors.textTertiary,
-    fontStyle: 'italic',
-  },
-  preferencesContainer: {
-    gap: 8,
-  },
-  preferenceItem: {
-    padding: 12,
-    backgroundColor: colors.offWhite,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  preferenceName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors.textPrimary,
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 4,
   },
-  preferenceImportance: {
-    fontSize: 12,
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: 8,
+  },
+  cardTitleCompact: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  cardValue: {
+    fontSize: 13,
     color: colors.textSecondary,
+    lineHeight: 18,
+    marginTop: 4,
+    marginBottom: 8,
   },
-  accountButton: {
-    padding: 16,
-    backgroundColor: colors.offWhite,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  accountButtonText: {
-    fontSize: 16,
+  linkText: {
+    fontSize: 14,
     fontWeight: '600',
     color: colors.primary,
-    marginBottom: 4,
+    marginRight: 2,
   },
-  accountButtonSubtext: {
-    fontSize: 12,
+  preferenceList: {
+    marginTop: 8,
+    gap: 4,
+  },
+  preferenceItem: {
+    fontSize: 13,
     color: colors.textSecondary,
+    lineHeight: 18,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: colors.textTertiary,
+    fontStyle: 'italic',
+    marginTop: 8,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
 });
 
 export default ProfileScreen;
-
