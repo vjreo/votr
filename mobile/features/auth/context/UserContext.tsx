@@ -69,12 +69,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     loadStoredUser();
-    loadRoster();
+    loadRosterFromStorage();
     const safety = setTimeout(() => setLoading(false), 12000);
     return () => clearTimeout(safety);
   }, []);
 
-  const loadRoster = async () => {
+  const loadRosterFromStorage = async () => {
     try {
       const storedRoster = await AsyncStorage.getItem(STORAGE_KEYS.ROSTER);
       if (storedRoster) {
@@ -84,6 +84,24 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Error loading roster:', error);
     }
   };
+
+  // When user is authenticated, fetch roster from backend; when anonymous, use AsyncStorage
+  useEffect(() => {
+    if (accessToken && !isAnonymous && user?.id) {
+      userApi
+        .getRoster()
+        .then((res) => {
+          const data = res.data;
+          if (Array.isArray(data) && data.length >= 0) {
+            setRoster(data);
+            AsyncStorage.setItem(STORAGE_KEYS.ROSTER, JSON.stringify(data));
+          }
+        })
+        .catch(() => {
+          // Fallback to local on API error
+        });
+    }
+  }, [accessToken, isAnonymous, user?.id]);
 
   useEffect(() => {
     // Set auth header for API requests
@@ -203,18 +221,21 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { data } = await authApi.login(email, password);
     setUserState(data.user);
     await persistAuth(String(data.user.id), data.accessToken, data.refreshToken, false);
+    await syncRosterToBackend();
   };
 
   const register = async (email: string, password: string) => {
     const { data } = await authApi.register(email, password);
     setUserState(data.user);
     await persistAuth(String(data.user.id), data.accessToken, data.refreshToken, false);
+    await syncRosterToBackend();
   };
 
   const oauthLogin = async (provider: 'google' | 'apple', providerId: string, email?: string, name?: string) => {
     const { data } = await authApi.oauth(provider, providerId, email, name);
     setUserState(data.user);
     await persistAuth(String(data.user.id), data.accessToken, data.refreshToken, false);
+    await syncRosterToBackend();
   };
 
   const linkAnonymousAccount = async (anonymousUserId: string) => {
@@ -225,6 +246,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Reload user data to get merged data
       const response = await userApi.get(user.id);
       setUserState(response.data);
+      await syncRosterToBackend();
     } catch (error) {
       console.error('Error linking anonymous account:', error);
       throw error;
@@ -292,28 +314,48 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const syncRosterToBackend = useCallback(async () => {
+    if (!accessToken || isAnonymous) return;
+    try {
+      const storedRoster = await AsyncStorage.getItem(STORAGE_KEYS.ROSTER);
+      const localRoster = storedRoster ? JSON.parse(storedRoster) : [];
+      if (localRoster.length > 0) {
+        const { data } = await userApi.syncRoster(localRoster);
+        setRoster(data || []);
+        await AsyncStorage.setItem(STORAGE_KEYS.ROSTER, JSON.stringify(data || []));
+      } else {
+        const { data } = await userApi.getRoster();
+        setRoster(data || []);
+        await AsyncStorage.setItem(STORAGE_KEYS.ROSTER, JSON.stringify(data || []));
+      }
+    } catch {
+      // Ignore sync errors
+    }
+  }, [accessToken, isAnonymous]);
+
   // Roster management functions
   const addToRoster = useCallback(async (candidate: RosterCandidate) => {
     setRoster((prevRoster) => {
-      // Check if already in roster
-      if (prevRoster.some((c) => c.id === candidate.id)) {
-        return prevRoster;
-      }
+      if (prevRoster.some((c) => c.id === candidate.id)) return prevRoster;
       const newRoster = [...prevRoster, candidate];
-      // Persist to AsyncStorage
       AsyncStorage.setItem(STORAGE_KEYS.ROSTER, JSON.stringify(newRoster));
       return newRoster;
     });
-  }, []);
+    if (accessToken && !isAnonymous) {
+      userApi.addToRoster(candidate.id).catch(() => {});
+    }
+  }, [accessToken, isAnonymous]);
 
   const removeFromRoster = useCallback(async (candidateId: string) => {
     setRoster((prevRoster) => {
       const newRoster = prevRoster.filter((c) => c.id !== candidateId);
-      // Persist to AsyncStorage
       AsyncStorage.setItem(STORAGE_KEYS.ROSTER, JSON.stringify(newRoster));
       return newRoster;
     });
-  }, []);
+    if (accessToken && !isAnonymous) {
+      userApi.removeFromRoster(candidateId).catch(() => {});
+    }
+  }, [accessToken, isAnonymous]);
 
   const isInRoster = useCallback((candidateId: string): boolean => {
     return roster.some((c) => c.id === candidateId);

@@ -128,6 +128,20 @@ const ProfileScreen: React.FC = () => {
         )}
       </View>
 
+      {/* FAQ / Bias Indicators */}
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => (navigation as any).navigate('SourceInfo')}
+        activeOpacity={0.8}
+      >
+        <View style={styles.faqRow}>
+          <Ionicons name="help-circle-outline" size={22} color={colors.primary} />
+          <Text style={styles.faqTitle}>FAQ & Bias Indicators</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+        </View>
+        <Text style={styles.faqSubtitle}>Learn how we assess source reliability</Text>
+      </TouchableOpacity>
+
       {/* Achievements - compact */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Achievements</Text>
@@ -266,6 +280,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  faqRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  faqTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  faqSubtitle: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 6,
+    marginLeft: 34,
   },
 });
 

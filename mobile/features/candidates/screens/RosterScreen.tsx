@@ -76,11 +76,11 @@ const RosterScreen: React.FC = () => {
             </View>
             <Text style={styles.emptyTitle}>Your roster is empty</Text>
             <Text style={styles.emptySubtitle}>
-              Browse candidates and add them to your roster to keep track of who you plan to vote for.
+              When you find candidates you support, add them here to keep track of who you plan to vote for.
             </Text>
             <Button
-              title="Browse Candidates"
-              onPress={() => navigation.navigate('Feed' as never)}
+              title="Discover Candidates"
+              onPress={() => navigation.navigate('Search' as never)}
               style={styles.emptyButton}
             />
           </View>

@@ -48,9 +48,9 @@ cd backend
 npm install
 ```
 
-3. Create a `.env` file in the backend directory based on the root `.env.example`:
+3. Create a `.env` file in the backend directory:
 ```bash
-cp .env.example backend/.env
+cp backend/.env.example backend/.env
 ```
 
 4. Update `backend/.env` with your configuration (see Environment Variables section below)
@@ -110,7 +110,8 @@ npm run android
 ## API Endpoints
 
 ### Health Check
-- `GET /health` - Server health check
+- `GET /health` - Basic liveness check
+- `GET /health/ready` - Readiness (includes DB connectivity)
 
 ### Users
 - `POST /api/users` - Create a new user
@@ -178,9 +179,14 @@ To pull live candidates and elections for NC:
 
 4. **Flow**: FeedScreen passes your address to the API when loading candidates. If the DB is empty, the backend fetches from Google Civic, stores candidates, and returns them. Subsequent loads use the cache/database.
 
+## Launch & Demo
+
+- **Launch checklist**: See [docs/LAUNCH_CHECKLIST.md](docs/LAUNCH_CHECKLIST.md)
+- **Demo video**: Open `docs/demo/demo.html` in a browser for a slide-based demo, or follow [docs/DEMO_VIDEO_SCRIPT.md](docs/DEMO_VIDEO_SCRIPT.md) to record the live app
+
 ## Development Notes
 
-- The bias detection system is set up with placeholder functions. Integrate with actual ML services (Hugging Face, AWS Comprehend) and bias databases (Media Bias Fact Check, AllSides) for production.
+- The bias detection system supports Hugging Face, OpenAI, and media bias databases when API keys are set. Without keys, it uses the local database.
 - Location services require proper permissions on iOS and Android.
 - Push notifications for elections are set up but need Expo notification configuration.
 

@@ -358,7 +358,7 @@ const FeedScreen: React.FC = () => {
               <Text style={styles.sectionSubtitle}>
                 {Object.values(candidates).some((arr) => arr.length > 0)
                   ? 'Candidates on your ballot for upcoming races'
-                  : 'Add your address in Profile, or browse Search to discover candidates.'}
+                  : 'Add your address in Profile, or browse Discover to find candidates.'}
               </Text>
             </View>
 
@@ -368,19 +368,25 @@ const FeedScreen: React.FC = () => {
               <View style={styles.emptyState}>
                 <Ionicons
                   name={loadError ? 'cloud-offline-outline' : 'people-outline'}
-                  size={48}
+                  size={56}
                   color={colors.textTertiary}
                 />
                 <Text style={styles.emptyTitle}>
-                  {loadError ? "Couldn't load candidates" : 'No candidates yet'}
+                  {loadError ? "Couldn't load candidates" : 'No candidates on your ballot yet'}
                 </Text>
                 <Text style={styles.emptySubtitle}>
                   {loadError
                     ? 'Check your connection and pull to refresh.'
-                    : 'Browse the Search tab to discover candidates, or update your address in Profile.'}
+                    : 'Add your address in Profile to see races in your area, or browse Discover to explore candidates.'}
                 </Text>
                 {!loadError && (
-                  <Text style={styles.searchTabHint}>→ Try Search to discover candidates</Text>
+                  <TouchableOpacity
+                    style={styles.emptyCta}
+                    onPress={() => (navigation as any).navigate('Search')}
+                  >
+                    <Text style={styles.emptyCtaText}>Try Discover</Text>
+                    <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+                  </TouchableOpacity>
                 )}
               </View>
             )}
@@ -616,11 +622,20 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  searchTabHint: {
-    marginTop: 16,
-    fontSize: 15,
-    color: colors.primary,
+  emptyCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: colors.primary + '18',
+    borderRadius: borderRadius.lg,
+  },
+  emptyCtaText: {
+    fontSize: 16,
     fontWeight: '600',
+    color: colors.primary,
   },
 });
 

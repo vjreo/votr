@@ -8,6 +8,7 @@ import electionsRoutes from './routes/elections.js';
 import sampleBallotRoutes from './routes/sampleBallot.js';
 import authRoutes from './routes/auth.js';
 import biasRoutes from './routes/bias.js';
+import rosterRoutes from './routes/roster.js';
 import logger from './utils/logger.js';
 
 dotenv.config();
@@ -23,9 +24,25 @@ app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json());
 
-// Health check
+// Health check (basic - for load balancers)
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Readiness check (includes DB connectivity - for production)
+app.get('/health/ready', async (req, res) => {
+  try {
+    const pool = (await import('./db/connection.js')).default;
+    await pool.query('SELECT 1');
+    res.json({ status: 'ready', database: 'connected', timestamp: new Date().toISOString() });
+  } catch (err) {
+    res.status(503).json({
+      status: 'not ready',
+      database: 'disconnected',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // API Routes
@@ -35,6 +52,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/elections', electionsRoutes);
 app.use('/api/sample-ballot', sampleBallotRoutes);
 app.use('/api/bias', biasRoutes);
+app.use('/api/roster', rosterRoutes);
 
 // Error handling middleware - catches all unhandled errors
 app.use((err, req, res, next) => {

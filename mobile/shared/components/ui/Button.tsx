@@ -113,9 +113,9 @@ const Button: React.FC<ButtonProps> = ({
 
 const sizeStyles: Record<string, ViewStyle> = {
   small: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    minHeight: 36,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    minHeight: 44, // Accessibility: 44pt minimum touch target
   },
   medium: {
     paddingVertical: 12,

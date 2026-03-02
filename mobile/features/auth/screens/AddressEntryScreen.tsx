@@ -165,28 +165,19 @@ const AddressEntryScreen: React.FC = () => {
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
-        {/* Illustration */}
+        {/* Illustration - Voting ballot theme */}
         <View style={styles.illustrationContainer}>
           <View style={styles.illustration}>
-            {/* Stylized ocean/sunset illustration */}
-            <View style={styles.sky}>
-              <View style={styles.sun}>
-                <View style={styles.sunRays} />
-              </View>
-              <View style={styles.birds}>
-                <Text style={styles.bird}>~</Text>
-                <Text style={[styles.bird, styles.bird2]}>~</Text>
+            <View style={styles.ballotCard}>
+              <View style={styles.ballotLine} />
+              <View style={[styles.ballotLine, styles.ballotLineShort]} />
+              <View style={[styles.ballotLine, styles.ballotLineMedium]} />
+              <View style={styles.checkmarkWrapper}>
+                <Ionicons name="checkmark" size={16} color={colors.primary} />
               </View>
             </View>
-            <View style={styles.waves}>
-              <View style={styles.wave1} />
-              <View style={styles.wave2} />
-              <View style={styles.wave3} />
-            </View>
-            <View style={styles.boat}>
-              <View style={styles.boatBody} />
-              <View style={styles.boatMast} />
-              <View style={styles.boatFlag} />
+            <View style={styles.locationPin}>
+              <Ionicons name="location" size={28} color={colors.primary} />
             </View>
           </View>
         </View>
@@ -274,131 +265,60 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   illustration: {
-    width: 220,
-    height: 160,
+    width: 200,
+    height: 140,
     position: 'relative',
-    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  sky: {
+  ballotCard: {
+    width: 140,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    ...shadows.medium,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  ballotLine: {
+    height: 6,
+    backgroundColor: colors.border,
+    borderRadius: 3,
+    marginBottom: 12,
+    width: '100%',
+  },
+  ballotLineShort: {
+    width: '70%',
+  },
+  ballotLineMedium: {
+    width: '85%',
+    marginBottom: 0,
+  },
+  checkmarkWrapper: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: '#E8F4F8',
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
+    top: 12,
+    right: 12,
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.primary + '20',
+    borderRadius: 14,
   },
-  sun: {
+  locationPin: {
     position: 'absolute',
-    top: 15,
-    right: 40,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#F5A962',
-  },
-  sunRays: {
-    position: 'absolute',
-    top: -5,
-    left: -5,
-    right: -5,
-    bottom: -5,
-    borderRadius: 30,
-    borderWidth: 3,
-    borderColor: '#F5A96230',
-  },
-  birds: {
-    position: 'absolute',
-    top: 25,
-    left: 50,
-  },
-  bird: {
-    fontSize: 16,
-    color: colors.textTertiary,
-    transform: [{ rotate: '10deg' }],
-  },
-  bird2: {
-    marginLeft: 10,
-    marginTop: -5,
-    fontSize: 12,
-  },
-  waves: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-  },
-  wave1: {
-    position: 'absolute',
-    bottom: 30,
-    left: -20,
-    right: -20,
-    height: 50,
-    backgroundColor: '#7EC8E3',
-    borderTopLeftRadius: 100,
-    borderTopRightRadius: 60,
-  },
-  wave2: {
-    position: 'absolute',
-    bottom: 15,
-    left: -10,
-    right: -10,
-    height: 45,
-    backgroundColor: '#5DADE2',
-    borderTopLeftRadius: 60,
-    borderTopRightRadius: 100,
-  },
-  wave3: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 35,
-    backgroundColor: '#3498DB',
-    borderTopLeftRadius: 80,
-    borderTopRightRadius: 50,
-    borderBottomLeftRadius: borderRadius.xl,
-    borderBottomRightRadius: borderRadius.xl,
-  },
-  boat: {
-    position: 'absolute',
-    bottom: 55,
-    left: '35%',
-    width: 40,
-    height: 40,
-  },
-  boatBody: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    width: 35,
-    height: 12,
-    backgroundColor: '#A0522D',
-    borderRadius: 4,
-    transform: [{ skewX: '-5deg' }],
-  },
-  boatMast: {
-    position: 'absolute',
-    bottom: 10,
-    left: 15,
-    width: 3,
-    height: 30,
-    backgroundColor: '#8B4513',
-  },
-  boatFlag: {
-    position: 'absolute',
-    bottom: 30,
-    left: 18,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 15,
-    borderBottomWidth: 8,
-    borderTopWidth: 8,
-    borderLeftColor: colors.primary,
-    borderBottomColor: 'transparent',
-    borderTopColor: 'transparent',
+    bottom: -8,
+    right: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.small,
+    borderWidth: 2,
+    borderColor: colors.primary + '30',
   },
   card: {
     backgroundColor: colors.white,

@@ -11,6 +11,7 @@
 
 import crypto from 'crypto';
 import pool from '../db/connection.js';
+import logger from '../utils/logger.js';
 import { analyzeText } from '../integrations/huggingfaceApi.js';
 import { analyzeContentBias } from '../integrations/openaiApi.js';
 import { getMediaBiasRating } from '../integrations/mediaBiasApi.js';
@@ -243,7 +244,7 @@ async function getUserFeedbackScore(urlHash) {
       `SELECT AVG(rating) as avg_rating, COUNT(*) as count
        FROM source_feedback sf
        JOIN candidate_sources cs ON sf.source_id = cs.id
-       WHERE MD5(cs.url) = $1 AND sf.rating IS NOT NULL`,
+       WHERE encode(digest(cs.url, 'sha256'), 'hex') = $1 AND sf.rating IS NOT NULL`,
       [urlHash]
     );
 

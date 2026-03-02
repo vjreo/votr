@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 */node_modules/
+node_modules_backup/
 
 # Environment variables
 .env
@@ -60,7 +61,8 @@ expo-env.d.ts
 tmp/
 temp/
 
-# Markdown files (except README)
+# Markdown files (except README and docs)
 *.md
 !README.md
+!docs/*.md
 

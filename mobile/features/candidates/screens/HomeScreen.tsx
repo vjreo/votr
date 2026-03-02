@@ -115,10 +115,10 @@ const HomeScreen: React.FC = () => {
   if (!hasCandidates) {
     return (
       <View style={[styles.centerContainer, { paddingTop: insets.top }]}>
-        <Ionicons name="people-outline" size={48} color={colors.textTertiary} />
+        <Ionicons name="people-outline" size={56} color={colors.textTertiary} />
         <Text style={styles.emptyText}>No candidates found</Text>
         <Text style={styles.emptySubtext}>
-          Check back later or update your address in Profile.
+          Add your address in Profile to see races in your area, or check back closer to election day.
         </Text>
       </View>
     );

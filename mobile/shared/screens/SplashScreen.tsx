@@ -16,40 +16,54 @@ interface SplashScreenProps {
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
   const fadeAnim = new Animated.Value(0);
-  const scaleAnim = new Animated.Value(0.8);
+  const scaleAnim = new Animated.Value(0.85);
+  const taglineAnim = new Animated.Value(0);
 
   useEffect(() => {
-    // Animate logo in
+    // Logo animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 600,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
-        friction: 8,
-        tension: 40,
+        friction: 7,
+        tension: 50,
         useNativeDriver: true,
       }),
     ]).start();
+
+    // Tagline fade-in (delayed)
+    setTimeout(() => {
+      Animated.timing(taglineAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+    }, 400);
 
     // Navigate after delay
     const timer = setTimeout(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 300,
+        duration: 250,
         useNativeDriver: true,
       }).start(() => {
         onFinish();
       });
-    }, 2000);
+    }, 2200);
 
     return () => clearTimeout(timer);
   }, []);
 
   return (
     <View style={styles.container}>
+      {/* Subtle gradient-like background */}
+      <View style={styles.backgroundTint} />
+      <View style={styles.backgroundAccent} />
+
       <Animated.View
         style={[
           styles.logoContainer,
@@ -59,20 +73,20 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
           },
         ]}
       >
-        {/* VOTR Logo */}
         <View style={styles.logoWrapper}>
           <Text style={styles.logoV}>V</Text>
           <Text style={styles.logoText}>OTR</Text>
         </View>
 
-        {/* Tagline */}
-        <Text style={styles.tagline}>Your vote. Your voice.</Text>
+        <Animated.Text style={[styles.tagline, { opacity: taglineAnim }]}>
+          Your vote. Your voice.
+        </Animated.Text>
       </Animated.View>
 
-      {/* Decorative elements */}
       <View style={styles.decorativeBottom}>
         <View style={[styles.decorativeCircle, styles.circle1]} />
         <View style={[styles.decorativeCircle, styles.circle2]} />
+        <View style={[styles.decorativeCircle, styles.circle3]} />
       </View>
     </View>
   );
@@ -81,62 +95,84 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.offWhite,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  backgroundTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.primary + '12',
+  },
+  backgroundAccent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    backgroundColor: colors.accent + '14',
+  },
   logoContainer: {
     alignItems: 'center',
+    zIndex: 1,
   },
   logoWrapper: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   logoV: {
-    fontSize: 72,
+    fontSize: 76,
     fontWeight: '800',
     color: colors.primary,
-    // Custom styling for the V - like a checkmark
-    transform: [{ skewX: '-5deg' }],
+    transform: [{ skewX: '-4deg' }],
   },
   logoText: {
-    fontSize: 72,
+    fontSize: 76,
     fontWeight: '800',
     color: colors.primary,
-    letterSpacing: -2,
+    letterSpacing: -1,
   },
   tagline: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginTop: 12,
-    letterSpacing: 1,
+    fontSize: 18,
+    color: colors.textPrimary,
+    marginTop: 18,
+    letterSpacing: 2,
+    fontWeight: '600',
   },
   decorativeBottom: {
     position: 'absolute',
-    bottom: -50,
+    bottom: -80,
     left: 0,
     right: 0,
-    height: 200,
+    height: 280,
     overflow: 'hidden',
   },
   decorativeCircle: {
     position: 'absolute',
     borderRadius: 999,
-    opacity: 0.1,
   },
   circle1: {
-    width: 300,
-    height: 300,
+    width: 320,
+    height: 320,
     backgroundColor: colors.primary,
-    bottom: -150,
-    left: -50,
+    opacity: 0.08,
+    bottom: -160,
+    left: -80,
   },
   circle2: {
-    width: 200,
-    height: 200,
+    width: 220,
+    height: 220,
     backgroundColor: colors.secondary,
-    bottom: -100,
-    right: -30,
+    opacity: 0.06,
+    bottom: -80,
+    right: -40,
+  },
+  circle3: {
+    width: 160,
+    height: 160,
+    backgroundColor: colors.accent,
+    opacity: 0.06,
+    bottom: -40,
+    left: width * 0.3,
   },
 });
 

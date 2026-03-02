@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
   funFactContainer: {
     backgroundColor: '#FFF9E6',
     borderLeftWidth: 4,
-    borderLeftColor: '#F5A962',
+    borderLeftColor: colors.accent,
     padding: 14,
     borderRadius: borderRadius.md,
     marginBottom: 16,

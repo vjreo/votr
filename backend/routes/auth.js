@@ -309,6 +309,14 @@ router.post('/link-anonymous', async (req, res) => {
     [userId, anonymousUserId]
   );
 
+  // Transfer roster to authenticated user (CASCADE will remove anonymous entries when user is deleted)
+  await pool.query(
+    `INSERT INTO user_roster (user_id, candidate_id)
+     SELECT $1, candidate_id FROM user_roster WHERE user_id = $2
+     ON CONFLICT (user_id, candidate_id) DO NOTHING`,
+    [userId, anonymousUserId]
+  );
+
   // Delete anonymous user
   await pool.query('DELETE FROM users WHERE id = $1', [anonymousUserId]);
 

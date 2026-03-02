@@ -80,9 +80,9 @@ function MainTabs() {
         name="Search"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Search',
+          tabBarLabel: 'Discover',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search-outline" size={size} color={color} />
+            <Ionicons name="compass-outline" size={size} color={color} />
           ),
         }}
       />
@@ -113,16 +113,6 @@ function MainTabs() {
           tabBarLabel: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="FAQ"
-        component={SourceInfoScreen}
-        options={{
-          tabBarLabel: 'FAQ',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="help-circle-outline" size={size} color={color} />
           ),
         }}
       />

@@ -1,22 +1,24 @@
 /**
- * VOTER App Color Palette
- * Based on the Figma prototype design system
+ * VOTR Color Palette
+ * Based on Chantal Varon's Voter prototype (chantal-varon.com)
+ * - Yellow-orange as primary (60%) for energy, excitement, enthusiasm
+ * - Red and blue used equally for non-partisan balance (party symbolism)
  */
 
 export const colors = {
-  // Primary brand color - Coral/Salmon red
-  primary: '#E8594D',
-  primaryLight: '#F07B71',
-  primaryDark: '#D14840',
+  // Primary - Yellow-orange (Chantal's 60% color - energy, excitement)
+  primary: '#FF9F1C',
+  primaryLight: '#FFB347',
+  primaryDark: '#E67E22',
 
-  // Secondary - Soft blue (for illustrations and accents)
-  secondary: '#5DADE2',
-  secondaryLight: '#85C1E9',
-  secondaryDark: '#3498DB',
+  // Secondary - Blue (Democratic symbolic; used equally with red for non-partisan)
+  secondary: '#3498DB',
+  secondaryLight: '#5DADE2',
+  secondaryDark: '#2980B9',
 
-  // Accent - Warm orange (for highlights)
-  accent: '#F5A962',
-  accentLight: '#F8C291',
+  // Accent - Warmer orange for highlights (extends primary family)
+  accent: '#FF9500',
+  accentLight: '#FFB347',
   accentDark: '#E67E22',
 
   // Neutral colors
@@ -51,7 +53,7 @@ export const colors = {
   overlay: 'rgba(0, 0, 0, 0.5)',
   overlayLight: 'rgba(0, 0, 0, 0.3)',
 
-  // Party colors
+  // Party colors (Chantal: red and blue used equally for non-partisan)
   democrat: '#3498DB',
   republican: '#E74C3C',
   independent: '#9B59B6',
@@ -60,7 +62,7 @@ export const colors = {
   // Swipe action colors
   swipeLike: '#00B894',
   swipePass: '#E74C3C',
-  swipeSave: '#F5A962',
+  swipeSave: '#FF9F1C',
 
   // Match score colors
   matchHigh: '#00B894',
@@ -73,15 +75,15 @@ export const colors = {
   biasBiased: '#E74C3C',
 
   // Tab/chip colors
-  tabActive: '#E8594D',
+  tabActive: '#FF9F1C',
   tabInactive: '#B2BEC3',
   chipBackground: '#F5F6F8',
-  chipActiveBackground: '#E8594D',
+  chipActiveBackground: '#FF9F1C',
 };
 
 export const gradients = {
-  primary: ['#E8594D', '#F07B71'],
-  secondary: ['#5DADE2', '#85C1E9'],
+  primary: ['#FF9F1C', '#FFB347'],
+  secondary: ['#3498DB', '#5DADE2'],
   background: ['#F5F6F8', '#FFFFFF'],
   card: ['#FFFFFF', '#FAFBFC'],
 };
