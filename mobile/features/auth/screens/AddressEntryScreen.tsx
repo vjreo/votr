@@ -13,6 +13,8 @@ import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Input } from '../../../shared/components/ui';
+import { getApiErrorMessage } from '../../../shared/services/api';
+import { logEvent } from '../../../shared/services/analytics';
 import { useUser } from '../context/UserContext';
 import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
 
@@ -49,7 +51,7 @@ const AddressEntryScreen: React.FC = () => {
 
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
-  const [state, setState] = useState('');
+  const [state, setState] = useState('NC');
   const [zipCode, setZipCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,7 +61,7 @@ const AddressEntryScreen: React.FC = () => {
       const parsed = parseAddress(user.location.address);
       setAddress(parsed.address);
       setCity(parsed.city);
-      setState(parsed.state || user.location.state || '');
+      setState(parsed.state || user.location.state || 'NC');
       setZipCode(parsed.zipCode || user.location.zipCode || '');
     }
   }, [isUpdateMode, user?.location?.address, user?.location?.state, user?.location?.zipCode]);
@@ -131,13 +133,13 @@ const AddressEntryScreen: React.FC = () => {
         },
         targetUserId
       );
+      logEvent('onboarding_address_saved', { state: stateAbbr, update: isUpdateMode });
       if (isUpdateMode) {
         (navigation as any).goBack();
       }
     } catch (error: any) {
       console.error('Error saving location:', error);
-      const msg = error?.response?.data?.error || error?.message || 'Unable to save location. Please try again.';
-      setErrors({ address: msg });
+      setErrors({ address: getApiErrorMessage(error) });
     } finally {
       setLoading(false);
     }
@@ -182,12 +184,15 @@ const AddressEntryScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Form Card */}
+        {/* Form Card - demo style: orange h2, gray description */}
         <View style={[styles.card, shadows.medium as any]}>
+          <Text style={styles.screenTitle}>
+            {isUpdateMode ? 'Update Your Address' : 'Your Ballot, Your Address'}
+          </Text>
           <Text style={styles.title}>
             {isUpdateMode
               ? 'Update your voting address to change your ballot.'
-              : 'Enter the address where you are registered to vote to view your ballot.'}
+              : 'Enter your registered voting address to see candidates on your actual ballot.'}
           </Text>
 
           <Input
@@ -275,8 +280,8 @@ const styles = StyleSheet.create({
     width: 140,
     paddingVertical: 20,
     paddingHorizontal: 20,
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.xl,
     ...shadows.medium,
     borderWidth: 1,
     borderColor: colors.borderLight,
@@ -313,7 +318,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.small,
@@ -321,14 +326,21 @@ const styles = StyleSheet.create({
     borderColor: colors.primary + '30',
   },
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.xl,
     padding: 24,
+  },
+  screenTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 8,
+    textAlign: 'center',
   },
   title: {
     fontSize: 16,
     color: colors.textSecondary,
-    lineHeight: 24,
+    lineHeight: 1.6,
     marginBottom: 24,
     textAlign: 'center',
   },

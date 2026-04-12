@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,11 +13,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { CategorySection, Button } from '../../../shared/components/ui';
 import CandidateCard from '../components/CandidateCard';
+import SwipeableCard from '../components/SwipeableCard';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { candidateApi } from '../services/candidateApi';
 import { getNextElection, getUpcomingDeadlines } from '../../../shared/data/upcomingElections';
 import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
 import { DEFAULT_STATE } from '../../../shared/constants';
+import { features } from '../../../shared/config/features';
+import type { Candidate } from '../../../shared/types';
+import {
+  groupCandidatesByOfficeLevel,
+  toSwipeCandidate,
+  type OfficeBucket,
+} from '../utils/candidateGrouping';
+import { useCandidatePairCompare } from '../hooks/useCandidatePairCompare';
+import { logEvent } from '../../../shared/services/analytics';
 
 const getDaysUntil = (dateString: string): number => {
   const today = new Date();
@@ -60,25 +70,20 @@ const OFFICE_LEVELS = [
   },
 ];
 
-interface Candidate {
-  id: string;
-  name: string;
-  party: string;
-  photo?: string;
-  office?: string;
-  officeLevel?: string;
-}
-
 const FeedScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { user } = useUser();
+  const { user, accessToken } = useUser();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const [candidates, setCandidates] = useState<Record<string, Candidate[]>>({});
-  const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
+  const [candidates, setCandidates] = useState<Record<OfficeBucket, Candidate[]>>(() =>
+    groupCandidatesByOfficeLevel([], false) as Record<OfficeBucket, Candidate[]>
+  );
+  const { selectedForComparison, handleToggleComparison, handleCompare } =
+    useCandidatePairCompare();
+  const [matchDeck, setMatchDeck] = useState<Candidate[]>([]);
 
   const userState = user?.location?.state || DEFAULT_STATE;
   const userAddress = user?.location?.address;
@@ -93,46 +98,53 @@ const FeedScreen: React.FC = () => {
     try {
       setLoading(true);
       setLoadError(false);
+      const prefCount = user?.preferences?.length ?? 0;
+      const useMatch = Boolean(accessToken && prefCount > 0);
       const response = await candidateApi.getAll({
         state: userState,
         location: userAddress || undefined,
+        lat: user?.location?.latitude,
+        lng: user?.location?.longitude,
+        includeMatch: useMatch,
+        sortMatch: useMatch,
       });
 
-      const grouped: Record<string, Candidate[]> = {
-        federal: [],
-        state: [],
-        state_legislature: [],
-        local: [],
-      };
-
-      (response.data || []).forEach((candidate: any) => {
-        const normalized = {
-          ...candidate,
-          photo: candidate.photo || candidate.photo_url,
-        };
-        const level = candidate.office_level || candidate.officeLevel || 'local';
-        if (grouped[level]) {
-          grouped[level].push(normalized);
-        } else {
-          grouped.local.push(normalized);
-        }
-      });
-
+      const grouped = groupCandidatesByOfficeLevel(
+        (response.data || []) as unknown[],
+        useMatch
+      ) as Record<OfficeBucket, Candidate[]>;
       setCandidates(grouped);
+
+      const listCount = Object.values(grouped).reduce((n, arr) => n + arr.length, 0);
+      logEvent('candidates_feed_loaded', {
+        count: listCount,
+        includeMatch: useMatch,
+        state: userState,
+      });
+
+      const rows = (response.data || []) as Record<string, unknown>[];
+      if (useMatch && rows.length > 0) {
+        setMatchDeck(rows.slice(0, 8).map((r) => toSwipeCandidate(r, userState)));
+      } else {
+        setMatchDeck([]);
+      }
     } catch (error) {
       console.warn('Error loading candidates:', error);
       setLoadError(true);
-      setCandidates({
-        federal: [],
-        state: [],
-        state_legislature: [],
-        local: [],
-      });
+      setCandidates(groupCandidatesByOfficeLevel([], false) as Record<OfficeBucket, Candidate[]>);
+      setMatchDeck([]);
     } finally {
       setLoading(false);
       loadInProgressRef.current = false;
     }
-  }, [userState, userAddress]);
+  }, [
+    userState,
+    userAddress,
+    accessToken,
+    user?.preferences?.length,
+    user?.location?.latitude,
+    user?.location?.longitude,
+  ]);
 
   // Single source: refetch on focus (includes initial mount). No separate useEffect.
   useFocusEffect(
@@ -151,25 +163,10 @@ const FeedScreen: React.FC = () => {
     navigation.navigate('CandidateDetail' as never, { candidateId } as never);
   };
 
-  const handleToggleComparison = (candidateId: string) => {
-    setSelectedForComparison((prev) => {
-      if (prev.includes(candidateId)) {
-        return prev.filter((id) => id !== candidateId);
-      }
-      if (prev.length >= 2) {
-        // Replace the first one
-        return [prev[1], candidateId];
-      }
-      return [...prev, candidateId];
-    });
-  };
+  const openBrowse = () => navigation.navigate('DiscoverList' as never);
 
-  const handleCompare = () => {
-    if (selectedForComparison.length === 2) {
-      navigation.navigate('Compare' as never, {
-        candidateIds: selectedForComparison,
-      } as never);
-    }
+  const popMatchDeck = (id: string) => {
+    setMatchDeck((prev) => prev.filter((c) => c.id !== id));
   };
 
   const renderOfficeSection = (level: typeof OFFICE_LEVELS[0]) => {
@@ -191,11 +188,11 @@ const FeedScreen: React.FC = () => {
         {levelCandidates.map((candidate) => (
           <CandidateCard
             key={candidate.id}
-            id={candidate.id}
             name={candidate.name}
             party={candidate.party}
             photo={candidate.photo}
             office={candidate.office}
+            matchScore={candidate.matchScore}
             onPress={() => handleCandidatePress(candidate.id)}
             onCompare={() => handleToggleComparison(candidate.id)}
             selected={selectedForComparison.includes(candidate.id)}
@@ -229,14 +226,16 @@ const FeedScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Search Bar - links to Search tab */}
+        {/* Opens full browse (stack) when Discover tab is hidden in MVP mode */}
         <TouchableOpacity
           style={styles.searchContainer}
-          onPress={() => navigation.navigate('Search')}
+          onPress={openBrowse}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Browse candidates and offices"
         >
           <Ionicons name="search" size={20} color={colors.textTertiary} />
-          <Text style={styles.searchPlaceholder}>Search candidates, offices...</Text>
+          <Text style={styles.searchPlaceholder}>Browse candidates, offices...</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
         </TouchableOpacity>
       </View>
@@ -261,14 +260,6 @@ const FeedScreen: React.FC = () => {
           </View>
         ) : (
           <>
-            {/* What's happening near you */}
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>What&apos;s happening near you</Text>
-              <Text style={styles.sectionSubtitle}>
-                Upcoming elections and who&apos;s running in {userState || DEFAULT_STATE}
-              </Text>
-            </View>
-
             {nextElection && (
               <View style={styles.nextElectionCard}>
                 <View style={styles.nextElectionTop}>
@@ -335,6 +326,40 @@ const FeedScreen: React.FC = () => {
               </View>
             )}
 
+            {(user?.preferences?.length ?? 0) > 0 && !loading && (
+              <Text style={styles.matchExplainer}>
+                Match scores use your issue picks and positions we have on file. Few overlapping
+                issues or thin public data can lower scores—that reflects data limits, not a value
+                judgment.
+              </Text>
+            )}
+
+            {matchDeck.length > 0 && (
+              <View style={styles.matchDeckBlock}>
+                <Text style={styles.matchDeckTitle}>Top matches for you</Text>
+                <Text style={styles.matchDeckHint}>
+                  Swipe to skip, or swipe up to read more. Sorted by fit with your issue picks.
+                </Text>
+                <View style={styles.matchDeckStack}>
+                  {matchDeck.slice(0, 3).map((c, index) => (
+                    <SwipeableCard
+                      key={c.id}
+                      candidate={c}
+                      matchScore={c.matchScore}
+                      index={index}
+                      onSwipeLeft={() => popMatchDeck(c.id)}
+                      onSwipeRight={() => popMatchDeck(c.id)}
+                      onSwipeUp={() =>
+                        navigation.navigate('CandidateDetail' as never, {
+                          candidateId: c.id,
+                        } as never)
+                      }
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+
             {!nextElection && upcomingDeadlines.length === 0 && (
               <TouchableOpacity
                 style={styles.nextElectionCard}
@@ -352,13 +377,16 @@ const FeedScreen: React.FC = () => {
               </TouchableOpacity>
             )}
 
-            {/* Who's running */}
-            <View style={[styles.sectionHeader, { marginTop: 28 }]}>
-              <Text style={styles.sectionTitle}>Who&apos;s running</Text>
+            <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+              <Text style={styles.sectionTitle}>Candidates on your ballot</Text>
               <Text style={styles.sectionSubtitle}>
                 {Object.values(candidates).some((arr) => arr.length > 0)
-                  ? 'Candidates on your ballot for upcoming races'
-                  : 'Add your address in Profile, or browse Discover to find candidates.'}
+                  ? userState === 'NC'
+                    ? 'North Carolina is our deepest dataset (Open States + curated races). Match scores reflect your onboarding issue picks.'
+                    : 'Organized by office. Match scores show alignment with your views.'
+                  : features.mvpMode
+                    ? 'Add your voting address in Profile for local context—or browse all North Carolina candidates.'
+                    : 'Add your address in Profile to see races in your area, or open Discover to browse.'}
               </Text>
             </View>
 
@@ -372,19 +400,21 @@ const FeedScreen: React.FC = () => {
                   color={colors.textTertiary}
                 />
                 <Text style={styles.emptyTitle}>
-                  {loadError ? "Couldn't load candidates" : 'No candidates on your ballot yet'}
+                  {loadError ? "Couldn't load candidates" : 'No candidates yet'}
                 </Text>
                 <Text style={styles.emptySubtitle}>
                   {loadError
-                    ? 'Check your connection and pull to refresh.'
-                    : 'Add your address in Profile to see races in your area, or browse Discover to explore candidates.'}
+                    ? 'Check your connection and pull down to refresh.'
+                    : 'Enter your voting address in Profile to see races in your area—or browse all North Carolina candidates.'}
                 </Text>
                 {!loadError && (
                   <TouchableOpacity
                     style={styles.emptyCta}
-                    onPress={() => (navigation as any).navigate('Search')}
+                    onPress={openBrowse}
                   >
-                    <Text style={styles.emptyCtaText}>Try Discover</Text>
+                    <Text style={styles.emptyCtaText}>
+                      {features.mvpMode ? 'Browse NC candidates' : 'Try Discover'}
+                    </Text>
                     <Ionicons name="arrow-forward" size={18} color={colors.primary} />
                   </TouchableOpacity>
                 )}
@@ -403,9 +433,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     paddingBottom: 12,
-    ...shadows.small,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   headerContent: {
     flexDirection: 'row',
@@ -433,14 +464,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 16,
     marginBottom: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 12,
     gap: 10,
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
+    backgroundColor: colors.backgroundLight,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1.5,
     borderColor: colors.border,
-    ...shadows.small,
   },
   searchPlaceholder: {
     flex: 1,
@@ -453,6 +483,34 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 16,
     paddingBottom: 100,
+  },
+  matchExplainer: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.textSecondary,
+    marginBottom: 14,
+    paddingHorizontal: 2,
+  },
+  matchDeckBlock: {
+    marginBottom: 8,
+  },
+  matchDeckTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 6,
+  },
+  matchDeckHint: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 12,
+  },
+  matchDeckStack: {
+    position: 'relative',
+    width: '100%',
+    height: 540,
+    alignItems: 'center',
+    marginBottom: 8,
   },
   categoryIcon: {
     fontSize: 24,
@@ -500,10 +558,12 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   nextElectionCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
     padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
     ...shadows.small,
   },
   nextElectionTop: {
@@ -529,22 +589,25 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   countdownBadge: {
-    backgroundColor: colors.primary + '20',
+    backgroundColor: colors.primaryMuted,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.primary + '30',
   },
   countdownNumber: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
     color: colors.primary,
   },
   countdownLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '700',
     color: colors.primary,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   nextElectionDesc: {
     fontSize: 14,
@@ -561,10 +624,12 @@ const styles = StyleSheet.create({
   officeChip: {
     fontSize: 12,
     color: colors.textSecondary,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundLight,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   feedCardActions: {
     flexDirection: 'row',
@@ -583,10 +648,12 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   deadlinesSection: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
     padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
     ...shadows.small,
   },
   deadlinesTitle: {
@@ -629,8 +696,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    backgroundColor: colors.primary + '18',
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.primaryMuted,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.primary + '30',
   },
   emptyCtaText: {
     fontSize: 16,

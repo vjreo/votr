@@ -1,20 +1,46 @@
-import React from 'react';
+/**
+ * Card — 2026 Bento-Grid Design System
+ *
+ * Variants:
+ * - default   : standard dark surface card
+ * - elevated  : higher z-level surface with larger shadow
+ * - outlined  : subtle border, transparent base (for list items)
+ * - glass     : glassmorphism — semi-transparent with blur tint
+ * - bento     : flat accent-bordered compartment (grid layouts)
+ * - highlight : primary-tinted surface for featured content
+ *
+ * Press feedback: scale-down spring micro-interaction.
+ */
+import React, { useRef, useCallback } from 'react';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
+  Animated,
   ViewStyle,
   StyleProp,
 } from 'react-native';
 import { colors, borderRadius, shadows } from '../../theme/colors';
 
+type CardVariant = 'default' | 'elevated' | 'outlined' | 'glass' | 'bento' | 'highlight';
+type CardPadding = 'none' | 'small' | 'medium' | 'large';
+
 interface CardProps {
   children: React.ReactNode;
   onPress?: () => void;
-  variant?: 'default' | 'elevated' | 'outlined';
-  padding?: 'none' | 'small' | 'medium' | 'large';
+  variant?: CardVariant;
+  padding?: CardPadding;
   style?: StyleProp<ViewStyle>;
+  /** Disables press animation (use for cards with internal scroll) */
+  staticPress?: boolean;
 }
+
+const PADDING_MAP: Record<CardPadding, number> = {
+  none: 0,
+  small: 12,
+  medium: 16,
+  large: 20,
+};
 
 const Card: React.FC<CardProps> = ({
   children,
@@ -22,59 +48,94 @@ const Card: React.FC<CardProps> = ({
   variant = 'default',
   padding = 'medium',
   style,
+  staticPress = false,
 }) => {
-  const getVariantStyle = (): ViewStyle => {
-    switch (variant) {
-      case 'elevated':
-        return { ...styles.elevated, ...(shadows.medium as any) };
-      case 'outlined':
-        return styles.outlined;
-      default:
-        return { ...styles.default, ...(shadows.small as any) };
-    }
-  };
+  const scale = useRef(new Animated.Value(1)).current;
 
-  const getPaddingStyle = (): ViewStyle => {
-    switch (padding) {
-      case 'none':
-        return { padding: 0 };
-      case 'small':
-        return { padding: 12 };
-      case 'large':
-        return { padding: 20 };
-      default:
-        return { padding: 16 };
-    }
-  };
+  const handlePressIn = useCallback(() => {
+    if (staticPress) return;
+    Animated.spring(scale, {
+      toValue: 0.98,
+      useNativeDriver: true,
+      speed: 40,
+      bounciness: 2,
+    }).start();
+  }, [scale, staticPress]);
 
-  const cardStyle = [styles.base, getVariantStyle(), getPaddingStyle(), style];
+  const handlePressOut = useCallback(() => {
+    if (staticPress) return;
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 30,
+      bounciness: 4,
+    }).start();
+  }, [scale, staticPress]);
+
+  const cardStyle = [
+    styles.base,
+    variantStyles[variant],
+    { padding: PADDING_MAP[padding] },
+    style,
+  ];
 
   if (onPress) {
     return (
-      <TouchableOpacity style={cardStyle} onPress={onPress} activeOpacity={0.7}>
-        {children}
-      </TouchableOpacity>
+      <Animated.View style={[{ transform: [{ scale }] }]}>
+        <TouchableOpacity
+          style={cardStyle}
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={1}
+          accessibilityRole="button"
+        >
+          {children}
+        </TouchableOpacity>
+      </Animated.View>
     );
   }
 
   return <View style={cardStyle}>{children}</View>;
 };
 
-const styles = StyleSheet.create({
-  base: {
-    borderRadius: borderRadius.lg,
-    backgroundColor: colors.white,
-  },
+const variantStyles: Record<CardVariant, ViewStyle> = {
   default: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
+    ...(shadows.small as ViewStyle),
   },
   elevated: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceElevated,
+    ...(shadows.medium as ViewStyle),
   },
   outlined: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  glass: {
+    backgroundColor: 'rgba(36,34,32,0.72)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    ...(shadows.medium as ViewStyle),
+  },
+  bento: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...(shadows.small as ViewStyle),
+  },
+  highlight: {
+    backgroundColor: colors.primaryMuted,
+    borderWidth: 1,
+    borderColor: 'rgba(245,166,35,0.22)',
+  },
+};
+
+const styles = StyleSheet.create({
+  base: {
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
   },
 });
 

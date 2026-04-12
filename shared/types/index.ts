@@ -57,6 +57,8 @@ export interface Candidate {
   apiSource: string;
   createdAt: Date;
   updatedAt: Date;
+  /** Present when API called with includeMatch (0–100) */
+  matchScore?: number;
 }
 
 export type OfficeLevel = 'federal' | 'state' | 'local';

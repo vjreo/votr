@@ -1,40 +1,57 @@
 /**
  * Candidate Repository
- * Data access layer for candidates
+ * Data access layer for candidates.
+ * All multi-source fetches use JOINs to avoid N+1 queries.
  */
 
 import pool from '../db/connection.js';
 
 export class CandidateRepository {
   /**
-   * Get candidates by state
-   * @param {string} stateCode - Two-letter state code
-   * @param {Object} options - Query options
-   * @param {string} options.office - Optional office filter (ILIKE pattern)
-   * @param {string} options.officeLevel - Optional office level filter
-   * @returns {Promise<Array>} Array of candidates
+   * Get candidates by state with sources in a single JOIN query.
+   * @param {string} stateCode
+   * @param {Object} options - { office?: string, officeLevel?: string }
+   * @returns {Promise<Array>}
    */
-  async findByState(stateCode, options = {}) {
+  async findByStateWithSources(stateCode, options = {}) {
     const { office, officeLevel } = options;
-    const whereClauses = ['state = $1'];
+    const whereClauses = ['c.state = $1'];
     const params = [stateCode.toUpperCase()];
 
     if (office) {
-      const paramIndex = params.length + 1;
-      whereClauses.push(`office ILIKE $${paramIndex}`);
       params.push(`%${office}%`);
+      whereClauses.push(`c.office ILIKE $${params.length}`);
     }
-
     if (officeLevel) {
-      const paramIndex = params.length + 1;
-      whereClauses.push(`office_level = $${paramIndex}`);
       params.push(officeLevel);
+      whereClauses.push(`c.office_level = $${params.length}`);
     }
 
+    // Single JOIN — eliminates N+1 (one query instead of 1 + N)
     const query = `
-      SELECT * FROM candidates 
-      WHERE ${whereClauses.join(' AND ')} 
-      ORDER BY created_at DESC
+      SELECT
+        c.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id',            cs.id,
+              'candidate_id',  cs.candidate_id,
+              'url',           cs.url,
+              'source_type',   cs.source_type,
+              'title',         cs.title,
+              'bias_score',    cs.bias_score,
+              'bias_tier',     cs.bias_tier,
+              'last_analyzed', cs.last_analyzed,
+              'created_at',    cs.created_at
+            ) ORDER BY cs.bias_score ASC NULLS LAST
+          ) FILTER (WHERE cs.id IS NOT NULL),
+          '[]'
+        ) AS sources
+      FROM candidates c
+      LEFT JOIN candidate_sources cs ON cs.candidate_id = c.id
+      WHERE ${whereClauses.join(' AND ')}
+      GROUP BY c.id
+      ORDER BY c.created_at DESC
     `;
 
     const result = await pool.query(query, params);
@@ -42,64 +59,55 @@ export class CandidateRepository {
   }
 
   /**
-   * Get candidate with sources
-   * @param {string} candidateId - Candidate UUID
-   * @returns {Promise<Object|null>} Candidate with sources or null if not found
+   * Get a single candidate with its sources.
+   * @param {string} candidateId
+   * @returns {Promise<Object|null>}
    */
   async findByIdWithSources(candidateId) {
-    const candidateQuery = 'SELECT * FROM candidates WHERE id = $1';
-    const candidateResult = await pool.query(candidateQuery, [candidateId]);
-
-    if (candidateResult.rows.length === 0) {
-      return null;
-    }
-
-    const candidate = candidateResult.rows[0];
-
-    const sourcesQuery = `
-      SELECT * FROM candidate_sources 
-      WHERE candidate_id = $1 
-      ORDER BY bias_score ASC
+    const query = `
+      SELECT
+        c.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id',            cs.id,
+              'candidate_id',  cs.candidate_id,
+              'url',           cs.url,
+              'source_type',   cs.source_type,
+              'title',         cs.title,
+              'bias_score',    cs.bias_score,
+              'bias_tier',     cs.bias_tier,
+              'last_analyzed', cs.last_analyzed,
+              'created_at',    cs.created_at
+            ) ORDER BY cs.bias_score ASC NULLS LAST
+          ) FILTER (WHERE cs.id IS NOT NULL),
+          '[]'
+        ) AS sources
+      FROM candidates c
+      LEFT JOIN candidate_sources cs ON cs.candidate_id = c.id
+      WHERE c.id = $1
+      GROUP BY c.id
     `;
-    const sourcesResult = await pool.query(sourcesQuery, [candidateId]);
 
-    return {
-      ...candidate,
-      sources: sourcesResult.rows,
-    };
+    const result = await pool.query(query, [candidateId]);
+    return result.rows[0] || null;
   }
 
   /**
-   * Get candidates with sources by state
-   * @param {string} stateCode - Two-letter state code
-   * @param {Object} options - Query options
-   * @returns {Promise<Array>} Array of candidates with sources
+   * Find candidate by ID (no sources).
+   * @param {string} id
+   * @returns {Promise<Object|null>}
    */
-  async findByStateWithSources(stateCode, options = {}) {
-    const candidates = await this.findByState(stateCode, options);
-
-    const candidatesWithSources = await Promise.all(
-      candidates.map(async (candidate) => {
-        const sourcesQuery = `
-          SELECT * FROM candidate_sources 
-          WHERE candidate_id = $1 
-          ORDER BY bias_score ASC
-        `;
-        const sourcesResult = await pool.query(sourcesQuery, [candidate.id]);
-        return {
-          ...candidate,
-          sources: sourcesResult.rows,
-        };
-      })
-    );
-
-    return candidatesWithSources;
+  async findById(id) {
+    const result = await pool.query('SELECT * FROM candidates WHERE id = $1', [id]);
+    return result.rows[0] || null;
   }
 
   /**
-   * Create or update a candidate
-   * @param {Object} candidateData - Candidate data
-   * @returns {Promise<Object>} Created/updated candidate
+   * Create or update a candidate (upsert).
+   * Unique key: (name, office, state, COALESCE(district, ''))
+   * @param {Object} candidateData
+   * @returns {Promise<Object>}
    */
   async upsert(candidateData) {
     const {
@@ -112,21 +120,23 @@ export class CandidateRepository {
       district,
       state,
       positions = [],
+      career = [],
       apiSource,
     } = candidateData;
 
     const query = `
       INSERT INTO candidates (
         name, office, office_level, party, photo_url, bio,
-        district, state, positions, api_source
+        district, state, positions, career, api_source
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      ON CONFLICT (name, office, state, COALESCE(district, '')) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      ON CONFLICT (name, office, state, COALESCE(district, ''))
       DO UPDATE SET
-        party = EXCLUDED.party,
-        photo_url = EXCLUDED.photo_url,
-        bio = EXCLUDED.bio,
-        positions = EXCLUDED.positions,
+        party      = EXCLUDED.party,
+        photo_url  = EXCLUDED.photo_url,
+        bio        = EXCLUDED.bio,
+        positions  = EXCLUDED.positions,
+        career     = EXCLUDED.career,
         api_source = EXCLUDED.api_source,
         updated_at = CURRENT_TIMESTAMP
       RETURNING *
@@ -141,7 +151,8 @@ export class CandidateRepository {
       bio,
       district,
       state.toUpperCase(),
-      JSON.stringify(positions),
+      JSON.stringify(Array.isArray(positions) ? positions : []),
+      JSON.stringify(Array.isArray(career) ? career : []),
       apiSource,
     ]);
 
@@ -149,28 +160,16 @@ export class CandidateRepository {
   }
 
   /**
-   * Bulk upsert candidates
-   * @param {Array<Object>} candidates - Array of candidate data
-   * @returns {Promise<Array>} Array of upserted candidates
+   * Bulk upsert candidates.
+   * @param {Array<Object>} candidates
+   * @returns {Promise<Array>}
    */
   async bulkUpsert(candidates) {
     const results = [];
     for (const candidate of candidates) {
-      const result = await this.upsert(candidate);
-      results.push(result);
+      results.push(await this.upsert(candidate));
     }
     return results;
-  }
-
-  /**
-   * Find candidate by ID
-   * @param {string} id - Candidate UUID
-   * @returns {Promise<Object|null>} Candidate or null if not found
-   */
-  async findById(id) {
-    const query = 'SELECT * FROM candidates WHERE id = $1';
-    const result = await pool.query(query, [id]);
-    return result.rows[0] || null;
   }
 }
 

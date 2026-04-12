@@ -4,6 +4,7 @@ import { User } from '../../../shared/types';
 import { userApi } from '../services/userApi';
 import { authApi } from '../services/authApi';
 import api from '../../../shared/services/api';
+import { logEvent } from '../../../shared/services/analytics';
 
 interface RosterCandidate {
   id: string;
@@ -337,6 +338,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addToRoster = useCallback(async (candidate: RosterCandidate) => {
     setRoster((prevRoster) => {
       if (prevRoster.some((c) => c.id === candidate.id)) return prevRoster;
+      logEvent('roster_candidate_added', { candidateId: candidate.id });
       const newRoster = [...prevRoster, candidate];
       AsyncStorage.setItem(STORAGE_KEYS.ROSTER, JSON.stringify(newRoster));
       return newRoster;

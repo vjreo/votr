@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,22 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import CandidateCard from '../components/CandidateCard';
 import { CategorySection, Button } from '../../../shared/components/ui';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { candidateApi } from '../services/candidateApi';
 import { Candidate } from '../../../shared/types';
-import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
+import { colors, borderRadius } from '../../../shared/theme/colors';
 import { DEFAULT_STATE } from '../../../shared/constants';
+import { features } from '../../../shared/config/features';
+import { groupCandidatesByOfficeLevel, type OfficeBucket } from '../utils/candidateGrouping';
+import { useCandidatePairCompare } from '../hooks/useCandidatePairCompare';
+import { logEvent } from '../../../shared/services/analytics';
 
 const OFFICE_LEVELS = [
   { key: 'federal', title: 'U.S. Senate', icon: '🏛️' },
@@ -29,11 +34,16 @@ const OFFICE_LEVELS = [
 const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
-  const { user } = useUser();
-  const [candidates, setCandidates] = useState<Record<string, Candidate[]>>({});
+  const route = useRoute();
+  const { user, accessToken } = useUser();
+  const isStackBrowse = route.name === 'DiscoverList';
+  const [candidates, setCandidates] = useState<Record<OfficeBucket, Candidate[]>>(() =>
+    groupCandidatesByOfficeLevel([], false) as Record<OfficeBucket, Candidate[]>
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
+  const { selectedForComparison, handleToggleComparison, handleCompare } =
+    useCandidatePairCompare();
   const loadInProgressRef = React.useRef(false);
 
   const loadCandidates = useCallback(async () => {
@@ -43,25 +53,28 @@ const HomeScreen: React.FC = () => {
       setLoading(true);
       const state = user?.location?.state || DEFAULT_STATE;
       const location = user?.location?.address;
-      const response = await candidateApi.getAll({ state, location });
-
-      const grouped: Record<string, Candidate[]> = {
-        federal: [],
-        state: [],
-        state_legislature: [],
-        local: [],
-      };
-
-      (response.data || []).forEach((c: any) => {
-        const level = c.office_level || c.officeLevel || 'local';
-        const bucket = grouped[level] || grouped.local;
-        bucket.push({
-          ...c,
-          photo: c.photo || c.photo_url,
-        });
+      const prefCount = user?.preferences?.length ?? 0;
+      const useMatch = Boolean(accessToken && prefCount > 0);
+      const response = await candidateApi.getAll({
+        state,
+        location,
+        lat: user?.location?.latitude,
+        lng: user?.location?.longitude,
+        includeMatch: useMatch,
+        sortMatch: useMatch,
       });
 
+      const grouped = groupCandidatesByOfficeLevel(
+        (response.data || []) as unknown[],
+        useMatch
+      ) as Record<OfficeBucket, Candidate[]>;
       setCandidates(grouped);
+      const listCount = Object.values(grouped).reduce((n, arr) => n + arr.length, 0);
+      logEvent('discover_list_loaded', {
+        count: listCount,
+        includeMatch: useMatch,
+        stack: isStackBrowse,
+      });
     } catch (error) {
       console.error('Error loading candidates:', error);
       Alert.alert('Error', 'Failed to load candidates. Please try again.');
@@ -70,7 +83,15 @@ const HomeScreen: React.FC = () => {
       setRefreshing(false);
       loadInProgressRef.current = false;
     }
-  }, [user?.location?.state, user?.location?.address]);
+  }, [
+    user?.location?.state,
+    user?.location?.address,
+    user?.location?.latitude,
+    user?.location?.longitude,
+    accessToken,
+    user?.preferences?.length,
+    isStackBrowse,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
@@ -85,20 +106,6 @@ const HomeScreen: React.FC = () => {
 
   const handleCandidatePress = (candidateId: string) => {
     navigation.navigate('CandidateDetail' as never, { candidateId } as never);
-  };
-
-  const handleToggleComparison = (candidateId: string) => {
-    setSelectedForComparison((prev) => {
-      if (prev.includes(candidateId)) return prev.filter((id) => id !== candidateId);
-      if (prev.length >= 2) return [prev[1], candidateId];
-      return [...prev, candidateId];
-    });
-  };
-
-  const handleCompare = () => {
-    if (selectedForComparison.length === 2) {
-      navigation.navigate('Compare' as never, { candidateIds: selectedForComparison } as never);
-    }
   };
 
   if (loading && !Object.values(candidates).some((arr) => arr.length > 0)) {
@@ -127,9 +134,24 @@ const HomeScreen: React.FC = () => {
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <Text style={styles.headerTitle}>Discover Candidates</Text>
+        {isStackBrowse && (
+          <TouchableOpacity
+            style={styles.backRow}
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="chevron-back" size={24} color={colors.primary} />
+            <Text style={styles.backText}>Back</Text>
+          </TouchableOpacity>
+        )}
+        <Text style={styles.headerTitle}>
+          {features.mvpMode ? 'Browse candidates' : 'Discover Candidates'}
+        </Text>
         <Text style={styles.headerSubtitle}>
-          Browse candidates by office. Tap to learn more or compare.
+          {user?.location?.state === 'NC'
+            ? 'North Carolina: browse by office. Tap for details or compare two.'
+            : 'Browse candidates by office. Tap to learn more or compare.'}
         </Text>
       </View>
 
@@ -155,11 +177,11 @@ const HomeScreen: React.FC = () => {
               {levelCandidates.map((candidate) => (
                 <CandidateCard
                   key={candidate.id}
-                  id={candidate.id}
                   name={candidate.name}
                   party={candidate.party}
                   photo={candidate.photo}
                   office={candidate.office}
+                  matchScore={candidate.matchScore}
                   onPress={() => handleCandidatePress(candidate.id)}
                   onCompare={() => handleToggleComparison(candidate.id)}
                   selected={selectedForComparison.includes(candidate.id)}
@@ -213,9 +235,19 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 16,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  backText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.primary,
   },
   headerTitle: {
     fontSize: 24,

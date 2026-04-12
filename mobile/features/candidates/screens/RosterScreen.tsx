@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button, Card } from '../../../shared/components/ui';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
+import { features } from '../../../shared/config/features';
 
 interface RosterCandidate {
   id: string;
@@ -37,8 +38,6 @@ const RosterScreen: React.FC = () => {
     return acc;
   }, {});
 
-  const getPartyColor = () => colors.textSecondary;
-
   const handleCandidatePress = (candidateId: string) => {
     navigation.navigate('CandidateDetail' as never, { candidateId } as never);
   };
@@ -53,7 +52,7 @@ const RosterScreen: React.FC = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Candidates you're voting for</Text>
+        <Text style={styles.title}>Build Your Voting List</Text>
         {!isEmpty && (
           <Text style={styles.subtitle}>
             {roster.length} candidate{roster.length !== 1 ? 's' : ''} selected
@@ -74,13 +73,13 @@ const RosterScreen: React.FC = () => {
             <View style={styles.emptyIcon}>
               <Ionicons name="clipboard-outline" size={64} color={colors.textTertiary} />
             </View>
-            <Text style={styles.emptyTitle}>Your roster is empty</Text>
+            <Text style={styles.emptyTitle}>Build your voting list</Text>
             <Text style={styles.emptySubtitle}>
-              When you find candidates you support, add them here to keep track of who you plan to vote for.
+              Add candidates from Match{features.mvpMode ? '' : ' or Discover'}. Your roster syncs when you sign in—handy at the polls.
             </Text>
             <Button
-              title="Discover Candidates"
-              onPress={() => navigation.navigate('Search' as never)}
+              title={features.mvpMode ? 'Browse candidates' : 'Discover Candidates'}
+              onPress={() => navigation.navigate('DiscoverList' as never)}
               style={styles.emptyButton}
             />
           </View>
@@ -115,7 +114,7 @@ const RosterScreen: React.FC = () => {
 
                       <View style={styles.candidateInfo}>
                         <Text style={styles.candidateName}>{candidate.name}</Text>
-                        <Text style={[styles.candidateParty, { color: getPartyColor() }]}>
+                        <Text style={[styles.candidateParty, { color: colors.textSecondary }]}>
                           {candidate.party}
                         </Text>
                       </View>
@@ -123,7 +122,9 @@ const RosterScreen: React.FC = () => {
                       <TouchableOpacity
                         style={styles.removeButton}
                         onPress={() => handleRemove(candidate.id)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove ${candidate.name} from roster`}
                       >
                         <Ionicons name="close-circle" size={24} color={colors.textTertiary} />
                       </TouchableOpacity>
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     paddingHorizontal: 20,
     paddingVertical: 16,
     ...shadows.small,
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
   actionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: 16,
     ...shadows.small,

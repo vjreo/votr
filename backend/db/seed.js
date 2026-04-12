@@ -105,9 +105,25 @@ async function seedDatabase() {
     }
     console.log(`   ✓ ${preferences.length} preferences added`);
 
-    // Seed elections
+    // Seed elections — include next NC voting cycle (2026)
     console.log('\n🗳️  Seeding elections...');
     const elections = [
+      {
+        name: '2026 General Election',
+        date: '2026-11-03',
+        type: 'general',
+        state: 'NC',
+        offices: ['Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
+        early_voting_start: '2026-10-15',
+        early_voting_end: '2026-10-31',
+      },
+      {
+        name: '2026 Primary Election',
+        date: '2026-03-03',
+        type: 'primary',
+        state: 'NC',
+        offices: ['Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
+      },
       {
         name: '2024 General Election',
         date: '2024-11-05',
@@ -116,13 +132,6 @@ async function seedDatabase() {
         offices: ['President', 'Senator', 'Governor'],
         early_voting_start: '2024-10-17',
         early_voting_end: '2024-11-02',
-      },
-      {
-        name: '2024 Primary Election',
-        date: '2024-03-05',
-        type: 'primary',
-        state: 'NC',
-        offices: ['Senator', 'House of Representatives'],
       },
     ];
 

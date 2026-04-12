@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "VOTR - Gamified civic engagement platform",
   "private": true,
-  "workspaces": ["backend", "mobile"],
+  "workspaces": [
+    "backend",
+    "mobile"
+  ],
   "overrides": {
     "react-native-screens": "4.16.0"
   },
@@ -17,10 +20,13 @@
     "db:migrate": "cd backend && npm run db:migrate",
     "tunnel:backend": "npx ngrok http 3000"
   },
-  "keywords": ["voting", "civic-engagement", "politics", "democracy"],
+  "keywords": [
+    "voting",
+    "civic-engagement",
+    "politics",
+    "democracy"
+  ],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "jest": "^30.2.0"
-  }
+  "devDependencies": {}
 }

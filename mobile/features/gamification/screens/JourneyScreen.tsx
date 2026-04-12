@@ -63,7 +63,7 @@ const JourneyScreen: React.FC = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Your Journey</Text>
+        <Text style={styles.title}>Earn Your Civic Stripes</Text>
         <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
           <Ionicons name="share-outline" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     ...shadows.small,
   },
   title: {
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   },
   quickActionCard: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: 16,
     alignItems: 'center',
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
     width: '30%',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     ...shadows.small,
   },

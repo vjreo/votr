@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   card: {
     position: 'absolute',
     width: width - 40,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.xl,
     padding: 24,
     ...shadows.large,
@@ -459,12 +459,12 @@ const styles = StyleSheet.create({
     ...shadows.small,
   },
   disagreeButton: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderWidth: 2,
     borderColor: colors.error,
   },
   agreeButton: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderWidth: 2,
     borderColor: colors.success,
   },

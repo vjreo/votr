@@ -1,6 +1,6 @@
 # Render Blueprint - VOTR Backend
 # Deploy: https://dashboard.render.com → New → Blueprint → Connect repo
-# Set GOOGLE_CIVIC_API_KEY in Dashboard after first deploy
+# Set OPEN_STATES_API_KEY in Dashboard after first deploy (for NC legislators)
 
 services:
   - type: web
@@ -17,7 +17,7 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
-      - key: GOOGLE_CIVIC_API_KEY
+      - key: OPEN_STATES_API_KEY
         sync: false
       - key: DATABASE_URL
         fromDatabase:

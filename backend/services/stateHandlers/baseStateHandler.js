@@ -4,8 +4,6 @@
  * Provides common functionality and defines interface
  */
 
-import civicApi from '../civicApi.js';
-
 export class BaseStateHandler {
   constructor(stateCode) {
     this.stateCode = stateCode.toUpperCase();
@@ -32,7 +30,7 @@ export class BaseStateHandler {
    */
   getDataSources() {
     return {
-      primary: 'google_civic_api',
+      primary: 'db_only',
       fallback: null,
       // Override in state-specific handlers
     };
@@ -67,20 +65,27 @@ export class BaseStateHandler {
    * @returns {string} Office level ('federal', 'state', 'local')
    */
   determineOfficeLevel(office) {
-    const officeLower = office.toLowerCase();
+    const officeLower = (office || '').toLowerCase();
     
-    // Federal offices
-    if (officeLower.includes('president') || 
-        officeLower.includes('senate') || 
-        officeLower.includes('representative') ||
+    // Federal offices (US Senate, US House - not state senate/house)
+    if (officeLower.includes('president') ||
+        (officeLower.includes('u.s. senate') || officeLower.includes('us senate')) ||
+        (officeLower.includes('u.s.') && officeLower.includes('representative')) ||
         officeLower.includes('congress')) {
       return 'federal';
     }
     
-    // State offices
-    if (officeLower.includes('governor') || 
-        officeLower.includes('state') ||
-        officeLower.includes('legislature')) {
+    // State legislature (NC State Senate, NC House of Representatives)
+    if (officeLower.includes('state senate') ||
+        officeLower.includes('house of representatives') ||
+        (officeLower.includes('state') && (officeLower.includes('district') || officeLower.includes('legislat')))) {
+      return 'state_legislature';
+    }
+    
+    // State executive (governor, etc.)
+    if (officeLower.includes('governor') ||
+        officeLower.includes('lieutenant governor') ||
+        officeLower.includes('attorney general')) {
       return 'state';
     }
     
@@ -143,10 +148,4 @@ export class BaseStateHandler {
     return stateNames[code.toUpperCase()] || code;
   }
 
-  /**
-   * Get civic API instance (shared across handlers)
-   */
-  getCivicApi() {
-    return civicApi;
-  }
 }

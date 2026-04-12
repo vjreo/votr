@@ -23,32 +23,33 @@ export interface UpcomingElection {
 
 const NC_ELECTIONS: UpcomingElection[] = [
   {
-    id: 'nc-municipal-2025',
-    name: '2025 Municipal Elections',
-    date: '2025-11-04',
-    type: 'municipal',
-    icon: '🏛️',
-    description: 'City councils, mayors, and local offices',
-    state: 'NC',
-    deadlines: [
-      { name: 'Voter Registration', date: '2025-10-10', icon: '📝', critical: true },
-      { name: 'Election Day', date: '2025-11-04', icon: '🗳️', critical: true },
-    ],
-    offices: ['Charlotte Mayor', 'City Council', 'Town Councils', 'School Boards'],
-  },
-  {
     id: 'nc-primary-2026',
-    name: '2026 Primary Elections',
+    name: '2026 Primary Election',
     date: '2026-03-03',
     type: 'primary',
     icon: '🗳️',
-    description: 'Party primaries for US Senate, House, and state offices',
+    description: 'Party primaries for Governor, US Senate, House, and state legislature',
     state: 'NC',
     deadlines: [
       { name: 'Voter Registration', date: '2026-02-06', icon: '📝', critical: true },
       { name: 'Primary Day', date: '2026-03-03', icon: '🗳️', critical: true },
     ],
-    offices: ['U.S. Senate', 'U.S. House', 'State Legislature'],
+    offices: ['Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
+  },
+  {
+    id: 'nc-general-2026',
+    name: '2026 General Election',
+    date: '2026-11-03',
+    type: 'general',
+    icon: '🏛️',
+    description: 'Governor, US Senate, House, state legislature, and local offices',
+    state: 'NC',
+    deadlines: [
+      { name: 'Early Voting Begins', date: '2026-10-15', icon: '📅', critical: false },
+      { name: 'Voter Registration', date: '2026-10-09', icon: '📝', critical: true },
+      { name: 'Election Day', date: '2026-11-03', icon: '🗳️', critical: true },
+    ],
+    offices: ['Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
   },
 ];
 

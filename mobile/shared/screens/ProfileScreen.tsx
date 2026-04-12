@@ -6,21 +6,27 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Constants from 'expo-constants';
 import StreakCounter from '../../features/gamification/components/StreakCounter';
 import AchievementBadge from '../../features/gamification/components/AchievementBadge';
 import { useUser } from '../../features/auth/context/UserContext';
 import { userApi } from '../../features/auth/services/userApi';
 import { calculateLevel, getPointsForNextLevel } from '../../features/gamification/utils/gamification';
+import { openUrlSafely } from '../utils/openUrl';
 import { colors } from '../theme/colors';
+
+const PRIVACY_URL = 'https://votr.app/privacy';
+const TERMS_URL = 'https://votr.app/terms';
 
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { user, loading: userLoading, logout } = useUser();
+  const { user, loading: userLoading, logout, isAnonymous } = useUser();
   const [gamification, setGamification] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -98,11 +104,29 @@ const ProfileScreen: React.FC = () => {
         </Text>
         <TouchableOpacity
           onPress={() => (navigation as any).navigate('AddressEntry')}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityRole="button"
+          accessibilityLabel="Change voting address"
         >
           <Text style={styles.linkText}>Change address</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Elections link - demo alignment */}
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => (navigation as any).navigate('ElectionCalendar')}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="View upcoming elections and deadlines"
+      >
+        <View style={styles.faqRow}>
+          <Ionicons name="calendar-outline" size={22} color={colors.primary} />
+          <Text style={styles.faqTitle}>Upcoming Elections</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+        </View>
+        <Text style={styles.faqSubtitle}>View election calendar and deadlines</Text>
+      </TouchableOpacity>
 
       {/* Preferences - with edit */}
       <View style={styles.card}>
@@ -162,6 +186,45 @@ const ProfileScreen: React.FC = () => {
           </View>
         )}
       </View>
+
+      {/* Legal & Account */}
+      <View style={styles.footerSection}>
+        <TouchableOpacity
+          style={styles.footerLink}
+          onPress={() => openUrlSafely(PRIVACY_URL)}
+          accessibilityRole="link"
+          accessibilityLabel="Privacy Policy"
+        >
+          <Text style={styles.footerLinkText}>Privacy Policy</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.footerLink}
+          onPress={() => openUrlSafely(TERMS_URL)}
+          accessibilityRole="link"
+          accessibilityLabel="Terms of Service"
+        >
+          <Text style={styles.footerLinkText}>Terms of Service</Text>
+        </TouchableOpacity>
+        {!isAnonymous && (
+          <TouchableOpacity
+            style={styles.signOutButton}
+            onPress={() =>
+              Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Sign Out', style: 'destructive', onPress: () => logout() },
+              ])
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Sign out"
+          >
+            <Ionicons name="log-out-outline" size={18} color={colors.error} />
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </TouchableOpacity>
+        )}
+        <Text style={styles.versionText}>
+          VOTR v{Constants.expoConfig?.version ?? '1.0.0'}
+        </Text>
+      </View>
     </ScrollView>
   );
 };
@@ -198,7 +261,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderRadius: 10,
@@ -223,7 +286,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 12,
     padding: 14,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -297,6 +360,42 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 6,
     marginLeft: 34,
+  },
+  footerSection: {
+    marginHorizontal: 16,
+    marginTop: 24,
+    marginBottom: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    alignItems: 'center',
+    gap: 12,
+  },
+  footerLink: {
+    paddingVertical: 4,
+  },
+  footerLinkText: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  signOutText: {
+    fontSize: 14,
+    color: colors.error,
+    fontWeight: '600',
+  },
+  versionText: {
+    fontSize: 12,
+    color: colors.textTertiary,
+    marginTop: 8,
   },
 });
 

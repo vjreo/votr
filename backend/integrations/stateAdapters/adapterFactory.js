@@ -1,11 +1,10 @@
 /**
  * Data Source Adapter Factory
  * Creates appropriate adapter based on source type
+ * Google Civic API removed (deprecated April 2025)
  */
 
-import { GoogleCivicAdapter } from './googleCivicAdapter.js';
-// Import other adapters as they're created
-// import { StateBoardAdapter } from './stateBoardAdapter.js';
+import { DbOnlyAdapter } from './dbOnlyAdapter.js';
 
 const adapters = new Map();
 
@@ -38,8 +37,8 @@ export function getAdapter(sourceType) {
   return AdapterClass._instance;
 }
 
-// Register default adapters
-registerAdapter('google_civic_api', GoogleCivicAdapter);
+// Register adapters
+registerAdapter('db_only', DbOnlyAdapter);
 
 export default {
   registerAdapter,

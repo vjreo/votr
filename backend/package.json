@@ -8,11 +8,14 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "db:migrate": "node db/migrate.js",
+    "db:migrate:career": "node db/run-migration-005.js",
     "db:verify": "node db/verify.js",
     "db:seed": "node db/seed.js",
+    "db:seed:nc": "node db/seed-nc-candidates.js",
+    "db:seed:nc:force": "node db/seed-nc-candidates.js --force",
+    "db:seed:elections": "node db/seed-elections.js",
     "db:fix-feedback": "node db/fix-source-feedback.js",
-    "test:api": "node test-api.js",
-    "test:civic": "node test-civic-api.js"
+    "test:api": "node test-api.js"
   },
   "keywords": [],
   "author": "",
@@ -23,9 +26,10 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
-    "node-cron": "^3.0.3",
     "openai": "^4.104.0",
     "pg": "^8.11.3"
   },

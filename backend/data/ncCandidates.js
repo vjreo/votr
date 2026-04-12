@@ -127,7 +127,7 @@ export const NC_CANDIDATES = {
     },
   ],
 
-  // State Legislature - populated from Civic API or DB when available
+  // State Legislature - populated from Open States or DB when available
   stateLegislature: [],
 
   // Local - Charlotte/Mecklenburg (real candidates only)
@@ -160,7 +160,7 @@ export const NC_CANDIDATES = {
     },
   ],
 
-  // School Board - populated from Civic API or DB when available
+  // School Board - populated from Open States or DB when available
   schoolBoard: [],
 };
 

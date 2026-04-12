@@ -1,93 +1,78 @@
 /**
  * Candidate Data Cache
- * Simple in-memory cache for candidate data per state
- * Can be replaced with Redis for distributed systems
+ * Bounded in-memory LRU-style cache for candidate data per state.
+ * Capped at MAX_ENTRIES to prevent unbounded memory growth on long-running servers.
+ * Can be replaced with Redis for distributed / multi-instance deployments.
  */
 
+const DEFAULT_TTL = 30 * 60 * 1000; // 30 minutes
+const MAX_ENTRIES = 200; // ~200 state+office combinations before eviction
+
+// Map preserves insertion order, allowing LRU eviction by deleting the first key.
 const cache = new Map();
-const DEFAULT_TTL = 30 * 60 * 1000; // 30 minutes in milliseconds
 
-/**
- * Get cache key for state
- * @param {string} stateCode - State code
- * @param {string} office - Optional office filter
- * @returns {string} Cache key
- */
 function getCacheKey(stateCode, office = null) {
-  if (office) {
-    return `candidate:${stateCode.toUpperCase()}:${office}`;
-  }
-  return `candidate:${stateCode.toUpperCase()}:all`;
+  return office
+    ? `candidate:${stateCode.toUpperCase()}:${office}`
+    : `candidate:${stateCode.toUpperCase()}:all`;
 }
 
 /**
- * Get cached candidate data
- * @param {string} stateCode - State code
- * @param {string} office - Optional office filter
- * @returns {any|null} Cached data or null if expired/not found
+ * Get cached data. Returns null if missing or expired.
  */
 export function get(stateCode, office = null) {
-  const cacheKey = getCacheKey(stateCode, office);
-  const entry = cache.get(cacheKey);
+  const key = getCacheKey(stateCode, office);
+  const entry = cache.get(key);
+  if (!entry) return null;
 
-  if (!entry) {
-    return null;
-  }
-
-  // Check if expired
   if (Date.now() > entry.expiresAt) {
-    cache.delete(cacheKey);
+    cache.delete(key);
     return null;
   }
 
+  // Move to end (most-recently-used) for LRU semantics
+  cache.delete(key);
+  cache.set(key, entry);
   return entry.data;
 }
 
 /**
- * Set cached candidate data
- * @param {string} stateCode - State code
- * @param {any} data - Data to cache
- * @param {string} office - Optional office filter
- * @param {number} ttl - Time to live in milliseconds (default: 30 minutes)
+ * Cache candidate data. Evicts the oldest entry when the cap is reached.
  */
 export function set(stateCode, data, office = null, ttl = DEFAULT_TTL) {
-  const cacheKey = getCacheKey(stateCode, office);
-  cache.set(cacheKey, {
-    data,
-    expiresAt: Date.now() + ttl,
-  });
+  const key = getCacheKey(stateCode, office);
+
+  // Evict the oldest entry when at capacity
+  if (cache.size >= MAX_ENTRIES && !cache.has(key)) {
+    const oldestKey = cache.keys().next().value;
+    cache.delete(oldestKey);
+  }
+
+  cache.set(key, { data, expiresAt: Date.now() + ttl });
 }
 
 /**
- * Clear cache for a specific state
- * @param {string} stateCode - State code
- * @param {string} office - Optional specific office, or null to clear all for state
+ * Clear cache for a specific state (and optional office filter).
  */
 export function clear(stateCode, office = null) {
   if (office) {
-    const cacheKey = getCacheKey(stateCode, office);
-    cache.delete(cacheKey);
+    cache.delete(getCacheKey(stateCode, office));
   } else {
-    // Clear all entries for this state
     const prefix = `candidate:${stateCode.toUpperCase()}:`;
-    for (const [cacheKey] of cache.entries()) {
-      if (cacheKey.startsWith(prefix)) {
-        cache.delete(cacheKey);
-      }
+    for (const key of cache.keys()) {
+      if (key.startsWith(prefix)) cache.delete(key);
     }
   }
 }
 
-/**
- * Clear all cache
- */
+/** Clear the entire cache. */
 export function clearAll() {
   cache.clear();
 }
 
-export default {
-  get,
-  set,
-  clear,
-  clearAll,
-};
+/** Expose cache size for monitoring/health checks. */
+export function size() {
+  return cache.size;
+}
+
+export default { get, set, clear, clearAll, size };

@@ -3,6 +3,7 @@
     "name": "VOTR",
     "slug": "votr-app",
     "version": "1.0.0",
+    "privacy": "public",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,6 +15,9 @@
     },
     "ios": {
       "supportsTablet": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "VOTR needs your location to show candidates and elections in your area.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "VOTR needs your location to show candidates and elections in your area."

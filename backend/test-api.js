@@ -2,6 +2,7 @@ import axios from 'axios';
 import logger from './utils/logger.js';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000/api';
+const BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '') || 'http://localhost:3000';
 
 /**
  * Test API endpoints
@@ -18,7 +19,7 @@ async function testAPI() {
   tests.push({
     name: 'Health Check',
     test: async () => {
-      const response = await axios.get('http://localhost:3000/health');
+      const response = await axios.get(`${BASE_URL}/health`);
       return response.status === 200 && response.data.status === 'ok';
     },
   });
@@ -58,12 +59,34 @@ async function testAPI() {
     },
   });
 
+  // Test 4b: includeMatch requires authentication
+  tests.push({
+    name: 'Get Candidates includeMatch requires auth',
+    test: async () => {
+      try {
+        await axios.get(`${API_BASE_URL}/candidates?state=NC&includeMatch=true`);
+        return false;
+      } catch (error) {
+        return error.response?.status === 401;
+      }
+    },
+  });
+
   // Test 5: Get elections
   tests.push({
     name: 'Get Elections',
     test: async () => {
       const response = await axios.get(`${API_BASE_URL}/elections?state=NC`);
       return response.status === 200 && Array.isArray(response.data);
+    },
+  });
+
+  // Test 5b: Sample ballot
+  tests.push({
+    name: 'Sample Ballot',
+    test: async () => {
+      const response = await axios.get(`${API_BASE_URL}/sample-ballot?state=NC`);
+      return response.status === 200 && response.data.success === true && Array.isArray(response.data.contests);
     },
   });
 
@@ -104,14 +127,12 @@ async function testAPI() {
   tests.push({
     name: 'Login User',
     test: async () => {
-      // First register
-      const email = `test${Date.now()}@votr.app`;
+      const email = `login${Date.now()}@votr.app`;
       await axios.post(`${API_BASE_URL}/auth/register`, {
         email,
         password: 'testpassword123',
       });
-
-      // Then login
+      await new Promise((r) => setTimeout(r, 300));
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         email,
         password: 'testpassword123',

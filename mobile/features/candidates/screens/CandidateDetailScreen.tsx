@@ -18,6 +18,7 @@ import { candidateApi } from '../services/candidateApi';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { useGamification } from '../../../features/gamification/context/GamificationContext';
 import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
+import { logEvent } from '../../../shared/services/analytics';
 
 const { width } = Dimensions.get('window');
 
@@ -105,6 +106,7 @@ const CandidateDetailScreen: React.FC = () => {
       setLoading(true);
       const response = await candidateApi.getById(candidateId);
       setCandidate(response.data);
+      logEvent('candidate_detail_view', { candidateId });
     } catch (error) {
       console.warn('Error loading candidate:', error);
       setCandidate(null);
@@ -267,6 +269,17 @@ const CandidateDetailScreen: React.FC = () => {
         />
       </View>
 
+      {(!candidate.positions || candidate.positions.length === 0) && (
+        <View style={styles.limitedIssueBanner}>
+          <Ionicons name="information-circle-outline" size={18} color={colors.textSecondary} />
+          <Text style={styles.limitedIssueText}>
+            We don&apos;t have detailed issue positions for this candidate yet. Match scores need
+            overlapping issues in our data—sparse rows here mean a weaker or zero score, not a
+            personal rating.
+          </Text>
+        </View>
+      )}
+
       {/* Content */}
       <ScrollView
         style={styles.content}
@@ -359,7 +372,7 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   header: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surfaceElevated,
     paddingBottom: 20,
     alignItems: 'center',
     position: 'relative',
@@ -384,7 +397,7 @@ const styles = StyleSheet.create({
   },
   stripe2: {
     top: '40%',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
   },
   stripe3: {
     top: '60%',
@@ -437,8 +450,24 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   tabBarContainer: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     ...shadows.small,
+  },
+  limitedIssueBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: colors.primaryMuted,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  limitedIssueText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.textSecondary,
   },
   content: {
     flex: 1,
@@ -576,7 +605,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     padding: 16,
     ...shadows.medium,
   },

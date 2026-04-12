@@ -1,10 +1,10 @@
 {
   "default": {
-    "primary": "google_civic_api",
+    "primary": "db_only",
     "fallback": null
   },
   "NC": {
-    "primary": "google_civic_api",
+    "primary": "db_only",
     "fallback": null
   }
 }

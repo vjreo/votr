@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH - 48,
     height: 320,
     borderRadius: 24,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     position: 'absolute',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

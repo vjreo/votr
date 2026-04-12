@@ -26,6 +26,8 @@ export interface SampleBallotResponse {
 }
 
 export const sampleBallotApi = {
-  getByAddress: (location: string) =>
-    api.get<SampleBallotResponse>('/sample-ballot', { params: { location } }),
+  getByAddress: (location: string, options?: { state?: string; lat?: number; lng?: number }) =>
+    api.get<SampleBallotResponse>('/sample-ballot', {
+      params: { location, state: options?.state, lat: options?.lat, lng: options?.lng },
+    }),
 };

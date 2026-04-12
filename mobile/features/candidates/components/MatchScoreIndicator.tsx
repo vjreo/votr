@@ -1,59 +1,131 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../../../shared/theme/colors';
+/**
+ * MatchScoreIndicator — 2026 redesign
+ *
+ * Visual changes:
+ * - Animated arc ring that fills to the score percentage on mount
+ * - Warm palette: green / sand / clay instead of flat green/amber/red
+ * - Clean number + label layout; no redundant "%" inside the ring for small size
+ * - Accessible: score is announced via accessibilityLabel
+ */
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
+import { colors, typography } from '../../../shared/theme/colors';
 
 interface MatchScoreIndicatorProps {
-  score: number; // 0-100
+  score: number; // 0–100
   size?: 'small' | 'medium' | 'large';
   showLabel?: boolean;
+  animate?: boolean;
 }
+
+const SIZE_MAP = {
+  small:  { diameter: 44, stroke: 3,  fontSize: 13, labelSize: 10 },
+  medium: { diameter: 64, stroke: 4,  fontSize: 18, labelSize: 11 },
+  large:  { diameter: 96, stroke: 5,  fontSize: 26, labelSize: 12 },
+};
+
+function scoreColor(score: number): string {
+  if (score >= 75) return colors.matchHigh;   // sage green
+  if (score >= 50) return colors.sand;         // warm sand
+  if (score >= 25) return colors.clay;         // terracotta
+  return colors.matchLow;                      // error red
+}
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const MatchScoreIndicator: React.FC<MatchScoreIndicatorProps> = ({
   score,
   size = 'medium',
   showLabel = true,
+  animate = true,
 }) => {
-  const getColor = () => {
-    if (score >= 80) return colors.matchHigh; // Green
-    if (score >= 60) return colors.matchMedium; // Amber
-    if (score >= 40) return colors.warning; // Warning color
-    if (score >= 20) return colors.matchLow; // Red
-    return colors.matchLow; // Red
-  };
+  const clampedScore = Math.max(0, Math.min(100, Math.round(score)));
+  const config = SIZE_MAP[size];
+  const radius = (config.diameter - config.stroke * 2) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const color = scoreColor(clampedScore);
 
-  const getSizeStyles = () => {
-    switch (size) {
-      case 'small':
-        return { fontSize: 14, circleSize: 40 };
-      case 'large':
-        return { fontSize: 32, circleSize: 100 };
-      default:
-        return { fontSize: 20, circleSize: 60 };
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (animate) {
+      Animated.timing(progressAnim, {
+        toValue: clampedScore / 100,
+        duration: 800,
+        useNativeDriver: false,
+        delay: 100,
+      }).start();
+    } else {
+      progressAnim.setValue(clampedScore / 100);
     }
-  };
+  }, [clampedScore, animate, progressAnim]);
 
-  const sizeStyles = getSizeStyles();
+  const strokeDashoffset = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [circumference, 0],
+  });
+
+  const cx = config.diameter / 2;
+  const cy = config.diameter / 2;
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      accessibilityLabel={`Match score: ${clampedScore}%`}
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: clampedScore }}
+    >
+      {/* SVG arc ring */}
+      <Svg
+        width={config.diameter}
+        height={config.diameter}
+        style={StyleSheet.absoluteFill}
+      >
+        {/* Track */}
+        <Circle
+          cx={cx}
+          cy={cy}
+          r={radius}
+          strokeWidth={config.stroke}
+          stroke={colors.border}
+          fill="none"
+          rotation="-90"
+          originX={cx}
+          originY={cy}
+        />
+        {/* Progress */}
+        <AnimatedCircle
+          cx={cx}
+          cy={cy}
+          r={radius}
+          strokeWidth={config.stroke}
+          stroke={color}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          rotation="-90"
+          originX={cx}
+          originY={cy}
+        />
+      </Svg>
+
+      {/* Score label centered inside */}
       <View
         style={[
-          styles.circle,
-          {
-            width: sizeStyles.circleSize,
-            height: sizeStyles.circleSize,
-            borderRadius: sizeStyles.circleSize / 2,
-            borderColor: getColor(),
-          },
+          styles.labelWrapper,
+          { width: config.diameter, height: config.diameter },
         ]}
       >
-        <Text style={[styles.score, { fontSize: sizeStyles.fontSize, color: getColor() }]}>
-          {score}%
+        <Text style={[styles.score, { fontSize: config.fontSize, color }]}>
+          {clampedScore}
+          {size !== 'small' && <Text style={[styles.pct, { color }]}>%</Text>}
         </Text>
+        {showLabel && size !== 'small' && (
+          <Text style={[styles.matchLabel, { fontSize: config.labelSize }]}>Match</Text>
+        )}
       </View>
-      {showLabel && (
-        <Text style={styles.label}>Match</Text>
-      )}
     </View>
   );
 };
@@ -63,19 +135,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circle: {
-    borderWidth: 3,
+  labelWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white,
   },
   score: {
-    fontWeight: 'bold',
+    fontWeight: '700',
+    includeFontPadding: false,
   },
-  label: {
-    marginTop: 4,
-    fontSize: 12,
-    color: colors.textSecondary,
+  pct: {
+    fontWeight: '500',
+    fontSize: 11,
+  },
+  matchLabel: {
+    ...typography.caption2,
+    color: colors.textTertiary,
+    marginTop: 1,
     fontWeight: '500',
   },
 });

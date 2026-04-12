@@ -79,7 +79,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
         </View>
 
         <Animated.Text style={[styles.tagline, { opacity: taglineAnim }]}>
-          Your vote. Your voice.
+          Making democracy sexy. Discover candidates that match your values.
         </Animated.Text>
       </Animated.View>
 
@@ -95,13 +95,13 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.offWhite,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backgroundTint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.primary + '12',
+    backgroundColor: colors.primary + '08',
   },
   backgroundAccent: {
     position: 'absolute',
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '50%',
-    backgroundColor: colors.accent + '14',
+    backgroundColor: colors.primary + '0a',
   },
   logoContainer: {
     alignItems: 'center',
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: 18,
-    color: colors.textPrimary,
+    color: colors.textSecondary,
     marginTop: 18,
     letterSpacing: 2,
     fontWeight: '600',
@@ -154,23 +154,23 @@ const styles = StyleSheet.create({
     width: 320,
     height: 320,
     backgroundColor: colors.primary,
-    opacity: 0.08,
+    opacity: 0.12,
     bottom: -160,
     left: -80,
   },
   circle2: {
     width: 220,
     height: 220,
-    backgroundColor: colors.secondary,
-    opacity: 0.06,
+    backgroundColor: colors.moss,
+    opacity: 0.08,
     bottom: -80,
     right: -40,
   },
   circle3: {
     width: 160,
     height: 160,
-    backgroundColor: colors.accent,
-    opacity: 0.06,
+    backgroundColor: colors.primary,
+    opacity: 0.08,
     bottom: -40,
     left: width * 0.3,
   },

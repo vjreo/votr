@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     ...shadows.small,
   },
   backButton: {
@@ -537,9 +537,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   funFactContainer: {
-    backgroundColor: '#FFF9E6',
+    backgroundColor: 'rgba(245,166,35,0.15)',
     borderLeftWidth: 4,
-    borderLeftColor: colors.accent,
+    borderLeftColor: colors.primary,
     padding: 14,
     borderRadius: borderRadius.md,
     marginBottom: 16,
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
   funFactLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#B8860B',
+    color: colors.primary,
     marginBottom: 6,
   },
   funFactText: {
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
   upcomingLesson: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     padding: 12,
     borderRadius: borderRadius.lg,
     marginBottom: 10,
@@ -728,7 +728,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   celebrationContent: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     padding: 32,
     borderRadius: borderRadius.xl,
     alignItems: 'center',

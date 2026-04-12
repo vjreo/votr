@@ -34,7 +34,7 @@ export class NCStateHandler extends BaseStateHandler {
    */
   getDataSources() {
     return {
-      primary: 'google_civic_api',
+      primary: 'db_only',
       fallback: null, // Could add NC Board of Elections API if available
     };
   }

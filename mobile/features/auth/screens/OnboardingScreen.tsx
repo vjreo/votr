@@ -10,7 +10,8 @@ import {
 import IssueSwipeCard from '../components/IssueSwipeCard';
 import { useUser } from '../context/UserContext';
 import { ISSUES } from '../../../shared/data/issues';
-import { colors } from '../../../shared/theme/colors';
+import { colors, borderRadius } from '../../../shared/theme/colors';
+import { logEvent } from '../../../shared/services/analytics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -47,6 +48,7 @@ const OnboardingScreen: React.FC = () => {
       }));
 
       await updatePreferences(preferences);
+      logEvent('onboarding_preferences_saved', { issueCount: preferences.length });
       // Parent re-renders when user state updates; no navigation needed
     } catch (error) {
       console.error('Error saving preferences:', error);
@@ -61,9 +63,9 @@ const OnboardingScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>What matters to you?</Text>
+        <Text style={styles.title}>Swipe on Issues That Matter</Text>
         <Text style={styles.subtitle}>
-          Swipe right on issues you care about. Swipe left to skip.
+          Tell us what you care about. Climate, healthcare, education—swipe right to rank your priorities.
         </Text>
       </View>
 
@@ -165,7 +167,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: 48,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: borderRadius.full,
   },
   buttonDisabled: {
     backgroundColor: colors.border,

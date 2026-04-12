@@ -1,16 +1,26 @@
-import React from 'react';
+/**
+ * CandidateCard — 2026 redesign
+ *
+ * Visual changes:
+ * - Party pill chip with color-coded border (DEM / REP / IND)
+ * - Animated scale spring on press (physical feedback)
+ * - Photo ring border inherits party color for instant visual grouping
+ * - Selected state: amber glow border + checkmark overlay
+ * - Bento-style row: compact avatar | name + meta | actions
+ */
+import React, { useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Image,
   TouchableOpacity,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, borderRadius, shadows } from '../../../shared/theme/colors';
+import { colors, borderRadius, typography } from '../../../shared/theme/colors';
 
 interface CandidateCardProps {
-  id: string;
   name: string;
   party: string;
   photo?: string;
@@ -19,10 +29,33 @@ interface CandidateCardProps {
   onCompare?: () => void;
   selected?: boolean;
   size?: 'small' | 'medium' | 'large';
+  /** 0–100 when loaded with includeMatch */
+  matchScore?: number | null;
 }
 
+function getPartyColor(party: string = ''): string {
+  const p = party.toLowerCase();
+  if (p.includes('democrat')) return colors.democrat;
+  if (p.includes('republican')) return colors.republican;
+  if (p.includes('independent')) return colors.independent;
+  return colors.other;
+}
+
+function getPartyLabel(party: string = ''): string {
+  const p = party.toLowerCase();
+  if (p.includes('democrat')) return 'DEM';
+  if (p.includes('republican')) return 'REP';
+  if (p.includes('independent')) return 'IND';
+  return party.slice(0, 3).toUpperCase() || '—';
+}
+
+const PHOTO_SIZES: Record<string, number> = {
+  small: 40,
+  medium: 52,
+  large: 72,
+};
+
 const CandidateCard: React.FC<CandidateCardProps> = ({
-  id,
   name,
   party,
   photo,
@@ -31,141 +64,237 @@ const CandidateCard: React.FC<CandidateCardProps> = ({
   onCompare,
   selected = false,
   size = 'medium',
+  matchScore,
 }) => {
-  const getPartyColor = () => {
-    return colors.textSecondary;
-  };
+  const scale = useRef(new Animated.Value(1)).current;
 
-  const getPhotoSize = () => {
-    switch (size) {
-      case 'small':
-        return 40;
-      case 'large':
-        return 80;
-      default:
-        return 56;
-    }
-  };
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scale, {
+      toValue: 0.97,
+      useNativeDriver: true,
+      speed: 40,
+      bounciness: 2,
+    }).start();
+  }, [scale]);
 
-  const photoSize = getPhotoSize();
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 30,
+      bounciness: 5,
+    }).start();
+  }, [scale]);
+
+  const partyColor = getPartyColor(party);
+  const partyLabel = getPartyLabel(party);
+  const photoSize = PHOTO_SIZES[size] ?? PHOTO_SIZES.medium;
+  const avatarRadius = photoSize / 2;
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.container,
-        shadows.small as any,
-        selected && styles.selected,
-      ]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View style={styles.content}>
-        <View style={[styles.photoContainer, { width: photoSize, height: photoSize }]}>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <TouchableOpacity
+        style={[styles.container, selected && styles.containerSelected]}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+        accessibilityRole="button"
+        accessibilityLabel={`${name}, ${party}${office ? `, ${office}` : ''}`}
+        accessibilityState={{ selected }}
+      >
+        {/* Avatar */}
+        <View
+          style={[
+            styles.avatarRing,
+            {
+              width: photoSize + 4,
+              height: photoSize + 4,
+              borderRadius: avatarRadius + 2,
+              borderColor: selected ? colors.primary : partyColor,
+            },
+          ]}
+        >
           {photo ? (
             <Image
               source={{ uri: photo }}
-              style={[styles.photo, { width: photoSize, height: photoSize, borderRadius: photoSize / 2 }]}
+              style={[
+                styles.photo,
+                { width: photoSize, height: photoSize, borderRadius: avatarRadius },
+              ]}
             />
           ) : (
-            <View style={[styles.photoPlaceholder, { width: photoSize, height: photoSize, borderRadius: photoSize / 2 }]}>
-              <Ionicons name="person" size={photoSize / 2} color={colors.textTertiary} />
+            <View
+              style={[
+                styles.photoPlaceholder,
+                {
+                  width: photoSize,
+                  height: photoSize,
+                  borderRadius: avatarRadius,
+                  backgroundColor: partyColor + '22',
+                },
+              ]}
+            >
+              <Ionicons name="person" size={photoSize * 0.45} color={partyColor} />
             </View>
           )}
         </View>
 
+        {/* Info */}
         <View style={styles.info}>
           <Text style={styles.name} numberOfLines={1}>{name}</Text>
-          <Text style={[styles.party, { color: getPartyColor() }]} numberOfLines={1}>
-            {party}
-          </Text>
-          {office && size !== 'small' && (
-            <Text style={styles.office} numberOfLines={1}>{office}</Text>
-          )}
+
+          <View style={styles.metaRow}>
+            <View style={[styles.partyChip, { borderColor: partyColor }]}>
+              <Text style={[styles.partyChipText, { color: partyColor }]}>{partyLabel}</Text>
+            </View>
+            {matchScore != null && (
+              <View
+                style={[
+                  styles.matchChip,
+                  matchScore === 0 && styles.matchChipLowSignal,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.matchChipText,
+                    matchScore === 0 && styles.matchChipTextLowSignal,
+                  ]}
+                >
+                  {matchScore === 0 ? 'Low overlap' : `${matchScore}% match`}
+                </Text>
+              </View>
+            )}
+            {office && size !== 'small' && (
+              <Text style={styles.office} numberOfLines={1}>{office}</Text>
+            )}
+          </View>
         </View>
 
+        {/* Actions */}
         <View style={styles.actions}>
           {onCompare && (
             <TouchableOpacity
               style={styles.compareButton}
               onPress={(e) => {
-                e.stopPropagation?.();
+                e?.stopPropagation?.();
                 onCompare();
               }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel="Add to compare"
             >
-              <Ionicons name="git-compare-outline" size={20} color={colors.textSecondary} />
+              <Ionicons
+                name="git-compare-outline"
+                size={20}
+                color={selected ? colors.primary : colors.textTertiary}
+              />
             </TouchableOpacity>
           )}
-          <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-        </View>
-      </View>
 
-      {selected && (
-        <View style={styles.selectedIndicator}>
-          <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+          {selected ? (
+            <Ionicons name="checkmark-circle" size={22} color={colors.primary} />
+          ) : (
+            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+          )}
         </View>
-      )}
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    padding: 12,
-    marginBottom: 8,
-  },
-  selected: {
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  content: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 8,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  photoContainer: {
-    marginRight: 12,
+  containerSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryMuted,
+  },
+  avatarRing: {
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   photo: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surfaceElevated,
   },
   photoPlaceholder: {
-    backgroundColor: colors.background,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   info: {
     flex: 1,
-    marginRight: 8,
   },
   name: {
-    fontSize: 16,
+    ...typography.callout,
     fontWeight: '600',
     color: colors.textPrimary,
-    marginBottom: 2,
+    marginBottom: 4,
   },
-  party: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  office: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  actions: {
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  compareButton: {
-    padding: 4,
+  partyChip: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    backgroundColor: 'transparent',
   },
-  selectedIndicator: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
+  partyChipText: {
+    ...typography.caption2,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  matchChip: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primaryMuted,
+    borderWidth: 1,
+    borderColor: colors.primary + '55',
+  },
+  matchChipText: {
+    ...typography.caption2,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  matchChipLowSignal: {
+    borderColor: colors.textTertiary + '66',
+    backgroundColor: colors.surfaceElevated,
+  },
+  matchChipTextLowSignal: {
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  office: {
+    ...typography.caption1,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  compareButton: {
+    padding: 2,
   },
 });
 

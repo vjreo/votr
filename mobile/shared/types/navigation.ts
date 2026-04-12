@@ -1,6 +1,7 @@
 // Navigation types for the app
 export type RootStackParamList = {
   MainTabs: undefined;
+  DiscoverList: undefined;
   AddressEntry: undefined;
   Onboarding: undefined;
   PreferencesEdit: undefined;

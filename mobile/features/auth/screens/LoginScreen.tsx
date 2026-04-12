@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useUser } from '../context/UserContext';
+import { getApiErrorMessage } from '../../../shared/services/api';
 import { colors } from '../../../shared/theme/colors';
 
 const LoginScreen: React.FC = () => {
@@ -56,9 +57,9 @@ const LoginScreen: React.FC = () => {
         }
       }
       
-      navigation.navigate('Home' as never);
+      navigation.goBack();
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.error || 'Failed to authenticate');
+      Alert.alert('Error', getApiErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -131,7 +132,7 @@ const LoginScreen: React.FC = () => {
 
         <TouchableOpacity
           style={styles.skipButton}
-          onPress={() => navigation.navigate('Home' as never)}
+          onPress={() => navigation.goBack()}
         >
           <Text style={styles.skipText}>Continue as guest</Text>
         </TouchableOpacity>
@@ -143,7 +144,7 @@ const LoginScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     padding: 20,
     paddingTop: 60,
   },

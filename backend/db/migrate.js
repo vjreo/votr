@@ -8,7 +8,8 @@ const __dirname = path.dirname(__filename);
 
 async function migrate() {
   console.log('Running database migrations...\n');
-  
+  console.log('(Uses schema.sql as single source of truth)\n');
+
   const schemaPath = path.join(__dirname, 'schema.sql');
   let schema = fs.readFileSync(schemaPath, 'utf8');
   

@@ -76,10 +76,14 @@ export default function SampleBallotScreen() {
 
       setCandidates(grouped);
 
-      // Also try sample ballot API (raw ballot from Civic - may have data when candidates don't)
-      if (userAddress) {
+      // Sample ballot API (built from Open States + curated candidates)
+      if (userAddress || user?.location?.latitude) {
         try {
-          const ballotRes = await sampleBallotApi.getByAddress(userAddress);
+          const ballotRes = await sampleBallotApi.getByAddress(userAddress || '', {
+            state: userState,
+            lat: user?.location?.latitude,
+            lng: user?.location?.longitude,
+          });
           const data = ballotRes.data;
           if (data?.success && data.contests?.length) {
             setBallotContests(data.contests);
@@ -258,7 +262,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
@@ -370,7 +374,7 @@ const styles = StyleSheet.create({
   officialSection: {
     marginTop: 8,
     padding: 16,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     ...shadows.small,
   },

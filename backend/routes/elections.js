@@ -5,115 +5,92 @@ import { getStateHandler } from '../services/stateHandlers/stateRegistry.js';
 import electionRepository from '../repositories/electionRepository.js';
 import electionCache from '../services/cache/electionCache.js';
 import adapterFactory from '../integrations/stateAdapters/adapterFactory.js';
+import { authenticateToken } from '../middleware/auth.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = express.Router();
 
 /**
  * GET /api/elections
- * Get upcoming elections
+ * Upcoming elections for a state and optional district.
  * Query params: state, district
  */
-router.get('/', async (req, res, next) => {
-  const { state = DEFAULTS.STATE, district } = req.query;
-  const stateCode = state.toUpperCase();
+router.get(
+  '/',
+  asyncHandler(async (req, res) => {
+    const { state = DEFAULTS.STATE, district } = req.query;
 
-  // Check cache first
-  const cacheKey = district ? `district:${district}` : 'all';
-  const cached = electionCache.get(stateCode, cacheKey);
-  if (cached) {
-    return res.json(cached);
-  }
+    if (typeof state !== 'string' || state.length !== 2) {
+      return res.status(400).json({ error: 'state must be a 2-letter code' });
+    }
 
-  // Get state handler
-  const stateHandler = getStateHandler(stateCode);
+    const stateCode = state.toUpperCase();
+    const cacheKey = district ? `district:${district}` : 'all';
+    const cached = electionCache.get(stateCode, cacheKey);
+    if (cached) return res.json(cached);
 
-  // Try database first
-  const dbElections = await electionRepository.findByState(stateCode, {
-    district,
-    minDate: new Date(),
-  });
+    const stateHandler = getStateHandler(stateCode);
 
-  if (dbElections.length > 0) {
-    // Cache and return
-    electionCache.set(stateCode, dbElections, cacheKey);
-    return res.json(dbElections);
-  }
+    const dbElections = await electionRepository.findByState(stateCode, { district, minDate: new Date() });
+    if (dbElections.length > 0) {
+      electionCache.set(stateCode, dbElections, cacheKey);
+      return res.json(dbElections);
+    }
 
-  // Fetch from API if not in database
-  try {
-    const dataSources = stateHandler.getDataSources();
-    const adapter = adapterFactory.getAdapter(dataSources.primary);
+    // Try adapter as fallback
+    try {
+      const dataSources = stateHandler.getDataSources();
+      const adapter = adapterFactory.getAdapter(dataSources.primary);
+      const electionsData = await adapter.getElections();
+      const filtered = stateHandler.filterElections(electionsData);
 
-    const electionsData = await adapter.getElections();
-    
-    // Filter elections using state handler
-    const filteredElections = stateHandler.filterElections(electionsData);
+      const toStore = filtered.map((e) => ({
+        name: e.name,
+        date: e.electionDay,
+        type: DEFAULTS.ELECTION_TYPE,
+        state: stateCode,
+        district: district || null,
+        offices: [],
+      }));
 
-    // Normalize and store elections
-    const electionsToStore = filteredElections.map(election => ({
-      name: election.name,
-      date: election.electionDay,
-      type: DEFAULTS.ELECTION_TYPE,
-      state: stateCode,
-      district: district || null,
-      offices: [],
-    }));
+      await electionRepository.bulkUpsert(toStore);
 
-    await electionRepository.bulkUpsert(electionsToStore);
-
-    // Fetch stored elections
-    const storedElections = await electionRepository.findByState(stateCode, {
-      district,
-      minDate: new Date(),
-    });
-
-    // Cache and return
-    electionCache.set(stateCode, storedElections, cacheKey);
-    res.json(storedElections);
-  } catch (apiError) {
-    // API errors are non-fatal - return empty array
-    res.json([]);
-  }
-});
+      const stored = await electionRepository.findByState(stateCode, { district, minDate: new Date() });
+      electionCache.set(stateCode, stored, cacheKey);
+      return res.json(stored);
+    } catch {
+      // Adapter failure is non-fatal; return empty list
+      return res.json([]);
+    }
+  })
+);
 
 /**
  * GET /api/elections/upcoming
- * Get upcoming elections for a user's location
- * Query params: userId
+ * Upcoming elections for the authenticated user's saved location.
+ * Requires: authentication (userId comes from token, not query string)
  */
-router.get('/upcoming', async (req, res) => {
-  const { userId } = req.query;
+router.get(
+  '/upcoming',
+  authenticateToken,
+  asyncHandler(async (req, res) => {
+    const userResult = await pool.query('SELECT location FROM users WHERE id = $1', [req.userId]);
+    const location = userResult.rows[0]?.location;
 
-  if (!userId) {
-    return res.status(400).json({ error: 'userId is required' });
-  }
+    if (!location || !location.state) {
+      return res.status(400).json({ error: 'User location not set' });
+    }
 
-  // Get user location
-  const userResult = await pool.query('SELECT location FROM users WHERE id = $1', [userId]);
-  const location = userResult.rows[0]?.location;
+    const stateCode = location.state.toUpperCase();
+    const cached = electionCache.get(stateCode, 'upcoming');
+    if (cached) {
+      return res.json(cached.slice(0, DEFAULTS.UPCOMING_ELECTIONS_LIMIT));
+    }
 
-  if (!location || !location.state) {
-    return res.status(400).json({ error: 'User location not set' });
-  }
-
-  const stateCode = location.state.toUpperCase();
-
-  // Check cache
-  const cached = electionCache.get(stateCode, 'upcoming');
-  if (cached) {
-    return res.json(cached.slice(0, DEFAULTS.UPCOMING_ELECTIONS_LIMIT));
-  }
-
-  // Get upcoming elections using repository
-  const elections = await electionRepository.findUpcoming(
-    stateCode,
-    DEFAULTS.UPCOMING_ELECTIONS_LIMIT
-  );
-
-  // Cache and return
-  electionCache.set(stateCode, elections, 'upcoming');
-  res.json(elections);
-});
+    const elections = await electionRepository.findUpcoming(stateCode, DEFAULTS.UPCOMING_ELECTIONS_LIMIT);
+    electionCache.set(stateCode, elections, 'upcoming');
+    res.json(elections);
+  })
+);
 
 export default router;
-

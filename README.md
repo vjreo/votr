@@ -33,7 +33,7 @@ votr/
 
 - Node.js 18+ and npm
 - PostgreSQL database
-- Google Civic Information API key
+- Open States API key (free; for NC legislators)
 - Expo CLI (for mobile development)
 
 ### Backend Setup
@@ -137,7 +137,7 @@ The backend requires the following environment variables (see `.env.example` for
 
 - `PORT` - Server port (default: 3000)
 - `DATABASE_URL` - PostgreSQL connection string
-- `GOOGLE_CIVIC_API_KEY` - Google Civic Information API key
+- `OPEN_STATES_API_KEY` - Open States API key (for NC legislators; free at openstates.org)
 - `JWT_SECRET` - Secret key for JWT token generation
 - `JWT_EXPIRES_IN` - JWT token expiration time (default: 15m)
 - `HUGGINGFACE_API_KEY` - Hugging Face API key (optional)
@@ -150,7 +150,7 @@ The backend requires the following environment variables (see `.env.example` for
 ### Backend
 - Node.js/Express
 - PostgreSQL
-- Google Civic Information API
+- Open States API (NC legislators)
 - ML bias detection (placeholder for integration)
 
 ### Mobile
@@ -162,22 +162,19 @@ The backend requires the following environment variables (see `.env.example` for
 
 ## Real Election Data (North Carolina)
 
-To pull live candidates and elections for NC:
+To pull live candidates for NC:
 
-1. **Get a Google Civic API key** (free tier available):
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create/select a project → APIs & Services → Enable **Civic Information API**
-   - Create credentials (API key) and copy the key
-   - Add to `backend/.env`: `GOOGLE_CIVIC_API_KEY=your-actual-key`
+1. **Get an Open States API key** (free):
+   - Sign up at [Open States](https://openstates.org/accounts/signup/)
+   - Go to Profile → API Key
+   - Add to `backend/.env`: `OPEN_STATES_API_KEY=your-key`
 
-2. **Enter your voting address** when the app prompts during onboarding. The address is used to fetch your district-specific ballot from the Civic API.
-
-3. **Test the integration**:
+2. **Seed curated candidates** (Governor, US Senate, local):
    ```bash
-   cd backend && node test-civic-api.js
+   cd backend && npm run db:seed && npm run db:seed:nc:force
    ```
 
-4. **Flow**: FeedScreen passes your address to the API when loading candidates. If the DB is empty, the backend fetches from Google Civic, stores candidates, and returns them. Subsequent loads use the cache/database.
+3. **Enter your voting address** in Profile. The app uses Open States for state legislators and the DB for governor, senate, and local offices.
 
 ## Launch & Demo
 

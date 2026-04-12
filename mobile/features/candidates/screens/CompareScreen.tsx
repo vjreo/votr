@@ -16,6 +16,7 @@ import { candidateApi } from '../services/candidateApi';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { useGamification } from '../../../features/gamification/context/GamificationContext';
 import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
+import { logEvent } from '../../../shared/services/analytics';
 
 // Comparison categories
 const COMPARE_TABS = [
@@ -73,6 +74,10 @@ const CompareScreen: React.FC = () => {
   useEffect(() => {
     // Record comparison for gamification
     if (candidates.length === 2) {
+      logEvent('compare_opened', {
+        a: candidateIds[0],
+        b: candidateIds[1],
+      });
       recordComparison(candidateIds);
       unlockAchievement('first_compare');
     }
@@ -401,7 +406,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     ...shadows.small,
   },
   backButton: {
@@ -424,7 +429,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 24,
     paddingHorizontal: 20,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
   },
   candidatePhotoContainer: {
     flex: 1,
@@ -485,7 +490,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   tabBarContainer: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
@@ -499,7 +504,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   compareRow: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: 16,
     ...shadows.small,
@@ -576,7 +581,7 @@ const styles = StyleSheet.create({
   },
   backgroundColumn: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: 16,
     ...shadows.small,

@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { openUrlSafely } from '../../../shared/utils/openUrl';
+import { colors } from '../../../shared/theme/colors';
 
 // NC County data with election office info
 const NC_COUNTIES = [
@@ -138,7 +139,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
 
   const searchNearbyLocations = () => {
     // In a real app, this would call the NC State Board of Elections API
-    // or Google Civic Information API
+    // or Open States / state Board of Elections
     setSearchResults(EARLY_VOTING_LOCATIONS.map((loc, index) => ({
       ...loc,
       distance: `${(0.5 + index * 1.2).toFixed(1)} mi`,
@@ -176,7 +177,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
           <Ionicons
             name={location.type === 'early' ? 'calendar' : 'location'}
             size={24}
-            color="#6366F1"
+            color={colors.primary}
           />
         </View>
         <View style={styles.locationInfo}>
@@ -189,11 +190,11 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
 
       <View style={styles.locationDetails}>
         <View style={styles.detailRow}>
-          <Ionicons name="navigate-outline" size={16} color="#6B7280" />
+          <Ionicons name="navigate-outline" size={16} color={colors.textSecondary} />
           <Text style={styles.detailText}>{location.address}</Text>
         </View>
         <View style={styles.detailRow}>
-          <Ionicons name="time-outline" size={16} color="#6B7280" />
+          <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
           <Text style={styles.detailText}>{location.hours}</Text>
         </View>
       </View>
@@ -203,7 +204,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
           style={styles.actionButton}
           onPress={() => openInMaps(location.address)}
         >
-          <Ionicons name="navigate" size={18} color="#fff" />
+          <Ionicons name="navigate" size={18} color={colors.white} />
           <Text style={styles.actionButtonText}>Get Directions</Text>
         </TouchableOpacity>
       </View>
@@ -219,7 +220,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#111827" />
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Find Your Polling Place</Text>
         </View>
@@ -228,11 +229,11 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
         <View style={styles.searchSection}>
           <Text style={styles.searchLabel}>Enter your registered address</Text>
           <View style={styles.searchInputContainer}>
-            <Ionicons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
+            <Ionicons name="search" size={20} color={colors.textTertiary} style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
               placeholder="123 Main St, Charlotte, NC"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textTertiary}
               value={address}
               onChangeText={setAddress}
               returnKeyType="search"
@@ -246,10 +247,10 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.white} />
             ) : (
               <>
-                <Ionicons name="search" size={20} color="#fff" />
+                <Ionicons name="search" size={20} color={colors.white} />
                 <Text style={styles.searchButtonText}>Find Polling Place</Text>
               </>
             )}
@@ -266,7 +267,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
             onPress={requestLocation}
             disabled={isLoading}
           >
-            <Ionicons name="locate" size={20} color="#6366F1" />
+            <Ionicons name="locate" size={20} color={colors.primary} />
             <Text style={styles.locationButtonText}>Use My Current Location</Text>
           </TouchableOpacity>
         </View>
@@ -279,8 +280,8 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
               style={styles.quickLinkCard}
               onPress={openNCPollingPlaceLookup}
             >
-              <View style={[styles.quickLinkIcon, { backgroundColor: '#EEF2FF' }]}>
-                <Ionicons name="location" size={24} color="#6366F1" />
+              <View style={[styles.quickLinkIcon, { backgroundColor: colors.primary + '20' }]}>
+                <Ionicons name="location" size={24} color={colors.primary} />
               </View>
               <Text style={styles.quickLinkTitle}>Official Lookup</Text>
               <Text style={styles.quickLinkSubtitle}>NC State Board</Text>
@@ -290,8 +291,8 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
               style={styles.quickLinkCard}
               onPress={openNCVoterSearch}
             >
-              <View style={[styles.quickLinkIcon, { backgroundColor: '#FEF3C7' }]}>
-                <Ionicons name="person" size={24} color="#D97706" />
+              <View style={[styles.quickLinkIcon, { backgroundColor: colors.primary + '20' }]}>
+                <Ionicons name="person" size={24} color={colors.primary} />
               </View>
               <Text style={styles.quickLinkTitle}>Verify Registration</Text>
               <Text style={styles.quickLinkSubtitle}>Check your status</Text>
@@ -301,8 +302,8 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
               style={styles.quickLinkCard}
               onPress={() => openUrlSafely('https://www.ncsbe.gov/voting/vote-mail')}
             >
-              <View style={[styles.quickLinkIcon, { backgroundColor: '#DCFCE7' }]}>
-                <Ionicons name="mail" size={24} color="#16A34A" />
+              <View style={[styles.quickLinkIcon, { backgroundColor: colors.success + '20' }]}>
+                <Ionicons name="mail" size={24} color={colors.success} />
               </View>
               <Text style={styles.quickLinkTitle}>Absentee Ballot</Text>
               <Text style={styles.quickLinkSubtitle}>Vote by mail</Text>
@@ -312,8 +313,8 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
               style={styles.quickLinkCard}
               onPress={() => navigation.navigate('SampleBallot')}
             >
-              <View style={[styles.quickLinkIcon, { backgroundColor: '#EEF2FF' }]}>
-                <Ionicons name="document-text" size={24} color="#6366F1" />
+              <View style={[styles.quickLinkIcon, { backgroundColor: colors.primary + '20' }]}>
+                <Ionicons name="document-text" size={24} color={colors.primary} />
               </View>
               <Text style={styles.quickLinkTitle}>Sample Ballot</Text>
               <Text style={styles.quickLinkSubtitle}>Preview your races</Text>
@@ -359,7 +360,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
             {selectedTab === 'polling' && (
               <View style={styles.electionDayInfo}>
                 <View style={styles.infoCard}>
-                  <Ionicons name="information-circle" size={24} color="#6366F1" />
+                  <Ionicons name="information-circle" size={24} color={colors.primary} />
                   <View style={styles.infoContent}>
                     <Text style={styles.infoTitle}>Election Day Polling</Text>
                     <Text style={styles.infoText}>
@@ -371,7 +372,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
                       onPress={openNCPollingPlaceLookup}
                     >
                       <Text style={styles.infoButtonText}>Find My Precinct</Text>
-                      <Ionicons name="open-outline" size={16} color="#6366F1" />
+                      <Ionicons name="open-outline" size={16} color={colors.primary} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -404,7 +405,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
                     onPress={() => openUrlSafely('https://www.ncsbe.gov/voting/vote-mail')}
                   >
                     <Text style={styles.infoButtonText}>Learn About Absentee Voting</Text>
-                    <Ionicons name="open-outline" size={16} color="#6366F1" />
+                    <Ionicons name="open-outline" size={16} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -433,7 +434,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
                 <Text style={styles.countyName}>{county.name}</Text>
                 <Text style={styles.countySeat}>{county.seat}</Text>
                 <View style={styles.countyPhone}>
-                  <Ionicons name="call-outline" size={14} color="#6366F1" />
+                  <Ionicons name="call-outline" size={14} color={colors.primary} />
                   <Text style={styles.countyPhoneText}>{county.phone}</Text>
                 </View>
               </TouchableOpacity>
@@ -445,7 +446,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
         <View style={styles.reminderSection}>
           <View style={styles.reminderCard}>
             <View style={styles.reminderIcon}>
-              <Ionicons name="calendar" size={32} color="#fff" />
+              <Ionicons name="calendar" size={32} color={colors.white} />
             </View>
             <View style={styles.reminderContent}>
               <Text style={styles.reminderTitle}>Don't Forget!</Text>
@@ -467,7 +468,7 @@ export default function PollingPlaceFinderScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -481,10 +482,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.textPrimary,
   },
   searchSection: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     marginHorizontal: 20,
     padding: 20,
     borderRadius: 16,
@@ -496,13 +497,13 @@ const styles = StyleSheet.create({
   },
   searchLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.backgroundLight,
     borderRadius: 12,
     paddingHorizontal: 12,
   },
@@ -513,20 +514,20 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#111827',
+    color: colors.textPrimary,
   },
   searchButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#6366F1',
+    backgroundColor: colors.primary,
     paddingVertical: 14,
     borderRadius: 12,
     marginTop: 12,
     gap: 8,
   },
   searchButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -538,10 +539,10 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: colors.border,
   },
   dividerText: {
-    color: '#9CA3AF',
+    color: colors.textTertiary,
     paddingHorizontal: 12,
     fontSize: 14,
   },
@@ -549,13 +550,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF2FF',
+    backgroundColor: colors.primary + '20',
     paddingVertical: 14,
     borderRadius: 12,
     gap: 8,
   },
   locationButtonText: {
-    color: '#6366F1',
+    color: colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -566,12 +567,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginBottom: 16,
   },
   quickLinksGrid: {
@@ -582,7 +583,7 @@ const styles = StyleSheet.create({
   },
   quickLinkCard: {
     width: '47%',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     padding: 16,
     borderRadius: 12,
     shadowColor: '#000',
@@ -602,11 +603,11 @@ const styles = StyleSheet.create({
   quickLinkTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.textPrimary,
   },
   quickLinkSubtitle: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   tabsSection: {
@@ -615,7 +616,7 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
-    backgroundColor: '#E5E7EB',
+    backgroundColor: colors.backgroundLight,
     borderRadius: 12,
     padding: 4,
   },
@@ -626,7 +627,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   activeTab: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -635,11 +636,11 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   activeTabText: {
-    color: '#111827',
+    color: colors.textPrimary,
     fontWeight: '600',
   },
   resultsSection: {
@@ -649,16 +650,16 @@ const styles = StyleSheet.create({
   resultsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   resultsSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginBottom: 16,
   },
   locationCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -677,7 +678,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: colors.primary + '20',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -688,11 +689,11 @@ const styles = StyleSheet.create({
   locationName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.textPrimary,
   },
   locationDistance: {
     fontSize: 14,
-    color: '#6366F1',
+    color: colors.primary,
     fontWeight: '500',
     marginTop: 2,
   },
@@ -708,7 +709,7 @@ const styles = StyleSheet.create({
   detailText: {
     flex: 1,
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
   },
   locationActions: {
     flexDirection: 'row',
@@ -719,13 +720,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#6366F1',
+    backgroundColor: colors.primary,
     paddingVertical: 10,
     borderRadius: 10,
     gap: 6,
   },
   actionButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -734,7 +735,7 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
     gap: 12,
@@ -750,12 +751,12 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.textPrimary,
     marginBottom: 8,
   },
   infoText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   infoButton: {
@@ -767,7 +768,7 @@ const styles = StyleSheet.create({
   infoButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6366F1',
+    color: colors.primary,
   },
   countySection: {
     paddingHorizontal: 20,
@@ -778,7 +779,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   countyCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     width: 160,
@@ -791,11 +792,11 @@ const styles = StyleSheet.create({
   countyName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.textPrimary,
   },
   countySeat: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   countyPhone: {
@@ -806,7 +807,7 @@ const styles = StyleSheet.create({
   },
   countyPhoneText: {
     fontSize: 12,
-    color: '#6366F1',
+    color: colors.primary,
   },
   reminderSection: {
     paddingHorizontal: 20,
@@ -814,7 +815,7 @@ const styles = StyleSheet.create({
   },
   reminderCard: {
     flexDirection: 'row',
-    backgroundColor: '#6366F1',
+    backgroundColor: colors.primary,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
@@ -834,7 +835,7 @@ const styles = StyleSheet.create({
   reminderTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.white,
     marginBottom: 4,
   },
   reminderText: {

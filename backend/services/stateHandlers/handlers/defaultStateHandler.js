@@ -1,7 +1,7 @@
 /**
  * Default State Handler
  * Fallback handler for states without specific implementations
- * Uses generic logic and Google Civic API
+ * Uses generic logic and db_only adapter
  */
 
 import { BaseStateHandler } from '../baseStateHandler.js';
@@ -24,11 +24,11 @@ export class DefaultStateHandler extends BaseStateHandler {
   }
 
   /**
-   * Default data sources - Google Civic API
+   * Default data sources - db_only (elections from seed)
    */
   getDataSources() {
     return {
-      primary: 'google_civic_api',
+      primary: 'db_only',
       fallback: null,
     };
   }

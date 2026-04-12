@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     padding: 12,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,

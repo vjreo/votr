@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './shared/types/navigation'; // Navigation type declarations
-import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -8,10 +8,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { UserProvider, useUser } from './features/auth/context/UserContext';
-import api, { API_BASE_URL } from './shared/services/api';
 import { GamificationProvider } from './features/gamification/context/GamificationContext';
-import * as Location from 'expo-location';
 import { colors } from './shared/theme/colors';
+import { features } from './shared/config/features';
 
 // Shared Screens
 import SplashScreen from './shared/screens/SplashScreen';
@@ -45,7 +44,7 @@ import SampleBallotScreen from './features/elections/screens/SampleBallotScreen'
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Bottom Tab Navigator
+// Bottom Tab Navigator — MVP mode: Match + Shortlist + Profile (no Discover/Journey tabs)
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -54,7 +53,7 @@ function MainTabs() {
         tabBarInactiveTintColor: colors.textTertiary,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.white,
+          backgroundColor: 'rgba(0,0,0,0.6)',
           borderTopColor: colors.border,
           paddingTop: 8,
           paddingBottom: 8,
@@ -70,42 +69,46 @@ function MainTabs() {
         name="Feed"
         component={FeedScreen}
         options={{
-          tabBarLabel: 'Feed',
+          tabBarLabel: features.mvpMode ? 'Match' : 'Feed',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="newspaper-outline" size={size} color={color} />
+            <Ionicons name={features.mvpMode ? 'heart-outline' : 'newspaper-outline'} size={size} color={color} />
           ),
         }}
       />
-      <Tab.Screen
-        name="Search"
-        component={HomeScreen}
-        options={{
-          tabBarLabel: 'Discover',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="compass-outline" size={size} color={color} />
-          ),
-        }}
-      />
+      {features.showDiscoverTab ? (
+        <Tab.Screen
+          name="Discover"
+          component={HomeScreen}
+          options={{
+            tabBarLabel: 'Discover',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="compass-outline" size={size} color={color} />
+            ),
+          }}
+        />
+      ) : null}
       <Tab.Screen
         name="Roster"
         component={RosterScreen}
         options={{
-          tabBarLabel: 'My Roster',
+          tabBarLabel: features.mvpMode ? 'Shortlist' : 'My Roster',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="checkbox-outline" size={size} color={color} />
           ),
         }}
       />
-      <Tab.Screen
-        name="Journey"
-        component={JourneyScreen}
-        options={{
-          tabBarLabel: 'Journey',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="trophy-outline" size={size} color={color} />
-          ),
-        }}
-      />
+      {features.showJourneyTab ? (
+        <Tab.Screen
+          name="Journey"
+          component={JourneyScreen}
+          options={{
+            tabBarLabel: 'Journey',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="trophy-outline" size={size} color={color} />
+            ),
+          }}
+        />
+      ) : null}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
@@ -122,44 +125,11 @@ function MainTabs() {
 
 // Main App Navigator
 function AppNavigator() {
-  const { user, loading, hasLocation, updateLocation, createAnonymousUser } = useUser();
+  const { user, loading, hasLocation } = useUser();
   const [showSplash, setShowSplash] = useState(true);
 
-  useEffect(() => {
-    // Auto-detect location only when user exists and has no location yet
-    if (user && !hasLocation) {
-      requestLocationPermission();
-    }
-  }, [user?.id, hasLocation]);
-
-  const requestLocationPermission = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted' || !user) return;
-
-      const location = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = location.coords;
-
-      const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
-      const address = geocode[0];
-
-      if (user && address) {
-        await updateLocation({
-          latitude,
-          longitude,
-          address: `${address?.street || ''} ${address?.city || ''}, ${address?.region || ''} ${address?.postalCode || ''}`.trim(),
-          city: address?.city,
-          state: address?.region || '',
-          zipCode: address?.postalCode,
-        });
-      }
-    } catch (error: any) {
-      // Rate limit or permission denied - fail silently; user can enter address manually
-      if (__DEV__ && error?.message) {
-        console.warn('Auto-location failed:', error.message);
-      }
-    }
-  };
+  // Location is set only when user explicitly enters address in AddressEntryScreen.
+  // No auto-detect—we default to NC until user enters their voting address.
 
   // Show splash screen
   if (showSplash) {
@@ -210,6 +180,14 @@ function AppNavigator() {
           <>
             <Stack.Screen name="MainTabs" component={MainTabs} />
             <Stack.Screen
+              name="DiscoverList"
+              component={HomeScreen}
+              options={{
+                presentation: 'card',
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
               name="Login"
               component={LoginScreen}
               options={{
@@ -230,6 +208,10 @@ function AppNavigator() {
                 presentation: 'modal',
                 headerShown: true,
                 title: 'About Bias Indicators',
+                headerBackTitle: 'Back',
+                headerStyle: { backgroundColor: colors.background },
+                headerTintColor: colors.textPrimary,
+                headerTitleStyle: { color: colors.textPrimary, fontWeight: '600' },
               }}
             />
             <Stack.Screen
@@ -314,42 +296,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
     padding: 24,
-  },
-  retryTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 8,
-  },
-  retrySubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  retryButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  apiUrl: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginBottom: 8,
-  },
-  apiHint: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 16,
-    textAlign: 'center',
   },
 });
 
@@ -358,7 +306,7 @@ export default function App() {
     <SafeAreaProvider>
       <UserProvider>
         <GamificationProvider>
-          <StatusBar style="auto" />
+          <StatusBar style="light" />
           <AppNavigator />
         </GamificationProvider>
       </UserProvider>
