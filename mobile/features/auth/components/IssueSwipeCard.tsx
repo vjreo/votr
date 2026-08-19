@@ -37,7 +37,7 @@ const IssueSwipeCard: React.FC<IssueSwipeCardProps> = ({
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => index === 0,
       onPanResponderMove: (_, gestureState) => {
         position.setValue({ x: gestureState.dx, y: gestureState.dy });
       },
@@ -113,11 +113,11 @@ const IssueSwipeCard: React.FC<IssueSwipeCardProps> = ({
           zIndex: 100 - index,
         },
       ]}
-      {...panResponder.panHandlers}
+      {...(index === 0 ? panResponder.panHandlers : {})}
     >
       <View style={styles.content}>
         <Text style={styles.issueName}>{issue.name}</Text>
-        <Text style={styles.hint}>Swipe right if it matters to you</Text>
+        <Text style={styles.hint}>Swipe right if it matters to you, or use the buttons below</Text>
       </View>
 
       <Animated.View style={[styles.likeLabel, { opacity: likeOpacity }]} pointerEvents="none">

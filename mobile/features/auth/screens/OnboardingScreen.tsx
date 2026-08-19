@@ -12,17 +12,19 @@ import { useUser } from '../context/UserContext';
 import { ISSUES } from '../../../shared/data/issues';
 import { colors, borderRadius } from '../../../shared/theme/colors';
 import { logEvent } from '../../../shared/services/analytics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const OnboardingScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const { updatePreferences } = useUser();
   const [deck, setDeck] = useState<typeof ISSUES>([...ISSUES]);
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const handleSwipeRight = (issue: { id: string; name: string }) => {
-    setSelectedIssues((prev) => [...prev, issue.id]);
+    setSelectedIssues((prev) => (prev.includes(issue.id) ? prev : [...prev, issue.id]));
   };
 
   const handleSwipeLeft = (_issue: { id: string }) => {
@@ -61,11 +63,11 @@ const OnboardingScreen: React.FC = () => {
   const canContinue = selectedIssues.length > 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 16, paddingBottom: insets.bottom }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Swipe on Issues That Matter</Text>
         <Text style={styles.subtitle}>
-          Tell us what you care about. Climate, healthcare, education—swipe right to rank your priorities.
+          Tap “I care” or swipe right on issues that matter. We’ll match you with candidates who share those priorities.
         </Text>
       </View>
 
@@ -104,13 +106,43 @@ const OnboardingScreen: React.FC = () => {
 
       {deck.length > 0 && (
         <View style={styles.footer}>
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={[styles.choiceButton, styles.passButton]}
+              onPress={() => {
+                const top = deck[0];
+                if (!top) return;
+                handleSwipeLeft(top);
+                handleAnimationComplete(top);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Pass on this issue"
+            >
+              <Text style={styles.passButtonText}>Pass</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.choiceButton, styles.careButton]}
+              onPress={() => {
+                const top = deck[0];
+                if (!top) return;
+                handleSwipeRight(top);
+                handleAnimationComplete(top);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="I care about this issue"
+            >
+              <Text style={styles.careButtonText}>I care</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.counter}>
-            {selectedIssues.length} selected • {deck.length} left
+            {selectedIssues.length} selected · {deck.length} left
           </Text>
           {selectedIssues.length > 0 && (
             <TouchableOpacity
               style={styles.skipButton}
               onPress={() => setDeck([])}
+              accessibilityRole="button"
+              accessibilityLabel="Done selecting issues"
             >
               <Text style={styles.skipButtonText}>I'm done</Text>
             </TouchableOpacity>
@@ -125,7 +157,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: 60,
+    paddingTop: 0,
   },
   header: {
     paddingHorizontal: 24,
@@ -182,6 +214,40 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     alignItems: 'center',
     gap: 12,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+    marginBottom: 4,
+  },
+  choiceButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  passButton: {
+    backgroundColor: colors.errorMuted,
+    borderWidth: 1,
+    borderColor: colors.swipePass + '55',
+  },
+  careButton: {
+    backgroundColor: colors.successMuted,
+    borderWidth: 1,
+    borderColor: colors.swipeLike + '55',
+  },
+  passButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.swipePass,
+  },
+  careButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.swipeLike,
   },
   counter: {
     fontSize: 14,

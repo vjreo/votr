@@ -19,6 +19,7 @@ import { userApi } from '../../features/auth/services/userApi';
 import { calculateLevel, getPointsForNextLevel } from '../../features/gamification/utils/gamification';
 import { openUrlSafely } from '../utils/openUrl';
 import { colors } from '../theme/colors';
+import { features } from '../config/features';
 
 const PRIVACY_URL = 'https://votr.app/privacy';
 const TERMS_URL = 'https://votr.app/terms';
@@ -31,6 +32,11 @@ const ProfileScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (features.mvpMode) {
+      setGamification({ points: 0, streak: 0, badges: [] });
+      setLoading(false);
+      return;
+    }
     loadGamification();
   }, [user]);
 
@@ -80,21 +86,40 @@ const ProfileScreen: React.FC = () => {
         <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
-      {/* Stats row - compact */}
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{points}</Text>
-          <Text style={styles.statLabel}>Points</Text>
+      {/* Stats row - compact (full app only) */}
+      {!features.mvpMode && (
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{points}</Text>
+            <Text style={styles.statLabel}>Points</Text>
+          </View>
+          <View style={styles.statCard}>
+            <StreakCounter streak={streak} size="small" />
+            <Text style={styles.statLabel}>Streak</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{level}</Text>
+            <Text style={styles.statLabel}>Level · {pointsToNext} to next</Text>
+          </View>
         </View>
-        <View style={styles.statCard}>
-          <StreakCounter streak={streak} size="small" />
-          <Text style={styles.statLabel}>Streak</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{level}</Text>
-          <Text style={styles.statLabel}>Level · {pointsToNext} to next</Text>
-        </View>
-      </View>
+      )}
+
+      {isAnonymous && (
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => (navigation as any).navigate('Login')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Sign in to save your shortlist"
+        >
+          <View style={styles.faqRow}>
+            <Ionicons name="log-in-outline" size={22} color={colors.primary} />
+            <Text style={styles.faqTitle}>Sign in</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+          </View>
+          <Text style={styles.faqSubtitle}>Save your shortlist across devices</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Voting address - compact */}
       <View style={styles.card}>
@@ -112,7 +137,7 @@ const ProfileScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Elections link - demo alignment */}
+      {/* Elections + polling */}
       <TouchableOpacity
         style={styles.card}
         onPress={() => (navigation as any).navigate('ElectionCalendar')}
@@ -126,6 +151,36 @@ const ProfileScreen: React.FC = () => {
           <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
         </View>
         <Text style={styles.faqSubtitle}>View election calendar and deadlines</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => (navigation as any).navigate('SampleBallot')}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="View sample ballot"
+      >
+        <View style={styles.faqRow}>
+          <Ionicons name="document-text-outline" size={22} color={colors.primary} />
+          <Text style={styles.faqTitle}>Sample ballot</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+        </View>
+        <Text style={styles.faqSubtitle}>Preview races on your ballot</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => (navigation as any).navigate('PollingPlaceFinder')}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="Find your polling place"
+      >
+        <View style={styles.faqRow}>
+          <Ionicons name="navigate-outline" size={22} color={colors.primary} />
+          <Text style={styles.faqTitle}>Find polling place</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+        </View>
+        <Text style={styles.faqSubtitle}>Where to vote in your area</Text>
       </TouchableOpacity>
 
       {/* Preferences - with edit */}
@@ -166,26 +221,28 @@ const ProfileScreen: React.FC = () => {
         <Text style={styles.faqSubtitle}>Learn how we assess source reliability</Text>
       </TouchableOpacity>
 
-      {/* Achievements - compact */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Achievements</Text>
-        {badges.length === 0 ? (
-          <Text style={styles.emptyText}>Keep engaging to earn badges.</Text>
-        ) : (
-          <View style={styles.badgeRow}>
-            {badges.slice(0, 6).map((badge: any) => (
-              <AchievementBadge
-                key={badge.id || badge.type}
-                type={badge.type}
-                name={badge.name}
-                description={badge.description}
-                unlocked={true}
-                unlockedAt={badge.unlockedAt ? new Date(badge.unlockedAt) : undefined}
-              />
-            ))}
-          </View>
-        )}
-      </View>
+      {/* Achievements - full app only */}
+      {!features.mvpMode && (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Achievements</Text>
+          {badges.length === 0 ? (
+            <Text style={styles.emptyText}>Keep engaging to earn badges.</Text>
+          ) : (
+            <View style={styles.badgeRow}>
+              {badges.slice(0, 6).map((badge: any) => (
+                <AchievementBadge
+                  key={badge.id || badge.type}
+                  type={badge.type}
+                  name={badge.name}
+                  description={badge.description}
+                  unlocked={true}
+                  unlockedAt={badge.unlockedAt ? new Date(badge.unlockedAt) : undefined}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+      )}
 
       {/* Legal & Account */}
       <View style={styles.footerSection}>

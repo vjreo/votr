@@ -6,14 +6,18 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Share,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Card } from '../../../shared/components/ui';
 import { useUser } from '../../../features/auth/context/UserContext';
-import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
+import { colors, shadows } from '../../../shared/theme/colors';
 import { features } from '../../../shared/config/features';
+import { getNextElection } from '../../../shared/data/upcomingElections';
+import { DEFAULT_STATE } from '../../../shared/constants';
 
 interface RosterCandidate {
   id: string;
@@ -26,7 +30,7 @@ interface RosterCandidate {
 const RosterScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { roster, removeFromRoster } = useUser();
+  const { roster, removeFromRoster, user } = useUser();
 
   // Group candidates by office type
   const groupedRoster = (roster || []).reduce((acc: Record<string, RosterCandidate[]>, candidate: RosterCandidate) => {
@@ -46,13 +50,34 @@ const RosterScreen: React.FC = () => {
     removeFromRoster?.(candidateId);
   };
 
+  const handleShare = async () => {
+    const lines = (roster || [])
+      .map((c) => `• ${c.name}${c.office ? ` — ${c.office}` : ''}`)
+      .join('\n');
+    try {
+      await Share.share({
+        message: `My VOTR shortlist:\n\n${lines}`,
+      });
+    } catch {
+      Alert.alert('Couldn’t share', 'Try again in a moment.');
+    }
+  };
+
   const isEmpty = !roster || roster.length === 0;
+  const nextElection = getNextElection(user?.location?.state || DEFAULT_STATE);
+  const electionLabel = nextElection
+    ? new Date(nextElection.date).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : null;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Build Your Voting List</Text>
+        <Text style={styles.title}>{features.mvpMode ? 'Your Shortlist' : 'Build Your Voting List'}</Text>
         {!isEmpty && (
           <Text style={styles.subtitle}>
             {roster.length} candidate{roster.length !== 1 ? 's' : ''} selected
@@ -134,33 +159,25 @@ const RosterScreen: React.FC = () => {
               </View>
             ))}
 
-            {/* Share/Export section */}
             <View style={styles.actionsSection}>
-              <Text style={styles.actionsSectionTitle}>Share Your Choices</Text>
-              <View style={styles.actionsRow}>
-                <TouchableOpacity style={styles.actionButton}>
-                  <Ionicons name="share-outline" size={24} color={colors.primary} />
-                  <Text style={styles.actionButtonText}>Share</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton}>
-                  <Ionicons name="print-outline" size={24} color={colors.primary} />
-                  <Text style={styles.actionButtonText}>Print</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton}>
-                  <Ionicons name="download-outline" size={24} color={colors.primary} />
-                  <Text style={styles.actionButtonText}>Save</Text>
-                </TouchableOpacity>
-              </View>
+              <Button
+                title="Share shortlist"
+                onPress={handleShare}
+                fullWidth
+                variant="secondary"
+                icon={<Ionicons name="share-outline" size={20} color={colors.primary} />}
+              />
             </View>
 
-            {/* Election day reminder */}
             <Card variant="outlined" style={styles.reminderCard}>
               <View style={styles.reminderContent}>
                 <Ionicons name="calendar-outline" size={32} color={colors.primary} />
                 <View style={styles.reminderText}>
-                  <Text style={styles.reminderTitle}>Election Day</Text>
+                  <Text style={styles.reminderTitle}>
+                    {electionLabel ? `Election Day · ${electionLabel}` : 'Election Day'}
+                  </Text>
                   <Text style={styles.reminderSubtitle}>
-                    Don't forget to bring this list on election day!
+                    Bring this shortlist with you to the polls.
                   </Text>
                 </View>
               </View>
@@ -296,32 +313,6 @@ const styles = StyleSheet.create({
   actionsSection: {
     marginTop: 8,
     marginBottom: 24,
-  },
-  actionsSectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 12,
-    paddingLeft: 4,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: 16,
-    ...shadows.small,
-  },
-  actionButton: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  actionButtonText: {
-    fontSize: 12,
-    color: colors.primary,
-    fontWeight: '500',
   },
   reminderCard: {
     backgroundColor: colors.primary + '10',

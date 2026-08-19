@@ -19,6 +19,7 @@ import { useUser } from '../../../features/auth/context/UserContext';
 import { useGamification } from '../../../features/gamification/context/GamificationContext';
 import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
 import { logEvent } from '../../../shared/services/analytics';
+import { features } from '../../../shared/config/features';
 
 const { width } = Dimensions.get('window');
 
@@ -236,8 +237,10 @@ const CandidateDetailScreen: React.FC = () => {
 
         {/* Back button */}
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { top: insets.top + 8 }]}
           onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <Ionicons name="chevron-back" size={28} color={colors.white} />
         </TouchableOpacity>
@@ -301,7 +304,15 @@ const CandidateDetailScreen: React.FC = () => {
       {/* Bottom action */}
       <View style={[styles.bottomAction, { paddingBottom: insets.bottom + 16 }]}>
         <Button
-          title={inRoster ? 'Remove from Roster' : 'Add Candidate'}
+          title={
+            inRoster
+              ? features.mvpMode
+                ? 'Remove from Shortlist'
+                : 'Remove from Roster'
+              : features.mvpMode
+                ? 'Add to Shortlist'
+                : 'Add Candidate'
+          }
           onPress={handleToggleRoster}
           variant={inRoster ? 'outline' : 'primary'}
           fullWidth
@@ -405,7 +416,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 50,
     left: 16,
     zIndex: 10,
     width: 40,

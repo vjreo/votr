@@ -239,7 +239,7 @@ const AddressEntryScreen: React.FC = () => {
           </View>
 
           <Button
-            title={isUpdateMode ? 'Save address' : 'Compare'}
+            title={isUpdateMode ? 'Save address' : 'See my ballot'}
             onPress={handleCompare}
             loading={loading}
             fullWidth
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     color: colors.textSecondary,
-    lineHeight: 1.6,
+    lineHeight: 24,
     marginBottom: 24,
     textAlign: 'center',
   },

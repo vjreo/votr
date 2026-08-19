@@ -53,11 +53,10 @@ function MainTabs() {
         tabBarInactiveTintColor: colors.textTertiary,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: 'rgba(0,0,0,0.6)',
+          backgroundColor: colors.surface,
           borderTopColor: colors.border,
-          paddingTop: 8,
-          paddingBottom: 8,
-          height: 60,
+          borderTopWidth: 1,
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
           fontSize: 11,

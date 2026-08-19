@@ -8,7 +8,7 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { CategorySection, Button } from '../../../shared/components/ui';
@@ -16,8 +16,8 @@ import CandidateCard from '../components/CandidateCard';
 import SwipeableCard from '../components/SwipeableCard';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { candidateApi } from '../services/candidateApi';
-import { getNextElection, getUpcomingDeadlines } from '../../../shared/data/upcomingElections';
-import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
+import { getNextElection } from '../../../shared/data/upcomingElections';
+import { colors, borderRadius } from '../../../shared/theme/colors';
 import { DEFAULT_STATE } from '../../../shared/constants';
 import { features } from '../../../shared/config/features';
 import type { Candidate } from '../../../shared/types';
@@ -39,10 +39,9 @@ const getDaysUntil = (dateString: string): number => {
 
 const formatDate = (dateString: string): string => {
   const d = new Date(dateString);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-// Office levels
 const OFFICE_LEVELS = [
   {
     key: 'federal',
@@ -53,19 +52,19 @@ const OFFICE_LEVELS = [
   {
     key: 'state',
     title: 'Governor',
-    description: 'State Governors are elected by the people. Governors are responsible for implementing state laws and overseeing the operation of the state executive branch.',
+    description: 'Governors implement state laws and run the state executive branch.',
     icon: '🏛️',
   },
   {
     key: 'state_legislature',
     title: 'State Legislature',
-    description: 'State legislators create and vote on state laws that affect your daily life.',
+    description: 'State legislators create and vote on state laws.',
     icon: '📜',
   },
   {
     key: 'local',
     title: 'Local Offices',
-    description: 'Local officials handle city and county governance, schools, and community services.',
+    description: 'Local officials handle city, county, schools, and community services.',
     icon: '🏘️',
   },
 ];
@@ -73,7 +72,7 @@ const OFFICE_LEVELS = [
 const FeedScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { user, accessToken } = useUser();
+  const { user, accessToken, addToRoster, isInRoster, roster } = useUser();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -84,13 +83,16 @@ const FeedScreen: React.FC = () => {
   const { selectedForComparison, handleToggleComparison, handleCompare } =
     useCandidatePairCompare();
   const [matchDeck, setMatchDeck] = useState<Candidate[]>([]);
+  const [hasHadDeck, setHasHadDeck] = useState(false);
+
+  const passedIdsRef = React.useRef<Set<string>>(new Set());
+  const locationKeyRef = React.useRef<string>('');
+  const loadInProgressRef = React.useRef(false);
 
   const userState = user?.location?.state || DEFAULT_STATE;
   const userAddress = user?.location?.address;
   const nextElection = getNextElection(userState);
-  const upcomingDeadlines = getUpcomingDeadlines(userState, 3);
-
-  const loadInProgressRef = React.useRef(false);
+  const locationKey = `${userState}|${userAddress || ''}|${user?.location?.latitude || ''}|${user?.location?.longitude || ''}`;
 
   const loadCandidates = React.useCallback(async () => {
     if (loadInProgressRef.current) return;
@@ -124,7 +126,12 @@ const FeedScreen: React.FC = () => {
 
       const rows = (response.data || []) as Record<string, unknown>[];
       if (useMatch && rows.length > 0) {
-        setMatchDeck(rows.slice(0, 8).map((r) => toSwipeCandidate(r, userState)));
+        const deck = rows
+          .map((r) => toSwipeCandidate(r, userState))
+          .filter((c) => !passedIdsRef.current.has(c.id))
+          .slice(0, 12);
+        setMatchDeck(deck);
+        if (deck.length > 0) setHasHadDeck(true);
       } else {
         setMatchDeck([]);
       }
@@ -146,12 +153,14 @@ const FeedScreen: React.FC = () => {
     user?.location?.longitude,
   ]);
 
-  // Single source: refetch on focus (includes initial mount). No separate useEffect.
-  useFocusEffect(
-    React.useCallback(() => {
-      loadCandidates();
-    }, [loadCandidates])
-  );
+  React.useEffect(() => {
+    if (locationKeyRef.current && locationKeyRef.current !== locationKey) {
+      passedIdsRef.current = new Set();
+      setHasHadDeck(false);
+    }
+    locationKeyRef.current = locationKey;
+    loadCandidates();
+  }, [loadCandidates, locationKey]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -169,7 +178,30 @@ const FeedScreen: React.FC = () => {
     setMatchDeck((prev) => prev.filter((c) => c.id !== id));
   };
 
-  const renderOfficeSection = (level: typeof OFFICE_LEVELS[0]) => {
+  const handlePass = (id: string) => {
+    passedIdsRef.current.add(id);
+    popMatchDeck(id);
+  };
+
+  const handleLike = (candidate: Candidate) => {
+    passedIdsRef.current.add(candidate.id);
+    addToRoster({
+      id: candidate.id,
+      name: candidate.name,
+      party: candidate.party || '',
+      office: candidate.office,
+      photo: candidate.photo,
+    });
+    popMatchDeck(candidate.id);
+  };
+
+  const visibleDeck = matchDeck.filter((c) => !isInRoster(c.id));
+  const topCard = visibleDeck[0];
+  const deckFinished = hasHadDeck && visibleDeck.length === 0;
+  const hasBallotCandidates = Object.values(candidates).some((arr) => arr.length > 0);
+  const showOfficeLists = !features.mvpMode || (!hasHadDeck && visibleDeck.length === 0);
+
+  const renderOfficeSection = (level: (typeof OFFICE_LEVELS)[0]) => {
     const levelCandidates = candidates[level.key] || [];
 
     if (levelCandidates.length === 0 && !loading) {
@@ -214,19 +246,28 @@ const FeedScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <View style={styles.headerContent}>
-          <View style={styles.locationContainer}>
+          <TouchableOpacity
+            style={styles.locationContainer}
+            onPress={() => navigation.navigate('AddressEntry')}
+            accessibilityRole="button"
+            accessibilityLabel="Change voting address"
+          >
             <Ionicons name="location" size={20} color={colors.primary} />
             <Text style={styles.locationText}>{userState || DEFAULT_STATE}</Text>
-          </View>
-          <View style={styles.headerIcons}>
-            <Ionicons name="notifications-outline" size={24} color={colors.textPrimary} />
-          </View>
+            <Ionicons name="chevron-down" size={16} color={colors.textTertiary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ElectionCalendar')}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityRole="button"
+            accessibilityLabel="Election calendar"
+          >
+            <Ionicons name="calendar-outline" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
         </View>
 
-        {/* Opens full browse (stack) when Discover tab is hidden in MVP mode */}
         <TouchableOpacity
           style={styles.searchContainer}
           onPress={openBrowse}
@@ -240,7 +281,6 @@ const FeedScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Content */}
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
@@ -256,99 +296,47 @@ const FeedScreen: React.FC = () => {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Loading what&apos;s near you...</Text>
+            <Text style={styles.loadingText}>Finding candidates on your ballot...</Text>
           </View>
         ) : (
           <>
             {nextElection && (
-              <View style={styles.nextElectionCard}>
-                <View style={styles.nextElectionTop}>
-                  <Text style={styles.nextElectionIcon}>{nextElection.icon}</Text>
-                  <View style={styles.nextElectionMeta}>
-                    <Text style={styles.nextElectionName}>{nextElection.name}</Text>
-                    <Text style={styles.nextElectionDate}>{formatDate(nextElection.date)}</Text>
-                  </View>
-                  <View style={styles.countdownBadge}>
-                    <Text style={styles.countdownNumber}>
-                      {getDaysUntil(nextElection.date)}
-                    </Text>
-                    <Text style={styles.countdownLabel}>days</Text>
-                  </View>
+              <TouchableOpacity
+                style={styles.electionChip}
+                onPress={() => navigation.navigate('ElectionCalendar')}
+                accessibilityRole="button"
+                accessibilityLabel={`${nextElection.name}, ${formatDate(nextElection.date)}`}
+              >
+                <Text style={styles.electionChipIcon}>{nextElection.icon}</Text>
+                <View style={styles.electionChipMeta}>
+                  <Text style={styles.electionChipName} numberOfLines={1}>
+                    {nextElection.name}
+                  </Text>
+                  <Text style={styles.electionChipDate}>
+                    {formatDate(nextElection.date)} · {getDaysUntil(nextElection.date)} days
+                  </Text>
                 </View>
-                <Text style={styles.nextElectionDesc}>{nextElection.description}</Text>
-                <View style={styles.nextElectionOffices}>
-                  {nextElection.offices.slice(0, 3).map((office, i) => (
-                    <Text key={i} style={styles.officeChip}>{office}</Text>
-                  ))}
-                  {nextElection.offices.length > 3 && (
-                    <Text style={styles.officeChip}>+{nextElection.offices.length - 3} more</Text>
-                  )}
-                </View>
-                <View style={styles.feedCardActions}>
-                  <TouchableOpacity
-                    style={styles.viewCalendarRow}
-                    onPress={() => navigation.navigate('SampleBallot')}
-                  >
-                    <Text style={styles.viewCalendarText}>View sample ballot</Text>
-                    <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.viewCalendarRow}
-                    onPress={() => navigation.navigate('ElectionCalendar')}
-                  >
-                    <Text style={styles.viewCalendarText}>Full calendar</Text>
-                    <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-                  </TouchableOpacity>
-                </View>
-              </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+              </TouchableOpacity>
             )}
 
-            {upcomingDeadlines.length > 0 && (
-              <View style={styles.deadlinesSection}>
-                <Text style={styles.deadlinesTitle}>Key deadlines</Text>
-                {upcomingDeadlines.map(({ deadline, election }, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      styles.deadlineRow,
-                      i === upcomingDeadlines.length - 1 && styles.deadlineRowLast,
-                    ]}
-                  >
-                    <Text style={styles.deadlineIcon}>{deadline.icon}</Text>
-                    <View style={styles.deadlineContent}>
-                      <Text style={styles.deadlineName}>{deadline.name}</Text>
-                      <Text style={styles.deadlineMeta}>
-                        {formatDate(deadline.date)} · {getDaysUntil(deadline.date)} days
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {(user?.preferences?.length ?? 0) > 0 && !loading && (
-              <Text style={styles.matchExplainer}>
-                Match scores use your issue picks and positions we have on file. Few overlapping
-                issues or thin public data can lower scores—that reflects data limits, not a value
-                judgment.
-              </Text>
-            )}
-
-            {matchDeck.length > 0 && (
+            {visibleDeck.length > 0 && (
               <View style={styles.matchDeckBlock}>
-                <Text style={styles.matchDeckTitle}>Top matches for you</Text>
+                <Text style={styles.matchDeckTitle}>
+                  {features.mvpMode ? 'Your matches' : 'Top matches for you'}
+                </Text>
                 <Text style={styles.matchDeckHint}>
-                  Swipe to skip, or swipe up to read more. Sorted by fit with your issue picks.
+                  Right or ♥ adds them to your shortlist. Left skips. Up or ℹ to read more.
                 </Text>
                 <View style={styles.matchDeckStack}>
-                  {matchDeck.slice(0, 3).map((c, index) => (
+                  {visibleDeck.slice(0, 3).map((c, index) => (
                     <SwipeableCard
                       key={c.id}
                       candidate={c}
                       matchScore={c.matchScore}
                       index={index}
-                      onSwipeLeft={() => popMatchDeck(c.id)}
-                      onSwipeRight={() => popMatchDeck(c.id)}
+                      onSwipeLeft={() => handlePass(c.id)}
+                      onSwipeRight={() => handleLike(c)}
                       onSwipeUp={() =>
                         navigation.navigate('CandidateDetail' as never, {
                           candidateId: c.id,
@@ -357,40 +345,84 @@ const FeedScreen: React.FC = () => {
                     />
                   ))}
                 </View>
+                {topCard && (
+                  <View style={styles.matchActions}>
+                    <TouchableOpacity
+                      style={[styles.matchActionBtn, styles.matchActionPass]}
+                      onPress={() => handlePass(topCard.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Pass on ${topCard.name}`}
+                    >
+                      <Ionicons name="close" size={28} color={colors.swipePass} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.matchActionBtn, styles.matchActionMore]}
+                      onPress={() =>
+                        navigation.navigate('CandidateDetail' as never, {
+                          candidateId: topCard.id,
+                        } as never)
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={`Learn more about ${topCard.name}`}
+                    >
+                      <Ionicons name="information" size={26} color={colors.textPrimary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.matchActionBtn, styles.matchActionLike]}
+                      onPress={() => handleLike(topCard)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Add ${topCard.name} to shortlist`}
+                    >
+                      <Ionicons name="heart" size={26} color={colors.swipeLike} />
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             )}
 
-            {!nextElection && upcomingDeadlines.length === 0 && (
-              <TouchableOpacity
-                style={styles.nextElectionCard}
-                onPress={() => navigation.navigate('ElectionCalendar')}
-              >
-                <Text style={styles.nextElectionIcon}>🗳️</Text>
-                <Text style={styles.nextElectionName}>Election calendar</Text>
-                <Text style={styles.nextElectionDesc}>
-                  View upcoming elections and deadlines for your area.
+            {deckFinished && (
+              <View style={styles.finishedCard}>
+                <Ionicons name="checkmark-circle" size={40} color={colors.success} />
+                <Text style={styles.finishedTitle}>You reviewed your top matches</Text>
+                <Text style={styles.finishedSubtitle}>
+                  {roster.length === 0
+                    ? 'No one made the shortlist yet. Browse the rest of the ballot, or pull down to start over.'
+                    : `${roster.length} candidate${roster.length === 1 ? '' : 's'} on your shortlist.`}
                 </Text>
-                <View style={styles.viewCalendarRow}>
-                  <Text style={styles.viewCalendarText}>Open calendar</Text>
-                  <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+                <View style={styles.finishedActions}>
+                  {roster.length > 0 && (
+                    <Button
+                      title="View shortlist"
+                      onPress={() => navigation.navigate('Roster')}
+                      fullWidth
+                    />
+                  )}
+                  <Button
+                    title="Browse all candidates"
+                    onPress={openBrowse}
+                    variant={roster.length > 0 ? 'secondary' : 'primary'}
+                    fullWidth
+                  />
                 </View>
-              </TouchableOpacity>
+              </View>
             )}
 
-            <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-              <Text style={styles.sectionTitle}>Candidates on your ballot</Text>
-              <Text style={styles.sectionSubtitle}>
-                {Object.values(candidates).some((arr) => arr.length > 0)
-                  ? userState === 'NC'
-                    ? 'North Carolina is our deepest dataset (Open States + curated races). Match scores reflect your onboarding issue picks.'
-                    : 'Organized by office. Match scores show alignment with your views.'
-                  : features.mvpMode
-                    ? 'Add your voting address in Profile for local context—or browse all North Carolina candidates.'
-                    : 'Add your address in Profile to see races in your area, or open Discover to browse.'}
-              </Text>
-            </View>
+            {showOfficeLists && (
+              <>
+                <View style={[styles.sectionHeader, { marginTop: visibleDeck.length > 0 ? 24 : 8 }]}>
+                  <Text style={styles.sectionTitle}>Candidates on your ballot</Text>
+                  <Text style={styles.sectionSubtitle}>
+                    {hasBallotCandidates
+                      ? 'Tap a candidate to learn more. Add the ones you want to your shortlist.'
+                      : features.mvpMode
+                        ? 'Add your voting address in Profile for local context—or browse all North Carolina candidates.'
+                        : 'Add your address in Profile to see races in your area, or open Discover to browse.'}
+                  </Text>
+                </View>
 
-            {OFFICE_LEVELS.map(renderOfficeSection)}
+                {OFFICE_LEVELS.map(renderOfficeSection)}
+              </>
+            )}
 
             {Object.values(candidates).every((arr) => arr.length === 0) && (
               <View style={styles.emptyState}>
@@ -405,18 +437,23 @@ const FeedScreen: React.FC = () => {
                 <Text style={styles.emptySubtitle}>
                   {loadError
                     ? 'Check your connection and pull down to refresh.'
-                    : 'Enter your voting address in Profile to see races in your area—or browse all North Carolina candidates.'}
+                    : 'Enter your voting address to see races in your area—or browse all North Carolina candidates.'}
                 </Text>
                 {!loadError && (
-                  <TouchableOpacity
-                    style={styles.emptyCta}
-                    onPress={openBrowse}
-                  >
-                    <Text style={styles.emptyCtaText}>
-                      {features.mvpMode ? 'Browse NC candidates' : 'Try Discover'}
-                    </Text>
-                    <Ionicons name="arrow-forward" size={18} color={colors.primary} />
-                  </TouchableOpacity>
+                  <View style={styles.emptyActions}>
+                    <TouchableOpacity
+                      style={styles.emptyCta}
+                      onPress={() => navigation.navigate('AddressEntry')}
+                    >
+                      <Text style={styles.emptyCtaText}>Add address</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.emptyCta} onPress={openBrowse}>
+                      <Text style={styles.emptyCtaText}>
+                        {features.mvpMode ? 'Browse NC candidates' : 'Try Discover'}
+                      </Text>
+                      <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+                    </TouchableOpacity>
+                  </View>
                 )}
               </View>
             )}
@@ -455,10 +492,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
   },
-  headerIcons: {
-    flexDirection: 'row',
-    gap: 16,
-  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -484,12 +517,33 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 100,
   },
-  matchExplainer: {
+  electionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    gap: 10,
+  },
+  electionChipIcon: {
+    fontSize: 22,
+  },
+  electionChipMeta: {
+    flex: 1,
+  },
+  electionChipName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  electionChipDate: {
     fontSize: 13,
-    lineHeight: 19,
     color: colors.textSecondary,
-    marginBottom: 14,
-    paddingHorizontal: 2,
+    marginTop: 2,
   },
   matchDeckBlock: {
     marginBottom: 8,
@@ -504,13 +558,72 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     marginBottom: 12,
+    lineHeight: 20,
   },
   matchDeckStack: {
     position: 'relative',
     width: '100%',
-    height: 540,
+    height: 520,
     alignItems: 'center',
+    marginBottom: 12,
+  },
+  matchActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
     marginBottom: 8,
+  },
+  matchActionBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+  },
+  matchActionPass: {
+    backgroundColor: colors.errorMuted,
+    borderColor: colors.swipePass + '55',
+  },
+  matchActionMore: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.surfaceElevated,
+    borderColor: colors.borderLight,
+  },
+  matchActionLike: {
+    backgroundColor: colors.successMuted,
+    borderColor: colors.swipeLike + '55',
+  },
+  finishedCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: 24,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  finishedTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  finishedSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  finishedActions: {
+    width: '100%',
+    gap: 10,
   },
   categoryIcon: {
     fontSize: 24,
@@ -542,6 +655,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     paddingHorizontal: 40,
+    lineHeight: 20,
+  },
+  emptyActions: {
+    marginTop: 20,
+    alignItems: 'center',
+    gap: 12,
   },
   sectionHeader: {
     marginBottom: 16,
@@ -557,143 +676,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 20,
   },
-  nextElectionCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.xl,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    ...shadows.small,
-  },
-  nextElectionTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  nextElectionIcon: {
-    fontSize: 32,
-    marginRight: 12,
-  },
-  nextElectionMeta: {
-    flex: 1,
-  },
-  nextElectionName: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  nextElectionDate: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  countdownBadge: {
-    backgroundColor: colors.primaryMuted,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.primary + '30',
-  },
-  countdownNumber: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.primary,
-  },
-  countdownLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  nextElectionDesc: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  nextElectionOffices: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
-  },
-  officeChip: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    backgroundColor: colors.backgroundLight,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  feedCardActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-    marginTop: 4,
-  },
-  viewCalendarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  viewCalendarText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  deadlinesSection: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.xl,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    ...shadows.small,
-  },
-  deadlinesTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 12,
-  },
-  deadlineRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  deadlineRowLast: {
-    borderBottomWidth: 0,
-  },
-  deadlineIcon: {
-    fontSize: 18,
-    marginRight: 12,
-  },
-  deadlineContent: {
-    flex: 1,
-  },
-  deadlineName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.textPrimary,
-  },
-  deadlineMeta: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
   emptyCta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 20,
     paddingVertical: 12,
     paddingHorizontal: 20,
     backgroundColor: colors.primaryMuted,
