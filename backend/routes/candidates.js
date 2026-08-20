@@ -51,7 +51,7 @@ async function loadUserPreferencesForMatch(userId) {
 }
 
 /**
- * Attach matchScore (0–100) per candidate; optional sort by score descending.
+ * Attach matchScore (0–100, or null when there is no overlapping issue data).
  */
 function enrichCandidatesWithMatch(candidates, userPreferences, sortMatch) {
   let out = candidates.map((c) => {
@@ -60,7 +60,12 @@ function enrichCandidatesWithMatch(candidates, userPreferences, sortMatch) {
     return { ...c, matchScore: score };
   });
   if (sortMatch && userPreferences.length > 0) {
-    out = [...out].sort((a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0));
+    out = [...out].sort((a, b) => {
+      if (a.matchScore == null && b.matchScore == null) return 0;
+      if (a.matchScore == null) return 1;
+      if (b.matchScore == null) return -1;
+      return b.matchScore - a.matchScore;
+    });
   }
   return out;
 }

@@ -14,113 +14,33 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
-import { Card, Button } from '../../../shared/components/ui';
+import { Card, Button, ScreenHeader } from '../../../shared/components/ui';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { openUrlSafely } from '../../../shared/utils/openUrl';
 import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
+import { DEFAULT_STATE } from '../../../shared/constants';
+import {
+  getDaysUntil,
+  getElectionsForState,
+  getNextElection,
+  getMvpTargetElection,
+  getUpcomingDeadlines,
+  MVP_TARGET,
+} from '../../../shared/data/upcomingElections';
 
-// NC Election Data - 2024/2025
-const NC_ELECTIONS = [
-  {
-    id: 'nc-general-2024',
-    name: '2024 General Election',
-    date: '2024-11-05',
-    type: 'general',
-    isKeyElection: true,
-    icon: '🗳️',
-    description: 'Vote for President, Governor, US Senate, State Legislature, and local offices',
-    deadlines: [
-      { name: 'Voter Registration Deadline', date: '2024-10-11', icon: '📝', critical: true },
-      { name: 'Absentee Ballot Request Deadline', date: '2024-10-29', icon: '✉️', critical: true },
-      { name: 'Early Voting Begins', date: '2024-10-17', icon: '🏃', critical: false },
-      { name: 'Early Voting Ends', date: '2024-11-02', icon: '⏰', critical: false },
-      { name: 'Election Day', date: '2024-11-05', icon: '🗳️', critical: true },
-    ],
-    offices: [
-      'President of the United States',
-      'Governor of North Carolina',
-      'Lieutenant Governor',
-      'Attorney General',
-      'U.S. House of Representatives',
-      'NC Supreme Court',
-      'NC Court of Appeals',
-      'NC State Senate',
-      'NC House of Representatives',
-      'County Commissioners',
-      'School Board',
-    ],
-    resources: [
-      { name: 'Check Registration Status', url: 'https://vt.ncsbe.gov/RegLkup/' },
-      { name: 'Find Your Polling Place', url: 'https://vt.ncsbe.gov/PPLkup/' },
-      { name: 'View Sample Ballot', url: 'https://vt.ncsbe.gov/BallotLkup/' },
-      { name: 'Track Absentee Ballot', url: 'https://northcarolina.ballottrax.net/voter/' },
-    ],
-  },
-  {
-    id: 'nc-municipal-2025',
-    name: '2025 Municipal Elections',
-    date: '2025-11-04',
-    type: 'municipal',
-    isKeyElection: false,
-    icon: '🏛️',
-    description: 'City councils, mayors, and local offices across North Carolina',
-    deadlines: [
-      { name: 'Voter Registration Deadline', date: '2025-10-10', icon: '📝', critical: true },
-      { name: 'Election Day', date: '2025-11-04', icon: '🗳️', critical: true },
-    ],
-    offices: [
-      'Charlotte Mayor',
-      'Charlotte City Council',
-      'Town Councils',
-      'Municipal Offices',
-    ],
-    resources: [],
-  },
-  {
-    id: 'nc-primary-2026',
-    name: '2026 Primary Elections',
-    date: '2026-03-03',
-    type: 'primary',
-    isKeyElection: false,
-    icon: '🗳️',
-    description: 'Party primaries for US Senate, House, and state offices',
-    deadlines: [
-      { name: 'Voter Registration Deadline', date: '2026-02-06', icon: '📝', critical: true },
-      { name: 'Primary Election Day', date: '2026-03-03', icon: '🗳️', critical: true },
-    ],
-    offices: [
-      'U.S. Senate',
-      'U.S. House of Representatives',
-      'State Legislature',
-    ],
-    resources: [],
-  },
+const NC_VOTER_TOOLS = [
+  { name: 'Check Registration Status', url: 'https://vt.ncsbe.gov/RegLkup/' },
+  { name: 'Find Your Polling Place', url: 'https://vt.ncsbe.gov/PPLkup/', screen: 'PollingPlaceFinder' as const },
+  { name: 'View Sample Ballot', url: 'https://vt.ncsbe.gov/BallotLkup/', screen: 'SampleBallot' as const },
+  { name: 'Track Absentee Ballot', url: 'https://northcarolina.ballottrax.net/voter/' },
 ];
 
-// Helper functions
-const getDaysUntil = (dateString: string): number => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(dateString);
-  target.setHours(0, 0, 0, 0);
-  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-};
-
 const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
+  return new Date(dateString).toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     year: 'numeric',
-  });
-};
-
-const formatShortDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
   });
 };
 
@@ -214,36 +134,18 @@ const ElectionCalendarScreen: React.FC = () => {
     openUrlSafely(url);
   };
 
-  const getUpcomingDeadlines = () => {
-    const allDeadlines: Array<{ deadline: any; election: any }> = [];
-
-    NC_ELECTIONS.forEach((election) => {
-      election.deadlines.forEach((deadline) => {
-        const daysUntil = getDaysUntil(deadline.date);
-        if (daysUntil >= 0 && daysUntil <= 60) {
-          allDeadlines.push({ deadline, election });
-        }
-      });
-    });
-
-    return allDeadlines.sort(
-      (a, b) => new Date(a.deadline.date).getTime() - new Date(b.deadline.date).getTime()
-    );
-  };
-
-  const upcomingDeadlines = getUpcomingDeadlines();
-  const nextElection = NC_ELECTIONS.find((e) => getDaysUntil(e.date) >= 0);
+  const userState = user?.location?.state || DEFAULT_STATE;
+  const elections = getElectionsForState(userState);
+  const upcomingDeadlines = getUpcomingDeadlines(userState, 6);
+  const nextElection = getNextElection(userState);
+  const mvpElection = getMvpTargetElection(userState);
+  const showMvpCard = Boolean(
+    mvpElection && nextElection && mvpElection.id !== nextElection.id
+  );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={28} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Election Calendar</Text>
-        <View style={styles.headerRight} />
-      </View>
+    <View style={styles.container}>
+      <ScreenHeader title="Election calendar" />
 
       <ScrollView
         style={styles.content}
@@ -265,6 +167,16 @@ const ElectionCalendarScreen: React.FC = () => {
               <Text style={styles.countdownDaysLabel}>days away</Text>
             </View>
             <Text style={styles.countdownDate}>{formatDate(nextElection.date)}</Text>
+          </Card>
+        )}
+
+        {showMvpCard && mvpElection && (
+          <Card variant="outlined" style={styles.mvpCard}>
+            <Text style={styles.mvpLabel}>VOTR is built for</Text>
+            <Text style={styles.mvpTitle}>{MVP_TARGET.label}</Text>
+            <Text style={styles.mvpMeta}>
+              {formatDate(mvpElection.date)} · {getDaysUntil(mvpElection.date)} days
+            </Text>
           </Card>
         )}
 
@@ -320,36 +232,37 @@ const ElectionCalendarScreen: React.FC = () => {
         )}
 
         {/* Quick Resources */}
-        {nextElection && nextElection.resources.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quick Resources</Text>
-            <View style={styles.resourceGrid}>
-              {nextElection.resources.map((resource, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.resourceButton}
-                  onPress={() => {
-                    if (resource.name === 'View Sample Ballot') {
-                      navigation.navigate('SampleBallot');
-                    } else {
-                      openResource(resource.url);
-                    }
-                  }}
-                >
-                  <Ionicons name="open-outline" size={20} color={colors.primary} />
-                  <Text style={styles.resourceText}>{resource.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Voter tools</Text>
+          <View style={styles.resourceGrid}>
+            {NC_VOTER_TOOLS.map((resource) => (
+              <TouchableOpacity
+                key={resource.name}
+                style={styles.resourceButton}
+                onPress={() => {
+                  if (resource.screen) {
+                    navigation.navigate(resource.screen as never);
+                  } else {
+                    openResource(resource.url);
+                  }
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={resource.name}
+              >
+                <Ionicons name="open-outline" size={20} color={colors.primary} />
+                <Text style={styles.resourceText}>{resource.name}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        )}
+        </View>
 
         {/* Elections List */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>All Elections</Text>
-          {NC_ELECTIONS.map((election) => {
+          {elections.map((election) => {
             const daysUntil = getDaysUntil(election.date);
             const isPast = daysUntil < 0;
+            const isMvp = election.id === MVP_TARGET.electionId;
 
             return (
               <Card
@@ -360,9 +273,12 @@ const ElectionCalendarScreen: React.FC = () => {
                 <View style={styles.electionHeader}>
                   <Text style={styles.electionIcon}>{election.icon}</Text>
                   <View style={styles.electionInfo}>
-                    <Text style={[styles.electionName, isPast && styles.pastText]}>
-                      {election.name}
-                    </Text>
+                    <View style={styles.electionNameRow}>
+                      <Text style={[styles.electionName, isPast && styles.pastText]}>
+                        {election.name}
+                      </Text>
+                      {isMvp && !isPast && <Text style={styles.mvpBadge}>MVP</Text>}
+                    </View>
                     <Text style={styles.electionDate}>{formatDate(election.date)}</Text>
                   </View>
                   {!isPast && (
@@ -455,6 +371,27 @@ const styles = StyleSheet.create({
   countdownCard: {
     backgroundColor: colors.primary,
     marginBottom: 20,
+  },
+  mvpCard: {
+    marginBottom: 20,
+  },
+  mvpLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textTertiary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  mvpTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  mvpMeta: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
   countdownHeader: {
     flexDirection: 'row',
@@ -627,6 +564,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.textPrimary,
+    flexShrink: 1,
+  },
+  electionNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  mvpBadge: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.primary,
+    letterSpacing: 0.6,
   },
   pastText: {
     color: colors.textTertiary,

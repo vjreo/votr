@@ -11,7 +11,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Card, Button } from '../../../shared/components/ui';
+import { Card, Button, ScreenHeader } from '../../../shared/components/ui';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { candidateApi } from '../../candidates/services/candidateApi';
 import { sampleBallotApi, Contest } from '../services/sampleBallotApi';
@@ -120,15 +120,8 @@ export default function SampleBallotScreen() {
   const hasBallotContests = ballotContests.length > 0;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={28} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sample Ballot</Text>
-        <View style={styles.headerRight} />
-      </View>
+    <View style={styles.container}>
+      <ScreenHeader title="Sample ballot" subtitle={userAddress || `Statewide · ${userState}`} />
 
       <ScrollView
         style={styles.content}
@@ -227,8 +220,13 @@ export default function SampleBallotScreen() {
                 <Ionicons name="document-text-outline" size={48} color={colors.textTertiary} />
                 <Text style={styles.emptyTitle}>No ballot data yet</Text>
                 <Text style={styles.emptySubtitle}>
-                  Add your voting address in Profile, or use the official NC lookup below.
+                  Add your voting address to see races for your district, or use the official NC lookup below.
                 </Text>
+                <Button
+                  title="Add voting address"
+                  onPress={() => navigation.navigate('AddressEntry' as never)}
+                  style={styles.emptyButton}
+                />
               </View>
             )}
 
@@ -370,6 +368,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     paddingHorizontal: 24,
+    marginBottom: 16,
+  },
+  emptyButton: {
+    minWidth: 200,
   },
   officialSection: {
     marginTop: 8,

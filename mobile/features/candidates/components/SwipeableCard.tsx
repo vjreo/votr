@@ -1,14 +1,3 @@
-/**
- * SwipeableCard — 2026 redesign
- *
- * Visual changes:
- * - Full-bleed photo with gradient overlay (bottom 60%) instead of opaque box
- * - Party badge chip (pill) with muted party color
- * - Match score ring in top-right with glass backdrop
- * - LIKE / NOPE labels use filled pill shape (not just border)
- * - Swipe-up hint replaced with icon row: ← pass | ↑ learn more | → like
- * - Depth: card has warm shadow with slight glow on like direction
- */
 import React, { useRef } from 'react';
 import {
   View,
@@ -63,7 +52,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
   onSwipeUp,
   index,
   cardWidth = SCREEN_WIDTH - 40,
-  cardHeight = 520,
+  cardHeight = 480,
 }) => {
   const position = useRef(new Animated.ValueXY()).current;
   const opacity = useRef(new Animated.Value(1)).current;
@@ -116,13 +105,11 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     ]).start();
   };
 
-  // Rotation based on horizontal drag
   const rotate = position.x.interpolate({
     inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
     outputRange: ['-12deg', '0deg', '12deg'],
   });
 
-  // Like / nope label opacity
   const likeOpacity = position.x.interpolate({
     inputRange: [0, SCREEN_WIDTH * 0.35],
     outputRange: [0, 1],
@@ -133,14 +120,12 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
-  // Glow tint on like swipe
   const glowOpacity = position.x.interpolate({
     inputRange: [0, SCREEN_WIDTH * 0.5],
     outputRange: [0, 0.18],
     extrapolate: 'clamp',
   });
 
-  const photoUri = (candidate as any).photo_url || candidate.photo;
   const partyColor = getPartyColor(candidate.party);
   const partyLabel = getPartyLabel(candidate.party);
 
@@ -164,16 +149,14 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
       {...(index === 0 ? panResponder.panHandlers : {})}
       accessibilityLabel={`${candidate.name}, ${candidate.office}`}
     >
-      {/* Photo */}
-      {photoUri ? (
-        <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="cover" />
+      {candidate.photo ? (
+        <Image source={{ uri: candidate.photo }} style={styles.photo} resizeMode="cover" />
       ) : (
         <View style={styles.photoPlaceholder}>
           <Ionicons name="person-circle" size={100} color={colors.surfaceHighlight} />
         </View>
       )}
 
-      {/* Gradient overlay — fades photo into card bottom */}
       <LinearGradient
         colors={['transparent', 'rgba(20,20,18,0.55)', 'rgba(20,20,18,0.97)']}
         locations={[0.35, 0.62, 1]}
@@ -181,27 +164,24 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
         pointerEvents="none"
       />
 
-      {/* Like glow overlay */}
       <Animated.View
         style={[styles.glowOverlay, { opacity: glowOpacity }]}
         pointerEvents="none"
       />
 
-      {/* Top row: party badge + match score */}
       <View style={styles.topRow}>
         {candidate.party && (
           <View style={[styles.partyBadge, { borderColor: partyColor }]}>
             <Text style={[styles.partyText, { color: partyColor }]}>{partyLabel}</Text>
           </View>
         )}
-        {matchScore !== undefined && (
+        {matchScore != null && (
           <View style={styles.scoreWrapper}>
             <MatchScoreIndicator score={matchScore} size="small" showLabel={false} animate />
           </View>
         )}
       </View>
 
-      {/* Bottom content */}
       <View style={styles.content}>
         <Text style={styles.name} numberOfLines={1}>{candidate.name}</Text>
         <Text style={styles.office} numberOfLines={1}>{candidate.office}</Text>
@@ -215,34 +195,16 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
             ))}
           </View>
         )}
-
-        {/* Swipe hint icons */}
-        <View style={styles.hintRow}>
-          <View style={styles.hintItem}>
-            <Ionicons name="close" size={14} color={colors.swipePass} />
-            <Text style={styles.hintText}>Pass</Text>
-          </View>
-          <View style={styles.hintItem}>
-            <Ionicons name="chevron-up" size={14} color={colors.textTertiary} />
-            <Text style={styles.hintText}>More</Text>
-          </View>
-          <View style={styles.hintItem}>
-            <Ionicons name="heart" size={14} color={colors.swipeLike} />
-            <Text style={styles.hintText}>Like</Text>
-          </View>
-        </View>
       </View>
 
-      {/* Like label (right swipe) */}
       <Animated.View style={[styles.likeLabel, { opacity: likeOpacity }]} pointerEvents="none">
-        <Ionicons name="heart" size={18} color={colors.swipeLike} />
-        <Text style={styles.likeText}>LIKE</Text>
+        <Ionicons name="heart" size={16} color={colors.swipeLike} />
+        <Text style={styles.likeText}>SHORTLIST</Text>
       </Animated.View>
 
-      {/* Nope label (left swipe) */}
       <Animated.View style={[styles.nopeLabel, { opacity: nopeOpacity }]} pointerEvents="none">
         <Ionicons name="close" size={18} color={colors.swipePass} />
-        <Text style={styles.nopeText}>NOPE</Text>
+        <Text style={styles.nopeText}>PASS</Text>
       </Animated.View>
     </Animated.View>
   );
@@ -307,25 +269,22 @@ const styles = StyleSheet.create({
     paddingBottom: 18,
   },
   name: {
-    ...typography.title2,
+    ...typography.title1,
     color: colors.offWhite,
-    marginBottom: 3,
+    marginBottom: 4,
   },
   office: {
-    ...typography.subhead,
+    ...typography.callout,
     color: 'rgba(242,239,232,0.72)',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   positionsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    marginBottom: 14,
   },
   positionChip: {
-    backgroundColor: 'rgba(245,166,35,0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(245,166,35,0.25)',
+    backgroundColor: 'rgba(245,166,35,0.16)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: borderRadius.full,
@@ -333,24 +292,7 @@ const styles = StyleSheet.create({
   positionText: {
     ...typography.caption1,
     color: colors.primary,
-    fontWeight: '500',
-  },
-  hintRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 24,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.07)',
-    paddingTop: 12,
-  },
-  hintItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  hintText: {
-    ...typography.caption1,
-    color: colors.textTertiary,
+    fontWeight: '600',
   },
   likeLabel: {
     position: 'absolute',

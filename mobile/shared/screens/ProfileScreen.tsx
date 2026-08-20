@@ -18,8 +18,10 @@ import { useUser } from '../../features/auth/context/UserContext';
 import { userApi } from '../../features/auth/services/userApi';
 import { calculateLevel, getPointsForNextLevel } from '../../features/gamification/utils/gamification';
 import { openUrlSafely } from '../utils/openUrl';
-import { colors } from '../theme/colors';
+import { colors, typography } from '../theme/colors';
 import { features } from '../config/features';
+import { getNextElection, getDaysUntil, formatShortDate } from '../data/upcomingElections';
+import { DEFAULT_STATE } from '../constants';
 
 const PRIVACY_URL = 'https://votr.app/privacy';
 const TERMS_URL = 'https://votr.app/terms';
@@ -75,6 +77,7 @@ const ProfileScreen: React.FC = () => {
   const level = calculateLevel(points);
   const pointsToNext = getPointsForNextLevel(points);
   const badges = gamification?.badges || [];
+  const nextElection = getNextElection(user.location?.state || DEFAULT_STATE);
 
   return (
     <ScrollView
@@ -143,14 +146,24 @@ const ProfileScreen: React.FC = () => {
         onPress={() => (navigation as any).navigate('ElectionCalendar')}
         activeOpacity={0.8}
         accessibilityRole="button"
-        accessibilityLabel="View upcoming elections and deadlines"
+        accessibilityLabel={
+          nextElection
+            ? `${nextElection.name}, ${formatShortDate(nextElection.date)}`
+            : 'View upcoming elections and deadlines'
+        }
       >
         <View style={styles.faqRow}>
           <Ionicons name="calendar-outline" size={22} color={colors.primary} />
-          <Text style={styles.faqTitle}>Upcoming Elections</Text>
+          <Text style={styles.faqTitle}>
+            {nextElection ? nextElection.name : 'Election calendar'}
+          </Text>
           <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
         </View>
-        <Text style={styles.faqSubtitle}>View election calendar and deadlines</Text>
+        <Text style={styles.faqSubtitle}>
+          {nextElection
+            ? `${formatShortDate(nextElection.date)} · ${getDaysUntil(nextElection.date)} days`
+            : 'View election calendar and deadlines'}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -198,7 +211,7 @@ const ProfileScreen: React.FC = () => {
           <View style={styles.preferenceList}>
             {user.preferences.map((pref: any, idx: number) => (
               <Text key={idx} style={styles.preferenceItem}>
-                {pref.issueName || pref.issueId} · {pref.importance || 1}/5
+                {pref.issueName || pref.issueId}
               </Text>
             ))}
           </View>
@@ -301,14 +314,48 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
     backgroundColor: colors.background,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
+    ...typography.largeTitle,
     color: colors.textPrimary,
+  },
+  card: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderLight,
+  },
+  cardTitle: {
+    ...typography.headline,
+    color: colors.textPrimary,
+    marginBottom: 8,
+  },
+  cardTitleCompact: {
+    ...typography.headline,
+    color: colors.textPrimary,
+  },
+  cardValue: {
+    ...typography.subhead,
+    color: colors.textSecondary,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  faqTitle: {
+    flex: 1,
+    ...typography.headline,
+    color: colors.textPrimary,
+  },
+  faqSubtitle: {
+    ...typography.footnote,
+    color: colors.textSecondary,
+    marginTop: 6,
+    marginLeft: 34,
   },
   statsRow: {
     flexDirection: 'row',
@@ -339,41 +386,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.textSecondary,
   },
-  card: {
-    marginHorizontal: 16,
-    marginTop: 12,
-    padding: 14,
-    backgroundColor: colors.card,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
-  },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 8,
-  },
-  cardTitleCompact: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  cardValue: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
-    marginTop: 4,
-    marginBottom: 8,
   },
   linkText: {
     fontSize: 14,
@@ -405,18 +422,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  faqTitle: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  faqSubtitle: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 6,
-    marginLeft: 34,
   },
   footerSection: {
     marginHorizontal: 16,

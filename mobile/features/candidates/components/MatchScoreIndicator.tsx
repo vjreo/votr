@@ -1,12 +1,3 @@
-/**
- * MatchScoreIndicator — 2026 redesign
- *
- * Visual changes:
- * - Animated arc ring that fills to the score percentage on mount
- * - Warm palette: green / sand / clay instead of flat green/amber/red
- * - Clean number + label layout; no redundant "%" inside the ring for small size
- * - Accessible: score is announced via accessibilityLabel
- */
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -26,10 +17,10 @@ const SIZE_MAP = {
 };
 
 function scoreColor(score: number): string {
-  if (score >= 75) return colors.matchHigh;   // sage green
-  if (score >= 50) return colors.sand;         // warm sand
-  if (score >= 25) return colors.clay;         // terracotta
-  return colors.matchLow;                      // error red
+  if (score >= 75) return colors.matchHigh;
+  if (score >= 50) return colors.sand;
+  if (score >= 25) return colors.clay;
+  return colors.matchLow;
 }
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -76,13 +67,11 @@ const MatchScoreIndicator: React.FC<MatchScoreIndicatorProps> = ({
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: clampedScore }}
     >
-      {/* SVG arc ring */}
       <Svg
         width={config.diameter}
         height={config.diameter}
         style={StyleSheet.absoluteFill}
       >
-        {/* Track */}
         <Circle
           cx={cx}
           cy={cy}
@@ -94,7 +83,6 @@ const MatchScoreIndicator: React.FC<MatchScoreIndicatorProps> = ({
           originX={cx}
           originY={cy}
         />
-        {/* Progress */}
         <AnimatedCircle
           cx={cx}
           cy={cy}
@@ -111,7 +99,6 @@ const MatchScoreIndicator: React.FC<MatchScoreIndicatorProps> = ({
         />
       </Svg>
 
-      {/* Score label centered inside */}
       <View
         style={[
           styles.labelWrapper,

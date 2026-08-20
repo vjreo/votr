@@ -16,7 +16,7 @@ import {
   TextStyle,
   Animated,
 } from 'react-native';
-import { colors, shadows, borderRadius, typography } from '../../theme/colors';
+import { colors, borderRadius, typography } from '../../theme/colors';
 
 interface ButtonProps {
   title: string;
@@ -70,7 +70,6 @@ const Button: React.FC<ButtonProps> = ({
     sizeStyles[size],
     variantStyles[variant],
     fullWidth && styles.fullWidth,
-    variant === 'primary' && !disabled ? (shadows.medium as ViewStyle) : {},
     (disabled || loading) && styles.disabled,
     style as ViewStyle,
   ].filter(Boolean) as ViewStyle[];

@@ -1,6 +1,6 @@
 /**
  * Bootstrap NC data on server startup.
- * Auto-populates curated candidates and 2026 elections if missing.
+ * Auto-populates curated candidates and NC elections if missing.
  * Does NOT close the pool — safe to call from server startup.
  */
 
@@ -38,18 +38,18 @@ const NC_ELECTIONS = [
     date: '2026-11-03',
     type: 'general',
     state: 'NC',
-    offices: ['Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
+    offices: ['U.S. Senate', 'U.S. House', 'State Legislature'],
     early_voting_start: '2026-10-15',
     early_voting_end: '2026-10-31',
   },
   {
-    name: '2026 Primary Election',
-    date: '2026-03-03',
+    name: '2028 Primary Election',
+    date: '2028-03-07',
     type: 'primary',
     state: 'NC',
-    offices: ['Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
-    early_voting_start: null,
-    early_voting_end: null,
+    offices: ['President', 'Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
+    early_voting_start: '2028-02-19',
+    early_voting_end: '2028-03-04',
   },
 ];
 
@@ -136,7 +136,7 @@ async function ensureNCCandidates() {
 }
 
 /**
- * Seed 2026 NC elections if missing.
+ * Seed NC elections if missing.
  */
 async function ensureElections() {
   try {
@@ -175,7 +175,7 @@ async function ensureElections() {
 
 /**
  * Ensure NC data is populated. Call on server startup.
- * Seeds: issues (if empty), curated candidates, 2026 elections.
+ * Seeds: issues (if empty), curated candidates, NC elections.
  * Open States legislators are fetched on first /api/candidates request.
  */
 export async function ensureNCData() {

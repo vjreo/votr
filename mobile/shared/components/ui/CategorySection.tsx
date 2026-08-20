@@ -9,7 +9,7 @@ import {
   UIManager,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, borderRadius, shadows } from '../../theme/colors';
+import { colors, typography } from '../../theme/colors';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -43,7 +43,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   };
 
   return (
-    <View style={[styles.container, shadows.small as any]}>
+    <View style={styles.container}>
       <TouchableOpacity
         style={styles.header}
         onPress={toggleExpanded}
@@ -62,8 +62,8 @@ const CategorySection: React.FC<CategorySectionProps> = ({
         </View>
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color={colors.textSecondary}
+          size={18}
+          color={colors.textTertiary}
         />
       </TouchableOpacity>
 
@@ -72,9 +72,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
           {description && (
             <Text style={styles.description}>{description}</Text>
           )}
-
           <View style={styles.content}>{children}</View>
-
           {actionLabel && onAction && (
             <TouchableOpacity style={styles.actionButton} onPress={onAction}>
               <Text style={styles.actionText}>{actionLabel}</Text>
@@ -88,16 +86,14 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    marginBottom: 16,
-    overflow: 'hidden',
+    marginBottom: 8,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -105,46 +101,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: colors.backgroundLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   titleContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    ...typography.overline,
+    color: colors.textTertiary,
   },
   collapsedDescription: {
-    fontSize: 13,
+    ...typography.caption1,
     color: colors.textSecondary,
     marginTop: 2,
   },
   description: {
-    fontSize: 14,
+    ...typography.footnote,
     color: colors.textSecondary,
-    lineHeight: 20,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 8,
+    paddingHorizontal: 4,
   },
   content: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 8,
   },
   actionButton: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    padding: 12,
+    paddingVertical: 12,
     alignItems: 'center',
   },
   actionText: {
-    fontSize: 14,
+    ...typography.footnote,
     fontWeight: '600',
     color: colors.primary,
   },

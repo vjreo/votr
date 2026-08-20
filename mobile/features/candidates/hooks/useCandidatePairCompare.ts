@@ -1,9 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useNavigation } from '@react-navigation/native';
 
-/**
- * Select up to two candidates for Compare; shared by Feed and Discover (Home) screens.
- */
 export function useCandidatePairCompare() {
   const navigation = useNavigation<any>();
   const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);

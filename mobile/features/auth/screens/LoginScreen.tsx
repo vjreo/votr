@@ -3,24 +3,31 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../context/UserContext';
 import { getApiErrorMessage } from '../../../shared/services/api';
-import { colors } from '../../../shared/theme/colors';
+import { Button, Input } from '../../../shared/components/ui';
+import { colors, typography } from '../../../shared/theme/colors';
 
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { login, register, isAnonymous, linkAnonymousAccount, user } = useUser();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleClose = () => navigation.goBack();
 
   const handleSubmit = async () => {
     if (!email || !password) {
@@ -38,25 +45,24 @@ const LoginScreen: React.FC = () => {
       return;
     }
 
+    const anonymousId = isAnonymous ? user?.id : undefined;
+
     try {
       setLoading(true);
-      
+
       if (isLogin) {
         await login(email, password);
       } else {
         await register(email, password);
-        
-        // Link anonymous account if user was anonymous
-        if (isAnonymous && user) {
+        if (anonymousId) {
           try {
-            await linkAnonymousAccount(user.id);
+            await linkAnonymousAccount(anonymousId);
           } catch (error) {
             console.error('Error linking anonymous account:', error);
-            // Continue anyway - data will be in new account
           }
         }
       }
-      
+
       navigation.goBack();
     } catch (error: any) {
       Alert.alert('Error', getApiErrorMessage(error));
@@ -66,40 +72,57 @@ const LoginScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{isLogin ? 'Welcome Back' : 'Create Account'}</Text>
-        <Text style={styles.subtitle}>
-          {isLogin 
-            ? 'Sign in to sync your data across devices' 
-            : 'Create an account to save your progress'}
-        </Text>
-      </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 24 },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={handleClose}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Ionicons name="close" size={28} color={colors.textPrimary} />
+        </TouchableOpacity>
 
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
+        <View style={styles.header}>
+          <Text style={styles.title}>{isLogin ? 'Welcome back' : 'Create account'}</Text>
+          <Text style={styles.subtitle}>
+            {isLogin
+              ? 'Sign in to sync your shortlist across devices'
+              : 'Save your shortlist so it isn’t stuck on this phone'}
+          </Text>
+        </View>
+
+        <Input
+          label="Email"
+          placeholder="you@example.com"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
           autoComplete="email"
         />
-
-        <TextInput
-          style={styles.input}
+        <Input
+          label="Password"
           placeholder="Password"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
           autoCapitalize="none"
         />
-
         {!isLogin && (
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm Password"
+          <Input
+            label="Confirm password"
+            placeholder="Confirm password"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
@@ -107,87 +130,55 @@ const LoginScreen: React.FC = () => {
           />
         )}
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+        <Button
+          title={isLogin ? 'Sign in' : 'Create account'}
           onPress={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>{isLogin ? 'Sign In' : 'Create Account'}</Text>
-          )}
-        </TouchableOpacity>
+          loading={loading}
+          fullWidth
+          size="large"
+        />
 
-        <TouchableOpacity
-          style={styles.switchButton}
-          onPress={() => setIsLogin(!isLogin)}
-        >
+        <TouchableOpacity style={styles.switchButton} onPress={() => setIsLogin(!isLogin)}>
           <Text style={styles.switchText}>
-            {isLogin 
-              ? "Don't have an account? Sign up" 
-              : 'Already have an account? Sign in'}
+            {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.skipText}>Continue as guest</Text>
+        <TouchableOpacity style={styles.skipButton} onPress={handleClose}>
+          <Text style={styles.skipText}>Not now</Text>
         </TouchableOpacity>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.card,
-    padding: 20,
-    paddingTop: 60,
+    backgroundColor: colors.background,
+  },
+  scroll: {
+    paddingHorizontal: 20,
+    flexGrow: 1,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
-    marginBottom: 40,
+    marginBottom: 28,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    ...typography.largeTitle,
     color: colors.textPrimary,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    ...typography.callout,
     color: colors.textSecondary,
-    lineHeight: 24,
-  },
-  form: {
-    flex: 1,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    marginBottom: 16,
-    backgroundColor: colors.offWhite,
-  },
-  button: {
-    backgroundColor: colors.primary,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: colors.white,
-    fontSize: 18,
-    fontWeight: '600',
   },
   switchButton: {
     marginTop: 20,
@@ -196,10 +187,13 @@ const styles = StyleSheet.create({
   switchText: {
     color: colors.primary,
     fontSize: 14,
+    fontWeight: '600',
   },
   skipButton: {
-    marginTop: 20,
+    marginTop: 16,
     alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   skipText: {
     color: colors.textSecondary,
@@ -208,4 +202,3 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
-

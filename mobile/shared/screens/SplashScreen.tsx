@@ -79,7 +79,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
         </View>
 
         <Animated.Text style={[styles.tagline, { opacity: taglineAnim }]}>
-          Making democracy sexy. Discover candidates that match your values.
+          Find who belongs on your ballot.
         </Animated.Text>
       </Animated.View>
 
@@ -132,11 +132,13 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
   },
   tagline: {
-    fontSize: 18,
+    fontSize: 16,
     color: colors.textSecondary,
-    marginTop: 18,
-    letterSpacing: 2,
-    fontWeight: '600',
+    marginTop: 20,
+    paddingHorizontal: 40,
+    textAlign: 'center',
+    lineHeight: 24,
+    fontWeight: '500',
   },
   decorativeBottom: {
     position: 'absolute',

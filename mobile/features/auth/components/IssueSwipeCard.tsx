@@ -7,7 +7,7 @@ import {
   PanResponder,
   Dimensions,
 } from 'react-native';
-import { colors } from '../../../shared/theme/colors';
+import { colors, borderRadius, typography } from '../../../shared/theme/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
@@ -117,7 +117,7 @@ const IssueSwipeCard: React.FC<IssueSwipeCardProps> = ({
     >
       <View style={styles.content}>
         <Text style={styles.issueName}>{issue.name}</Text>
-        <Text style={styles.hint}>Swipe right if it matters to you, or use the buttons below</Text>
+        <Text style={styles.hint}>Swipe right if it matters — or use the buttons</Text>
       </View>
 
       <Animated.View style={[styles.likeLabel, { opacity: likeOpacity }]} pointerEvents="none">
@@ -133,63 +133,67 @@ const IssueSwipeCard: React.FC<IssueSwipeCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     width: SCREEN_WIDTH - 48,
-    height: 320,
-    borderRadius: 24,
-    backgroundColor: colors.card,
+    height: 340,
+    borderRadius: 28,
+    backgroundColor: colors.surface,
     position: 'absolute',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderLight,
   },
   content: {
     alignItems: 'center',
-    padding: 32,
+    padding: 36,
   },
   issueName: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    ...typography.largeTitle,
     color: colors.textPrimary,
     textAlign: 'center',
   },
   hint: {
-    fontSize: 14,
+    ...typography.subhead,
     color: colors.textSecondary,
-    marginTop: 12,
+    marginTop: 14,
+    textAlign: 'center',
   },
   likeLabel: {
     position: 'absolute',
-    top: 40,
-    right: 24,
-    borderWidth: 4,
+    top: 36,
+    right: 22,
+    borderWidth: 2,
     borderColor: colors.swipeLike,
-    padding: 10,
-    borderRadius: 12,
-    transform: [{ rotate: '15deg' }],
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    transform: [{ rotate: '12deg' }],
+    backgroundColor: colors.successMuted,
   },
   likeText: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    ...typography.title3,
+    fontWeight: '800',
     color: colors.swipeLike,
   },
   nopeLabel: {
     position: 'absolute',
-    top: 40,
-    left: 24,
-    borderWidth: 4,
+    top: 36,
+    left: 22,
+    borderWidth: 2,
     borderColor: colors.swipePass,
-    padding: 10,
-    borderRadius: 12,
-    transform: [{ rotate: '-15deg' }],
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    transform: [{ rotate: '-12deg' }],
+    backgroundColor: colors.errorMuted,
   },
   nopeText: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    ...typography.title3,
+    fontWeight: '800',
     color: colors.swipePass,
   },
 });

@@ -1,88 +1,66 @@
 /**
- * Match Scoring Algorithm
- * Calculates alignment between user preferences and candidate positions
+ * Match scoring: alignment between user issue picks and candidate positions.
+ * No overlapping issues → score is null (not 0). 0 is reserved for real disagreement.
  */
 
-/**
- * Calculate match score between user preferences and candidate positions
- * @param {Array} userPreferences - Array of {issueId, importance}
- * @param {Array} candidatePositions - Array of {issueId, stance, confidence}
- * @returns {Object} {score: number, breakdown: Array}
- */
+function norm(value) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[_-]+/g, ' ');
+}
+
+function indexPositions(positions) {
+  const map = new Map();
+  for (const pos of positions) {
+    const id = norm(pos.issueId || pos.issue_id);
+    const name = norm(pos.issueName || pos.issue_name);
+    if (id) map.set(id, pos);
+    if (name) map.set(name, pos);
+  }
+  return map;
+}
+
 export function calculateMatchScore(userPreferences, candidatePositions) {
   if (!userPreferences || userPreferences.length === 0) {
-    return { score: 0, breakdown: [] };
+    return { score: null, overlapCount: 0, breakdown: [] };
   }
 
+  const positions = Array.isArray(candidatePositions) ? candidatePositions : [];
+  const positionIndex = indexPositions(positions);
   const breakdown = [];
   let totalWeight = 0;
   let weightedScore = 0;
+  let overlapCount = 0;
 
-  // Create a map of candidate positions by issueId
-  const positionMap = new Map();
-  candidatePositions.forEach(pos => {
-    positionMap.set(pos.issueId, pos);
-  });
+  for (const pref of userPreferences) {
+    const candidatePos =
+      positionIndex.get(norm(pref.issueId)) || positionIndex.get(norm(pref.issueName));
+    if (!candidatePos) continue;
 
-  // Calculate alignment for each user preference
-  userPreferences.forEach(pref => {
-    const candidatePos = positionMap.get(pref.issueId);
+    overlapCount += 1;
     const importance = pref.importance || 1;
-    
-    let alignment = 0;
-    let candidateStance = null;
+    const alignment = typeof candidatePos.confidence === 'number' ? candidatePos.confidence : 0.5;
 
-    if (candidatePos) {
-      // For now, we'll use a simple scoring mechanism
-      // In the future, this could use NLP to analyze stance text
-      alignment = candidatePos.confidence || 0.5;
-      candidateStance = candidatePos.stance;
-    } else {
-      // No position found - neutral alignment
-      alignment = 0;
-    }
-
-    // Weight by importance (1-5 scale)
-    const weight = importance;
-    totalWeight += weight;
-    weightedScore += alignment * weight;
-
+    totalWeight += importance;
+    weightedScore += alignment * importance;
     breakdown.push({
       issueId: pref.issueId,
       issueName: pref.issueName || pref.issueId,
       alignment,
       userImportance: importance,
-      candidateStance,
+      candidateStance: candidatePos.stance || null,
     });
-  });
+  }
 
-  // Calculate final score (0-100)
-  const score = totalWeight > 0 
-    ? Math.round((weightedScore / totalWeight) * 100)
-    : 0;
+  if (overlapCount === 0 || totalWeight === 0) {
+    return { score: null, overlapCount: 0, breakdown: [] };
+  }
 
+  const score = Math.round((weightedScore / totalWeight) * 100);
   return {
-    score: Math.max(0, Math.min(100, score)), // Clamp between 0-100
+    score: Math.max(0, Math.min(100, score)),
+    overlapCount,
     breakdown,
   };
 }
-
-/**
- * Get match explanation text
- * @param {number} score - Match score (0-100)
- * @returns {string} Explanation text
- */
-export function getMatchExplanation(score) {
-  if (score >= 80) {
-    return 'Excellent match! This candidate aligns strongly with your priorities.';
-  } else if (score >= 60) {
-    return 'Good match. This candidate aligns well with many of your priorities.';
-  } else if (score >= 40) {
-    return 'Moderate match. Some alignment with your priorities.';
-  } else if (score >= 20) {
-    return 'Limited match. Few areas of alignment.';
-  } else {
-    return 'Low match. Limited alignment with your priorities.';
-  }
-}
-

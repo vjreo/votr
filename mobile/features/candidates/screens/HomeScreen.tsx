@@ -1,35 +1,27 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Alert,
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import CandidateCard from '../components/CandidateCard';
-import { CategorySection, Button } from '../../../shared/components/ui';
+import { CategorySection, Button, SearchBar } from '../../../shared/components/ui';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { candidateApi } from '../services/candidateApi';
 import { Candidate } from '../../../shared/types';
-import { colors, borderRadius } from '../../../shared/theme/colors';
+import { colors, typography } from '../../../shared/theme/colors';
 import { DEFAULT_STATE } from '../../../shared/constants';
 import { features } from '../../../shared/config/features';
-import { groupCandidatesByOfficeLevel, type OfficeBucket } from '../utils/candidateGrouping';
+import { groupCandidatesByOffice, toSwipeCandidate } from '../utils/candidateGrouping';
 import { useCandidatePairCompare } from '../hooks/useCandidatePairCompare';
 import { logEvent } from '../../../shared/services/analytics';
-
-const OFFICE_LEVELS = [
-  { key: 'federal', title: 'U.S. Senate', icon: '🏛️' },
-  { key: 'state', title: 'Governor', icon: '🏛️' },
-  { key: 'state_legislature', title: 'State Legislature', icon: '📜' },
-  { key: 'local', title: 'Local Offices', icon: '🏘️' },
-];
 
 const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -37,24 +29,24 @@ const HomeScreen: React.FC = () => {
   const route = useRoute();
   const { user, accessToken } = useUser();
   const isStackBrowse = route.name === 'DiscoverList';
-  const [candidates, setCandidates] = useState<Record<OfficeBucket, Candidate[]>>(() =>
-    groupCandidatesByOfficeLevel([], false) as Record<OfficeBucket, Candidate[]>
-  );
+  const [rows, setRows] = useState<Candidate[]>([]);
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const { selectedForComparison, handleToggleComparison, handleCompare } =
     useCandidatePairCompare();
   const loadInProgressRef = React.useRef(false);
+  const useMatch = Boolean(accessToken && (user?.preferences?.length ?? 0) > 0);
 
   const loadCandidates = useCallback(async () => {
     if (loadInProgressRef.current) return;
     loadInProgressRef.current = true;
     try {
       setLoading(true);
+      setLoadError(false);
       const state = user?.location?.state || DEFAULT_STATE;
       const location = user?.location?.address;
-      const prefCount = user?.preferences?.length ?? 0;
-      const useMatch = Boolean(accessToken && prefCount > 0);
       const response = await candidateApi.getAll({
         state,
         location,
@@ -64,20 +56,19 @@ const HomeScreen: React.FC = () => {
         sortMatch: useMatch,
       });
 
-      const grouped = groupCandidatesByOfficeLevel(
-        (response.data || []) as unknown[],
-        useMatch
-      ) as Record<OfficeBucket, Candidate[]>;
-      setCandidates(grouped);
-      const listCount = Object.values(grouped).reduce((n, arr) => n + arr.length, 0);
+      const list = ((response.data || []) as Record<string, unknown>[]).map((r) =>
+        toSwipeCandidate(r, state)
+      );
+      setRows(list);
       logEvent('discover_list_loaded', {
-        count: listCount,
+        count: list.length,
         includeMatch: useMatch,
         stack: isStackBrowse,
       });
     } catch (error) {
       console.error('Error loading candidates:', error);
-      Alert.alert('Error', 'Failed to load candidates. Please try again.');
+      setLoadError(true);
+      setRows([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -88,27 +79,40 @@ const HomeScreen: React.FC = () => {
     user?.location?.address,
     user?.location?.latitude,
     user?.location?.longitude,
-    accessToken,
-    user?.preferences?.length,
     isStackBrowse,
+    useMatch,
   ]);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadCandidates();
-    }, [loadCandidates])
-  );
+  React.useEffect(() => {
+    loadCandidates();
+  }, [loadCandidates]);
 
   const onRefresh = () => {
     setRefreshing(true);
     loadCandidates();
   };
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((c) => {
+      const hay = `${c.name} ${c.office} ${c.party || ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [rows, query]);
+
+  const groups = useMemo(
+    () => groupCandidatesByOffice(filtered, useMatch),
+    [filtered, useMatch]
+  );
+
   const handleCandidatePress = (candidateId: string) => {
     navigation.navigate('CandidateDetail' as never, { candidateId } as never);
   };
 
-  if (loading && !Object.values(candidates).some((arr) => arr.length > 0)) {
+  const selectedCount = selectedForComparison.length;
+
+  if (loading && rows.length === 0) {
     return (
       <View style={[styles.centerContainer, { paddingTop: insets.top }]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -117,22 +121,8 @@ const HomeScreen: React.FC = () => {
     );
   }
 
-  const hasCandidates = Object.values(candidates).some((arr) => arr.length > 0);
-
-  if (!hasCandidates) {
-    return (
-      <View style={[styles.centerContainer, { paddingTop: insets.top }]}>
-        <Ionicons name="people-outline" size={56} color={colors.textTertiary} />
-        <Text style={styles.emptyText}>No candidates found</Text>
-        <Text style={styles.emptySubtext}>
-          Add your address in Profile to see races in your area, or check back closer to election day.
-        </Text>
-      </View>
-    );
-  }
-
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+    <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
         {isStackBrowse && (
           <TouchableOpacity
@@ -146,60 +136,96 @@ const HomeScreen: React.FC = () => {
           </TouchableOpacity>
         )}
         <Text style={styles.headerTitle}>
-          {features.mvpMode ? 'Browse candidates' : 'Discover Candidates'}
+          {features.mvpMode ? 'Browse candidates' : 'Discover'}
         </Text>
         <Text style={styles.headerSubtitle}>
-          {user?.location?.state === 'NC'
-            ? 'North Carolina: browse by office. Tap for details or compare two.'
-            : 'Browse candidates by office. Tap to learn more or compare.'}
+          Search by name or office. Check Compare on two candidates, then use the bar below.
         </Text>
+        <View style={styles.searchWrap}>
+          <SearchBar
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search name, office, or party"
+          />
+        </View>
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
-        }
-      >
-        {OFFICE_LEVELS.map((level) => {
-          const levelCandidates = candidates[level.key] || [];
-          if (levelCandidates.length === 0) return null;
+      {rows.length === 0 ? (
+        <View style={styles.centerContainer}>
+          <Ionicons
+            name={loadError ? 'cloud-offline-outline' : 'people-outline'}
+            size={56}
+            color={colors.textTertiary}
+          />
+          <Text style={styles.emptyText}>
+            {loadError ? "Couldn't load candidates" : 'No candidates found'}
+          </Text>
+          <Text style={styles.emptySubtext}>
+            {loadError
+              ? 'Check your connection and try again.'
+              : 'Add your address in Profile to see races in your area, or check back closer to election day.'}
+          </Text>
+          <Button
+            title="Try again"
+            onPress={loadCandidates}
+            style={styles.retryButton}
+          />
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: selectedCount > 0 ? 140 : 100 },
+          ]}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          }
+          keyboardShouldPersistTaps="handled"
+        >
+          {groups.length === 0 ? (
+            <Text style={styles.noResults}>No matches for “{query}”</Text>
+          ) : (
+            groups.map((group) => (
+              <CategorySection
+                key={group.office}
+                title={group.office}
+                defaultExpanded
+              >
+                {group.candidates.map((candidate) => (
+                    <CandidateCard
+                      key={candidate.id}
+                      name={candidate.name}
+                      party={candidate.party || ''}
+                      photo={candidate.photo}
+                      office={candidate.office}
+                      matchScore={candidate.matchScore}
+                      onPress={() => handleCandidatePress(candidate.id)}
+                      onCompare={() => handleToggleComparison(candidate.id)}
+                      selected={selectedForComparison.includes(candidate.id)}
+                    />
+                ))}
+              </CategorySection>
+            ))
+          )}
+        </ScrollView>
+      )}
 
-          return (
-            <CategorySection
-              key={level.key}
-              title={level.title}
-              icon={<Text style={styles.categoryIcon}>{level.icon}</Text>}
-              actionLabel="Tap to compare"
-              defaultExpanded
-            >
-              {levelCandidates.map((candidate) => (
-                <CandidateCard
-                  key={candidate.id}
-                  name={candidate.name}
-                  party={candidate.party}
-                  photo={candidate.photo}
-                  office={candidate.office}
-                  matchScore={candidate.matchScore}
-                  onPress={() => handleCandidatePress(candidate.id)}
-                  onCompare={() => handleToggleComparison(candidate.id)}
-                  selected={selectedForComparison.includes(candidate.id)}
-                />
-              ))}
-              {levelCandidates.length >= 2 && (
-                <Button
-                  title="Compare selected"
-                  onPress={handleCompare}
-                  disabled={selectedForComparison.length !== 2}
-                  fullWidth
-                  variant={selectedForComparison.length === 2 ? 'primary' : 'secondary'}
-                />
-              )}
-            </CategorySection>
-          );
-        })}
-      </ScrollView>
+      {selectedCount > 0 && (
+        <View style={[styles.compareBar, { paddingBottom: insets.bottom + 12 }]}>
+          <Text style={styles.compareBarText}>
+            {selectedCount === 1
+              ? 'Select one more to compare'
+              : '2 selected'}
+          </Text>
+          <Button
+            title="Compare"
+            onPress={handleCompare}
+            disabled={selectedCount !== 2}
+            size="small"
+          />
+        </View>
+      )}
     </View>
   );
 };
@@ -231,13 +257,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    minWidth: 160,
+  },
+  noResults: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 24,
   },
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingBottom: 12,
+    backgroundColor: colors.background,
+  },
+  headerTitle: {
+    ...typography.title1,
+    color: colors.textPrimary,
+    marginBottom: 4,
   },
   backRow: {
     flexDirection: 'row',
@@ -249,25 +288,41 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.primary,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
   headerSubtitle: {
     fontSize: 14,
     color: colors.textSecondary,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  searchWrap: {
+    marginBottom: 4,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 100,
   },
-  categoryIcon: {
-    fontSize: 24,
+  compareBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    backgroundColor: colors.background,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  compareBarText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
 });
 

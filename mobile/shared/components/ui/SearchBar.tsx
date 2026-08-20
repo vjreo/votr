@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, borderRadius, shadows } from '../../theme/colors';
+import { colors, borderRadius, typography } from '../../theme/colors';
 
 interface SearchBarProps {
   value: string;
@@ -31,8 +31,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   return (
-    <View style={[styles.container, shadows.small as any]}>
-      <Ionicons name="search" size={20} color={colors.textTertiary} />
+    <View style={styles.container}>
+      <Ionicons name="search" size={18} color={colors.textTertiary} />
       <TextInput
         style={styles.input}
         value={value}
@@ -58,17 +58,17 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     gap: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderLight,
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    ...typography.callout,
     color: colors.textPrimary,
     padding: 0,
   },

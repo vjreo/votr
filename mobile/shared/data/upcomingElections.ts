@@ -1,7 +1,11 @@
-/**
- * Upcoming elections by state - used for Feed "what's happening near me"
- * Can be extended or replaced with API data
- */
+export const MVP_TARGET = {
+  state: 'NC' as const,
+  electionId: 'nc-primary-2028',
+  /** G.S. 163-1: Tuesday after the first Monday in March. NCSBE can still change this. */
+  date: '2028-03-07',
+  label: '2028 NC Primary',
+};
+
 export interface ElectionDeadline {
   name: string;
   date: string;
@@ -23,55 +27,69 @@ export interface UpcomingElection {
 
 const NC_ELECTIONS: UpcomingElection[] = [
   {
-    id: 'nc-primary-2026',
-    name: '2026 Primary Election',
-    date: '2026-03-03',
-    type: 'primary',
-    icon: '🗳️',
-    description: 'Party primaries for Governor, US Senate, House, and state legislature',
-    state: 'NC',
-    deadlines: [
-      { name: 'Voter Registration', date: '2026-02-06', icon: '📝', critical: true },
-      { name: 'Primary Day', date: '2026-03-03', icon: '🗳️', critical: true },
-    ],
-    offices: ['Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
-  },
-  {
     id: 'nc-general-2026',
     name: '2026 General Election',
     date: '2026-11-03',
     type: 'general',
     icon: '🏛️',
-    description: 'Governor, US Senate, House, state legislature, and local offices',
+    description: 'U.S. Senate, U.S. House, and state legislature',
     state: 'NC',
     deadlines: [
       { name: 'Early Voting Begins', date: '2026-10-15', icon: '📅', critical: false },
       { name: 'Voter Registration', date: '2026-10-09', icon: '📝', critical: true },
       { name: 'Election Day', date: '2026-11-03', icon: '🗳️', critical: true },
     ],
-    offices: ['Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
+    offices: ['U.S. Senate', 'U.S. House', 'State Legislature'],
+  },
+  {
+    id: 'nc-primary-2028',
+    name: '2028 Primary Election',
+    date: MVP_TARGET.date,
+    type: 'primary',
+    icon: '🗳️',
+    description:
+      'Party primaries for President, Governor, U.S. Senate, U.S. House, and the General Assembly',
+    state: 'NC',
+    deadlines: [
+      { name: 'Voter Registration', date: '2028-02-11', icon: '📝', critical: true },
+      { name: 'Early Voting Begins', date: '2028-02-19', icon: '📅', critical: false },
+      { name: 'Primary Day', date: MVP_TARGET.date, icon: '🗳️', critical: true },
+    ],
+    offices: ['President', 'Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
   },
 ];
 
-const getDaysUntil = (dateString: string): number => {
+export function getDaysUntil(dateString: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const target = new Date(dateString);
   target.setHours(0, 0, 0, 0);
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-};
+}
+
+export function formatShortDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+export function getElectionsForState(stateCode: string): UpcomingElection[] {
+  if (stateCode.toUpperCase() !== 'NC') return [];
+  return [...NC_ELECTIONS].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+}
 
 export function getUpcomingElectionsForState(stateCode: string): UpcomingElection[] {
-  const state = stateCode.toUpperCase();
-  if (state === 'NC') {
-    return NC_ELECTIONS.filter((e) => getDaysUntil(e.date) >= 0);
-  }
-  return [];
+  return getElectionsForState(stateCode).filter((e) => getDaysUntil(e.date) >= 0);
 }
 
 export function getNextElection(stateCode: string): UpcomingElection | null {
   const upcoming = getUpcomingElectionsForState(stateCode);
   return upcoming[0] || null;
+}
+
+export function getMvpTargetElection(stateCode: string): UpcomingElection | null {
+  if (stateCode.toUpperCase() !== MVP_TARGET.state) return null;
+  return NC_ELECTIONS.find((e) => e.id === MVP_TARGET.electionId) || null;
 }
 
 export function getUpcomingDeadlines(stateCode: string, limit = 3) {

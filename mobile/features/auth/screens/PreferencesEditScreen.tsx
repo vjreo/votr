@@ -5,15 +5,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser } from '../context/UserContext';
-import Button from '../../../shared/components/ui/Button';
+import { Button, ScreenHeader } from '../../../shared/components/ui';
 import { ISSUES } from '../../../shared/data/issues';
-import { colors } from '../../../shared/theme/colors';
+import { colors, typography } from '../../../shared/theme/colors';
 
 const PreferencesEditScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -54,25 +52,16 @@ const PreferencesEditScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Preferences</Text>
-        <View style={styles.headerRight} />
-      </View>
+    <View style={styles.container}>
+      <ScreenHeader title="Issues you care about" />
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 120 }]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.subtitle}>
-          Tap issues you care about. Tap again to remove.
+          Tap to add or remove. Match scores use the issues you select.
         </Text>
         <View style={styles.chipRow}>
           {ISSUES.map((issue) => {
@@ -82,26 +71,33 @@ const PreferencesEditScreen: React.FC = () => {
                 key={issue.id}
                 style={[styles.chip, selected && styles.chipSelected]}
                 onPress={() => toggle(issue.id)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: selected }}
+                accessibilityLabel={issue.name}
               >
-                <Text
-                  style={[styles.chipText, selected && styles.chipTextSelected]}
-                >
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
                   {issue.name}
                 </Text>
               </TouchableOpacity>
             );
           })}
         </View>
+      </ScrollView>
+
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
+        <Text style={styles.footerHint}>
+          {selectedIds.length === 0
+            ? 'Select at least one issue'
+            : `${selectedIds.length} issue${selectedIds.length === 1 ? '' : 's'} selected`}
+        </Text>
         <Button
           title={saving ? 'Saving...' : 'Save'}
           onPress={handleSave}
           loading={saving}
           disabled={selectedIds.length === 0}
           fullWidth
-          style={styles.saveBtn}
-          size="medium"
         />
-      </ScrollView>
+      </View>
     </View>
   );
 };
@@ -111,67 +107,55 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backBtn: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    textAlign: 'center',
-  },
-  headerRight: { width: 44 },
   scroll: { flex: 1 },
   scrollContent: {
-    padding: 16,
+    padding: 20,
   },
   subtitle: {
-    fontSize: 14,
+    ...typography.subhead,
     color: colors.textSecondary,
     marginBottom: 16,
-    lineHeight: 20,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 24,
   },
   chip: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 14,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderLight,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   chipSelected: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryMuted,
     borderColor: colors.primary,
   },
   chipText: {
-    fontSize: 14,
+    ...typography.subhead,
     fontWeight: '500',
     color: colors.textPrimary,
   },
   chipTextSelected: {
-    color: colors.white,
+    color: colors.primary,
+    fontWeight: '600',
   },
-  saveBtn: {
-    marginTop: 8,
+  footer: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    backgroundColor: colors.background,
+    gap: 8,
+  },
+  footerHint: {
+    ...typography.footnote,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
 });
 

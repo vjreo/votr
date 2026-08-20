@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   StatusBar,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,11 +43,7 @@ const Header: React.FC<HeaderProps> = ({
         transparent && styles.transparent,
       ]}
     >
-      <StatusBar
-        barStyle={transparent ? 'light-content' : 'dark-content'}
-        backgroundColor="transparent"
-        translucent
-      />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <View style={styles.content}>
         <View style={styles.left}>
           {leftIcon && onLeftPress && (

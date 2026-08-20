@@ -7,21 +7,19 @@ import {
   Image,
   ActivityIndicator,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { TabBar, Button, Card } from '../../../shared/components/ui';
 import SourceList from '../../../shared/components/SourceList';
 import { candidateApi } from '../services/candidateApi';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { useGamification } from '../../../features/gamification/context/GamificationContext';
-import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
+import { colors, typography, borderRadius } from '../../../shared/theme/colors';
 import { logEvent } from '../../../shared/services/analytics';
 import { features } from '../../../shared/config/features';
-
-const { width } = Dimensions.get('window');
 
 const DETAIL_TABS = [
   { key: 'overview', label: 'Overview' },
@@ -95,7 +93,6 @@ const CandidateDetailScreen: React.FC = () => {
       newTabsViewed.add(activeTab);
       setTabsViewed(newTabsViewed);
 
-      // Check if all tabs have been viewed
       if (newTabsViewed.size >= 4) {
         unlockAchievement('deep_diver');
       }
@@ -129,8 +126,6 @@ const CandidateDetailScreen: React.FC = () => {
       unlockAchievement('first_roster');
     }
   };
-
-  const getPartyColor = () => colors.textSecondary;
 
   if (loading) {
     return (
@@ -226,42 +221,35 @@ const CandidateDetailScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header with photo */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        {/* Background pattern */}
-        <View style={styles.headerBackground}>
-          <View style={[styles.stripe, styles.stripe1]} />
-          <View style={[styles.stripe, styles.stripe2]} />
-          <View style={[styles.stripe, styles.stripe3]} />
-        </View>
+        <LinearGradient
+          colors={['#2C2A27', colors.background]}
+          style={StyleSheet.absoluteFill}
+        />
 
-        {/* Back button */}
         <TouchableOpacity
           style={[styles.backButton, { top: insets.top + 8 }]}
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons name="chevron-back" size={28} color={colors.white} />
+          <Ionicons name="chevron-back" size={26} color={colors.textPrimary} />
         </TouchableOpacity>
 
-        {/* Photo */}
         <View style={styles.photoContainer}>
           {candidate.photo ? (
             <Image source={{ uri: candidate.photo }} style={styles.photo} />
           ) : (
             <View style={styles.photoPlaceholder}>
-              <Ionicons name="person" size={60} color={colors.textTertiary} />
+              <Ionicons name="person" size={56} color={colors.textTertiary} />
             </View>
           )}
         </View>
 
-        {/* Name and party */}
         <Text style={styles.name}>{candidate.name}</Text>
-        <Text style={[styles.party, { color: getPartyColor() }]}>{candidate.party}</Text>
+        <Text style={styles.party}>{candidate.party}</Text>
       </View>
 
-      {/* Tabs */}
       <View style={styles.tabBarContainer}>
         <TabBar
           tabs={DETAIL_TABS}
@@ -276,14 +264,12 @@ const CandidateDetailScreen: React.FC = () => {
         <View style={styles.limitedIssueBanner}>
           <Ionicons name="information-circle-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.limitedIssueText}>
-            We don&apos;t have detailed issue positions for this candidate yet. Match scores need
-            overlapping issues in our data—sparse rows here mean a weaker or zero score, not a
-            personal rating.
+            We don&apos;t have detailed issue positions for this candidate yet. Match scores only
+            show when we have overlapping issues—no score is missing data, not a rating.
           </Text>
         </View>
       )}
 
-      {/* Content */}
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
@@ -301,7 +287,6 @@ const CandidateDetailScreen: React.FC = () => {
         )}
       </ScrollView>
 
-      {/* Bottom action */}
       <View style={[styles.bottomAction, { paddingBottom: insets.bottom + 16 }]}>
         <Button
           title={
@@ -329,7 +314,6 @@ const CandidateDetailScreen: React.FC = () => {
   );
 };
 
-// Info row component
 const InfoRow: React.FC<{ label: string; value?: string }> = ({ label, value }) => {
   if (!value) return null;
   return (
@@ -383,36 +367,11 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   header: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.background,
     paddingBottom: 20,
     alignItems: 'center',
     position: 'relative',
     overflow: 'hidden',
-  },
-  headerBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  stripe: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 20,
-  },
-  stripe1: {
-    top: '20%',
-    backgroundColor: '#C41E3A',
-  },
-  stripe2: {
-    top: '40%',
-    backgroundColor: colors.card,
-  },
-  stripe3: {
-    top: '60%',
-    backgroundColor: '#002868',
   },
   backButton: {
     position: 'absolute',
@@ -421,47 +380,46 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderLight,
   },
   photoContainer: {
-    marginTop: 20,
-    marginBottom: 16,
+    marginTop: 48,
+    marginBottom: 14,
   },
   photo: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 4,
-    borderColor: colors.white,
+    width: 112,
+    height: 112,
+    borderRadius: 56,
+    borderWidth: 2,
+    borderColor: colors.borderLight,
   },
   photoPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.background,
-    borderWidth: 4,
-    borderColor: colors.white,
+    width: 112,
+    height: 112,
+    borderRadius: 56,
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.borderLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   name: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.white,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    ...typography.title1,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    paddingHorizontal: 24,
   },
   party: {
-    fontSize: 16,
-    fontWeight: '500',
+    ...typography.callout,
+    color: colors.textSecondary,
     marginTop: 4,
   },
   tabBarContainer: {
-    backgroundColor: colors.card,
-    ...shadows.small,
+    backgroundColor: colors.background,
   },
   limitedIssueBanner: {
     flexDirection: 'row',
@@ -615,9 +573,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.card,
+    backgroundColor: colors.background,
     padding: 16,
-    ...shadows.medium,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
   },
 });
 

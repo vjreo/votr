@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Card } from '../../../shared/components/ui';
 import { useUser } from '../../../features/auth/context/UserContext';
-import { colors, shadows } from '../../../shared/theme/colors';
+import { colors, typography } from '../../../shared/theme/colors';
 import { features } from '../../../shared/config/features';
 import { getNextElection } from '../../../shared/data/upcomingElections';
 import { DEFAULT_STATE } from '../../../shared/constants';
@@ -77,10 +77,10 @@ const RosterScreen: React.FC = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>{features.mvpMode ? 'Your Shortlist' : 'Build Your Voting List'}</Text>
+        <Text style={styles.title}>{features.mvpMode ? 'Shortlist' : 'My roster'}</Text>
         {!isEmpty && (
           <Text style={styles.subtitle}>
-            {roster.length} candidate{roster.length !== 1 ? 's' : ''} selected
+            {roster.length} candidate{roster.length !== 1 ? 's' : ''} for the ballot
           </Text>
         )}
       </View>
@@ -98,21 +98,42 @@ const RosterScreen: React.FC = () => {
             <View style={styles.emptyIcon}>
               <Ionicons name="clipboard-outline" size={64} color={colors.textTertiary} />
             </View>
-            <Text style={styles.emptyTitle}>Build your voting list</Text>
+            <Text style={styles.emptyTitle}>No one on your shortlist yet</Text>
             <Text style={styles.emptySubtitle}>
-              Add candidates from Match{features.mvpMode ? '' : ' or Discover'}. Your roster syncs when you sign in—handy at the polls.
+              Heart or swipe right on Match to save candidates. Your shortlist is what you take to the polls.
             </Text>
             <Button
-              title={features.mvpMode ? 'Browse candidates' : 'Discover Candidates'}
-              onPress={() => navigation.navigate('DiscoverList' as never)}
+              title="Start matching"
+              onPress={() => navigation.navigate('Feed')}
               style={styles.emptyButton}
+            />
+            <Button
+              title="Browse by office"
+              onPress={() => navigation.navigate('DiscoverList' as never)}
+              variant="secondary"
+              style={styles.emptyButtonSecondary}
             />
           </View>
         ) : (
           <>
             {Object.entries(groupedRoster).map(([office, candidates]) => (
               <View key={office} style={styles.section}>
-                <Text style={styles.sectionTitle}>{office}</Text>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>{office}</Text>
+                  {candidates.length === 2 && (
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate('Compare' as never, {
+                          candidateIds: candidates.map((c) => c.id),
+                        } as never)
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={`Compare ${candidates[0].name} and ${candidates[1].name}`}
+                    >
+                      <Text style={styles.compareLink}>Compare</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
                 {candidates.map((candidate) => (
                   <Card
                     key={candidate.id}
@@ -167,6 +188,13 @@ const RosterScreen: React.FC = () => {
                 variant="secondary"
                 icon={<Ionicons name="share-outline" size={20} color={colors.primary} />}
               />
+              <Button
+                title="Preview sample ballot"
+                onPress={() => navigation.navigate('SampleBallot' as never)}
+                fullWidth
+                variant="secondary"
+                icon={<Ionicons name="document-text-outline" size={20} color={colors.primary} />}
+              />
             </View>
 
             <Card variant="outlined" style={styles.reminderCard}>
@@ -195,18 +223,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: colors.card,
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    ...shadows.small,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
+    ...typography.largeTitle,
     color: colors.textPrimary,
   },
   subtitle: {
-    fontSize: 14,
+    ...typography.subhead,
     color: colors.textSecondary,
     marginTop: 4,
   },
@@ -231,23 +257,32 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    ...typography.title3,
     color: colors.textPrimary,
     marginBottom: 8,
   },
   emptySubtitle: {
-    fontSize: 15,
+    ...typography.subhead,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
     marginBottom: 24,
   },
   emptyButton: {
     minWidth: 200,
   },
+  emptyButtonSecondary: {
+    minWidth: 200,
+    marginTop: 10,
+  },
   section: {
     marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingLeft: 4,
   },
   sectionTitle: {
     fontSize: 13,
@@ -255,8 +290,12 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 12,
-    paddingLeft: 4,
+    flex: 1,
+  },
+  compareLink: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
   },
   candidateCard: {
     marginBottom: 8,
@@ -313,10 +352,12 @@ const styles = StyleSheet.create({
   actionsSection: {
     marginTop: 8,
     marginBottom: 24,
+    gap: 10,
   },
   reminderCard: {
-    backgroundColor: colors.primary + '10',
-    borderColor: colors.primary + '30',
+    backgroundColor: colors.primaryMuted,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.primary + '33',
   },
   reminderContent: {
     flexDirection: 'row',

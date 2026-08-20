@@ -1,5 +1,3 @@
-// Shared TypeScript types for VOTR
-
 export interface User {
   id: string;
   preferences: IssuePreference[];
@@ -57,7 +55,7 @@ export interface Candidate {
   apiSource: string;
   createdAt: Date;
   updatedAt: Date;
-  /** Present when API called with includeMatch (0–100) */
+  /** Present when API called with includeMatch (0–100). Omitted when there is no overlapping issue data. */
   matchScore?: number;
 }
 

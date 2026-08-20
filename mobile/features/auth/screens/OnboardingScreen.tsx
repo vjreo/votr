@@ -10,7 +10,7 @@ import {
 import IssueSwipeCard from '../components/IssueSwipeCard';
 import { useUser } from '../context/UserContext';
 import { ISSUES } from '../../../shared/data/issues';
-import { colors, borderRadius } from '../../../shared/theme/colors';
+import { colors, borderRadius, typography } from '../../../shared/theme/colors';
 import { logEvent } from '../../../shared/services/analytics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -65,9 +65,9 @@ const OnboardingScreen: React.FC = () => {
   return (
     <View style={[styles.container, { paddingTop: insets.top + 16, paddingBottom: insets.bottom }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Swipe on Issues That Matter</Text>
+        <Text style={styles.title}>What do you care about?</Text>
         <Text style={styles.subtitle}>
-          Tap “I care” or swipe right on issues that matter. We’ll match you with candidates who share those priorities.
+          We’ll match you with candidates who share those priorities.
         </Text>
       </View>
 
@@ -140,11 +140,12 @@ const OnboardingScreen: React.FC = () => {
           {selectedIssues.length > 0 && (
             <TouchableOpacity
               style={styles.skipButton}
-              onPress={() => setDeck([])}
+              onPress={handleContinue}
+              disabled={saving}
               accessibilityRole="button"
               accessibilityLabel="Done selecting issues"
             >
-              <Text style={styles.skipButtonText}>I'm done</Text>
+              <Text style={styles.skipButtonText}>{saving ? 'Saving...' : "I'm done"}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -164,15 +165,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    ...typography.largeTitle,
     color: colors.textPrimary,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   subtitle: {
-    fontSize: 16,
+    ...typography.callout,
     color: colors.textSecondary,
-    lineHeight: 24,
   },
   deckContainer: {
     flex: 1,

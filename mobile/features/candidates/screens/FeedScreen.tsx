@@ -11,63 +11,37 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { CategorySection, Button } from '../../../shared/components/ui';
-import CandidateCard from '../components/CandidateCard';
+import { Button } from '../../../shared/components/ui';
 import SwipeableCard from '../components/SwipeableCard';
 import { useUser } from '../../../features/auth/context/UserContext';
 import { candidateApi } from '../services/candidateApi';
-import { getNextElection } from '../../../shared/data/upcomingElections';
-import { colors, borderRadius } from '../../../shared/theme/colors';
+import { getNextElection, getDaysUntil } from '../../../shared/data/upcomingElections';
+import { colors, borderRadius, typography } from '../../../shared/theme/colors';
 import { DEFAULT_STATE } from '../../../shared/constants';
-import { features } from '../../../shared/config/features';
 import type { Candidate } from '../../../shared/types';
-import {
-  groupCandidatesByOfficeLevel,
-  toSwipeCandidate,
-  type OfficeBucket,
-} from '../utils/candidateGrouping';
-import { useCandidatePairCompare } from '../hooks/useCandidatePairCompare';
+import { toSwipeCandidate } from '../utils/candidateGrouping';
 import { logEvent } from '../../../shared/services/analytics';
 
-const getDaysUntil = (dateString: string): number => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(dateString);
-  target.setHours(0, 0, 0, 0);
-  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-};
+const DECK_SIZE = 3;
+const UNDO_MS = 5000;
 
-const formatDate = (dateString: string): string => {
-  const d = new Date(dateString);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-};
-
-const OFFICE_LEVELS = [
-  {
-    key: 'federal',
-    title: 'U.S. Senate',
-    description: 'United States senators represent their state in the federal legislature.',
-    icon: '🏛️',
-  },
-  {
-    key: 'state',
-    title: 'Governor',
-    description: 'Governors implement state laws and run the state executive branch.',
-    icon: '🏛️',
-  },
-  {
-    key: 'state_legislature',
-    title: 'State Legislature',
-    description: 'State legislators create and vote on state laws.',
-    icon: '📜',
-  },
-  {
-    key: 'local',
-    title: 'Local Offices',
-    description: 'Local officials handle city, county, schools, and community services.',
-    icon: '🏘️',
-  },
-];
+function nextFromPool(
+  pool: Candidate[],
+  current: Candidate[],
+  passed: Set<string>,
+  rostered: (id: string) => boolean,
+  count: number
+): Candidate[] {
+  const have = new Set(current.map((c) => c.id));
+  const out = [...current];
+  for (const c of pool) {
+    if (out.length >= count) break;
+    if (have.has(c.id) || passed.has(c.id) || rostered(c.id)) continue;
+    out.push(c);
+    have.add(c.id);
+  }
+  return out;
+}
 
 const FeedScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -77,28 +51,46 @@ const FeedScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const [candidates, setCandidates] = useState<Record<OfficeBucket, Candidate[]>>(() =>
-    groupCandidatesByOfficeLevel([], false) as Record<OfficeBucket, Candidate[]>
-  );
-  const { selectedForComparison, handleToggleComparison, handleCompare } =
-    useCandidatePairCompare();
+  const [pool, setPool] = useState<Candidate[]>([]);
   const [matchDeck, setMatchDeck] = useState<Candidate[]>([]);
   const [hasHadDeck, setHasHadDeck] = useState(false);
+  const [lastPassed, setLastPassed] = useState<Candidate | null>(null);
 
   const passedIdsRef = React.useRef<Set<string>>(new Set());
   const locationKeyRef = React.useRef<string>('');
   const loadInProgressRef = React.useRef(false);
+  const undoTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isInRosterRef = React.useRef(isInRoster);
+  isInRosterRef.current = isInRoster;
 
   const userState = user?.location?.state || DEFAULT_STATE;
   const userAddress = user?.location?.address;
   const nextElection = getNextElection(userState);
   const locationKey = `${userState}|${userAddress || ''}|${user?.location?.latitude || ''}|${user?.location?.longitude || ''}`;
 
-  const loadCandidates = React.useCallback(async () => {
+  const clearUndoTimer = () => {
+    if (undoTimerRef.current) {
+      clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
+  };
+
+  const armUndo = (candidate: Candidate) => {
+    clearUndoTimer();
+    setLastPassed(candidate);
+    undoTimerRef.current = setTimeout(() => {
+      setLastPassed(null);
+      undoTimerRef.current = null;
+    }, UNDO_MS);
+  };
+
+  React.useEffect(() => () => clearUndoTimer(), []);
+
+  const loadCandidates = React.useCallback(async (opts?: { quiet?: boolean }) => {
     if (loadInProgressRef.current) return;
     loadInProgressRef.current = true;
     try {
-      setLoading(true);
+      if (!opts?.quiet) setLoading(true);
       setLoadError(false);
       const prefCount = user?.preferences?.length ?? 0;
       const useMatch = Boolean(accessToken && prefCount > 0);
@@ -111,35 +103,30 @@ const FeedScreen: React.FC = () => {
         sortMatch: useMatch,
       });
 
-      const grouped = groupCandidatesByOfficeLevel(
-        (response.data || []) as unknown[],
-        useMatch
-      ) as Record<OfficeBucket, Candidate[]>;
-      setCandidates(grouped);
-
-      const listCount = Object.values(grouped).reduce((n, arr) => n + arr.length, 0);
+      const rows = (response.data || []) as Record<string, unknown>[];
+      const list = rows.map((r) => toSwipeCandidate(r, userState));
+      setPool(list);
       logEvent('candidates_feed_loaded', {
-        count: listCount,
+        count: list.length,
         includeMatch: useMatch,
         state: userState,
       });
 
-      const rows = (response.data || []) as Record<string, unknown>[];
-      if (useMatch && rows.length > 0) {
-        const deck = rows
-          .map((r) => toSwipeCandidate(r, userState))
-          .filter((c) => !passedIdsRef.current.has(c.id))
-          .slice(0, 12);
-        setMatchDeck(deck);
-        if (deck.length > 0) setHasHadDeck(true);
-      } else {
-        setMatchDeck([]);
-      }
+      const deck = nextFromPool(
+        list,
+        [],
+        passedIdsRef.current,
+        (id) => isInRosterRef.current(id),
+        DECK_SIZE
+      );
+      setMatchDeck(deck);
+      setHasHadDeck(deck.length > 0);
     } catch (error) {
       console.warn('Error loading candidates:', error);
       setLoadError(true);
-      setCandidates(groupCandidatesByOfficeLevel([], false) as Record<OfficeBucket, Candidate[]>);
+      setPool([]);
       setMatchDeck([]);
+      setHasHadDeck(false);
     } finally {
       setLoading(false);
       loadInProgressRef.current = false;
@@ -157,34 +144,70 @@ const FeedScreen: React.FC = () => {
     if (locationKeyRef.current && locationKeyRef.current !== locationKey) {
       passedIdsRef.current = new Set();
       setHasHadDeck(false);
+      setLastPassed(null);
+      clearUndoTimer();
     }
     locationKeyRef.current = locationKey;
     loadCandidates();
   }, [loadCandidates, locationKey]);
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadCandidates();
-    setRefreshing(false);
+  const startOver = () => {
+    passedIdsRef.current = new Set();
+    setLastPassed(null);
+    clearUndoTimer();
+    const deck = nextFromPool(pool, [], new Set(), isInRoster, DECK_SIZE);
+    setMatchDeck(deck);
+    setHasHadDeck(deck.length > 0);
   };
 
-  const handleCandidatePress = (candidateId: string) => {
-    navigation.navigate('CandidateDetail' as never, { candidateId } as never);
+  const handleRefresh = async () => {
+    passedIdsRef.current = new Set();
+    setLastPassed(null);
+    clearUndoTimer();
+    setRefreshing(true);
+    await loadCandidates({ quiet: true });
+    setRefreshing(false);
   };
 
   const openBrowse = () => navigation.navigate('DiscoverList' as never);
 
-  const popMatchDeck = (id: string) => {
-    setMatchDeck((prev) => prev.filter((c) => c.id !== id));
+  const refillDeck = (withoutId: string) => {
+    setMatchDeck((prev) =>
+      nextFromPool(
+        pool,
+        prev.filter((c) => c.id !== withoutId),
+        passedIdsRef.current,
+        isInRoster,
+        DECK_SIZE
+      )
+    );
   };
 
-  const handlePass = (id: string) => {
-    passedIdsRef.current.add(id);
-    popMatchDeck(id);
+  const handlePass = (candidate: Candidate) => {
+    passedIdsRef.current.add(candidate.id);
+    armUndo(candidate);
+    refillDeck(candidate.id);
+  };
+
+  const handleUndo = () => {
+    if (!lastPassed) return;
+    passedIdsRef.current.delete(lastPassed.id);
+    const restored = lastPassed;
+    setLastPassed(null);
+    clearUndoTimer();
+    setMatchDeck((prev) => {
+      const without = prev.filter((c) => c.id !== restored.id);
+      return [restored, ...without].slice(0, DECK_SIZE);
+    });
+    setHasHadDeck(true);
   };
 
   const handleLike = (candidate: Candidate) => {
     passedIdsRef.current.add(candidate.id);
+    if (lastPassed?.id === candidate.id) {
+      setLastPassed(null);
+      clearUndoTimer();
+    }
     addToRoster({
       id: candidate.id,
       name: candidate.name,
@@ -192,57 +215,13 @@ const FeedScreen: React.FC = () => {
       office: candidate.office,
       photo: candidate.photo,
     });
-    popMatchDeck(candidate.id);
+    refillDeck(candidate.id);
   };
 
   const visibleDeck = matchDeck.filter((c) => !isInRoster(c.id));
   const topCard = visibleDeck[0];
   const deckFinished = hasHadDeck && visibleDeck.length === 0;
-  const hasBallotCandidates = Object.values(candidates).some((arr) => arr.length > 0);
-  const showOfficeLists = !features.mvpMode || (!hasHadDeck && visibleDeck.length === 0);
-
-  const renderOfficeSection = (level: (typeof OFFICE_LEVELS)[0]) => {
-    const levelCandidates = candidates[level.key] || [];
-
-    if (levelCandidates.length === 0 && !loading) {
-      return null;
-    }
-
-    return (
-      <CategorySection
-        key={level.key}
-        title={level.title}
-        description={level.description}
-        icon={<Text style={styles.categoryIcon}>{level.icon}</Text>}
-        actionLabel={levelCandidates.length > 0 ? 'Tap image to compare candidates' : undefined}
-        defaultExpanded={levelCandidates.length > 0}
-      >
-        {levelCandidates.map((candidate) => (
-          <CandidateCard
-            key={candidate.id}
-            name={candidate.name}
-            party={candidate.party}
-            photo={candidate.photo}
-            office={candidate.office}
-            matchScore={candidate.matchScore}
-            onPress={() => handleCandidatePress(candidate.id)}
-            onCompare={() => handleToggleComparison(candidate.id)}
-            selected={selectedForComparison.includes(candidate.id)}
-          />
-        ))}
-
-        {levelCandidates.length >= 2 && (
-          <Button
-            title="Compare"
-            onPress={handleCompare}
-            disabled={selectedForComparison.length !== 2}
-            fullWidth
-            variant={selectedForComparison.length === 2 ? 'primary' : 'secondary'}
-          />
-        )}
-      </CategorySection>
-    );
-  };
+  const poolEmpty = pool.length === 0;
 
   return (
     <View style={styles.container}>
@@ -254,9 +233,9 @@ const FeedScreen: React.FC = () => {
             accessibilityRole="button"
             accessibilityLabel="Change voting address"
           >
-            <Ionicons name="location" size={20} color={colors.primary} />
+            <Ionicons name="location" size={16} color={colors.primary} />
             <Text style={styles.locationText}>{userState || DEFAULT_STATE}</Text>
-            <Ionicons name="chevron-down" size={16} color={colors.textTertiary} />
+            <Ionicons name="chevron-down" size={14} color={colors.textTertiary} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => navigation.navigate('ElectionCalendar')}
@@ -264,10 +243,14 @@ const FeedScreen: React.FC = () => {
             accessibilityRole="button"
             accessibilityLabel="Election calendar"
           >
-            <Ionicons name="calendar-outline" size={24} color={colors.textPrimary} />
+            <Ionicons name="calendar-outline" size={22} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
-
+        {nextElection ? (
+          <Text style={styles.electionLine}>
+            {nextElection.name} · {getDaysUntil(nextElection.date)} days
+          </Text>
+        ) : null}
         <TouchableOpacity
           style={styles.searchContainer}
           onPress={openBrowse}
@@ -275,9 +258,8 @@ const FeedScreen: React.FC = () => {
           accessibilityRole="button"
           accessibilityLabel="Browse candidates and offices"
         >
-          <Ionicons name="search" size={20} color={colors.textTertiary} />
-          <Text style={styles.searchPlaceholder}>Browse candidates, offices...</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+          <Ionicons name="search" size={18} color={colors.textTertiary} />
+          <Text style={styles.searchPlaceholder}>Browse by name or office</Text>
         </TouchableOpacity>
       </View>
 
@@ -300,42 +282,16 @@ const FeedScreen: React.FC = () => {
           </View>
         ) : (
           <>
-            {nextElection && (
-              <TouchableOpacity
-                style={styles.electionChip}
-                onPress={() => navigation.navigate('ElectionCalendar')}
-                accessibilityRole="button"
-                accessibilityLabel={`${nextElection.name}, ${formatDate(nextElection.date)}`}
-              >
-                <Text style={styles.electionChipIcon}>{nextElection.icon}</Text>
-                <View style={styles.electionChipMeta}>
-                  <Text style={styles.electionChipName} numberOfLines={1}>
-                    {nextElection.name}
-                  </Text>
-                  <Text style={styles.electionChipDate}>
-                    {formatDate(nextElection.date)} · {getDaysUntil(nextElection.date)} days
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
-              </TouchableOpacity>
-            )}
-
             {visibleDeck.length > 0 && (
               <View style={styles.matchDeckBlock}>
-                <Text style={styles.matchDeckTitle}>
-                  {features.mvpMode ? 'Your matches' : 'Top matches for you'}
-                </Text>
-                <Text style={styles.matchDeckHint}>
-                  Right or ♥ adds them to your shortlist. Left skips. Up or ℹ to read more.
-                </Text>
                 <View style={styles.matchDeckStack}>
-                  {visibleDeck.slice(0, 3).map((c, index) => (
+                  {visibleDeck.map((c, index) => (
                     <SwipeableCard
                       key={c.id}
                       candidate={c}
                       matchScore={c.matchScore}
                       index={index}
-                      onSwipeLeft={() => handlePass(c.id)}
+                      onSwipeLeft={() => handlePass(c)}
                       onSwipeRight={() => handleLike(c)}
                       onSwipeUp={() =>
                         navigation.navigate('CandidateDetail' as never, {
@@ -349,7 +305,7 @@ const FeedScreen: React.FC = () => {
                   <View style={styles.matchActions}>
                     <TouchableOpacity
                       style={[styles.matchActionBtn, styles.matchActionPass]}
-                      onPress={() => handlePass(topCard.id)}
+                      onPress={() => handlePass(topCard)}
                       accessibilityRole="button"
                       accessibilityLabel={`Pass on ${topCard.name}`}
                     >
@@ -365,7 +321,7 @@ const FeedScreen: React.FC = () => {
                       accessibilityRole="button"
                       accessibilityLabel={`Learn more about ${topCard.name}`}
                     >
-                      <Ionicons name="information" size={26} color={colors.textPrimary} />
+                      <Ionicons name="information" size={22} color={colors.textPrimary} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.matchActionBtn, styles.matchActionLike]}
@@ -383,10 +339,10 @@ const FeedScreen: React.FC = () => {
             {deckFinished && (
               <View style={styles.finishedCard}>
                 <Ionicons name="checkmark-circle" size={40} color={colors.success} />
-                <Text style={styles.finishedTitle}>You reviewed your top matches</Text>
+                <Text style={styles.finishedTitle}>You reviewed your ballot matches</Text>
                 <Text style={styles.finishedSubtitle}>
                   {roster.length === 0
-                    ? 'No one made the shortlist yet. Browse the rest of the ballot, or pull down to start over.'
+                    ? 'No one made the shortlist yet. Start over, or browse by office.'
                     : `${roster.length} candidate${roster.length === 1 ? '' : 's'} on your shortlist.`}
                 </Text>
                 <View style={styles.finishedActions}>
@@ -398,33 +354,22 @@ const FeedScreen: React.FC = () => {
                     />
                   )}
                   <Button
+                    title="Start over"
+                    onPress={startOver}
+                    variant={roster.length > 0 ? 'secondary' : 'primary'}
+                    fullWidth
+                  />
+                  <Button
                     title="Browse all candidates"
                     onPress={openBrowse}
-                    variant={roster.length > 0 ? 'secondary' : 'primary'}
+                    variant="secondary"
                     fullWidth
                   />
                 </View>
               </View>
             )}
 
-            {showOfficeLists && (
-              <>
-                <View style={[styles.sectionHeader, { marginTop: visibleDeck.length > 0 ? 24 : 8 }]}>
-                  <Text style={styles.sectionTitle}>Candidates on your ballot</Text>
-                  <Text style={styles.sectionSubtitle}>
-                    {hasBallotCandidates
-                      ? 'Tap a candidate to learn more. Add the ones you want to your shortlist.'
-                      : features.mvpMode
-                        ? 'Add your voting address in Profile for local context—or browse all North Carolina candidates.'
-                        : 'Add your address in Profile to see races in your area, or open Discover to browse.'}
-                  </Text>
-                </View>
-
-                {OFFICE_LEVELS.map(renderOfficeSection)}
-              </>
-            )}
-
-            {Object.values(candidates).every((arr) => arr.length === 0) && (
+            {poolEmpty && (
               <View style={styles.emptyState}>
                 <Ionicons
                   name={loadError ? 'cloud-offline-outline' : 'people-outline'}
@@ -448,9 +393,7 @@ const FeedScreen: React.FC = () => {
                       <Text style={styles.emptyCtaText}>Add address</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.emptyCta} onPress={openBrowse}>
-                      <Text style={styles.emptyCtaText}>
-                        {features.mvpMode ? 'Browse NC candidates' : 'Try Discover'}
-                      </Text>
+                      <Text style={styles.emptyCtaText}>Browse NC candidates</Text>
                       <Ionicons name="arrow-forward" size={18} color={colors.primary} />
                     </TouchableOpacity>
                   </View>
@@ -460,6 +403,22 @@ const FeedScreen: React.FC = () => {
           </>
         )}
       </ScrollView>
+
+      {lastPassed && (
+        <View style={[styles.undoToast, { bottom: insets.bottom + 16 }]}>
+          <Text style={styles.undoText} numberOfLines={1}>
+            Passed on {lastPassed.name}
+          </Text>
+          <TouchableOpacity
+            onPress={handleUndo}
+            accessibilityRole="button"
+            accessibilityLabel={`Undo pass on ${lastPassed.name}`}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.undoAction}>Undo</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -470,211 +429,161 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: colors.surface,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingBottom: 8,
   },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: borderRadius.full,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderLight,
   },
   locationText: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...typography.headline,
     color: colors.textPrimary,
+  },
+  electionLine: {
+    ...typography.caption1,
+    color: colors.textTertiary,
+    paddingHorizontal: 22,
+    marginBottom: 10,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 16,
-    marginBottom: 12,
+    marginHorizontal: 20,
+    marginBottom: 4,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 11,
     gap: 10,
-    backgroundColor: colors.backgroundLight,
-    borderRadius: borderRadius.xl,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.full,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderLight,
   },
   searchPlaceholder: {
     flex: 1,
-    fontSize: 16,
+    ...typography.subhead,
     color: colors.textTertiary,
   },
   content: {
     flex: 1,
   },
   contentContainer: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  electionChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    gap: 10,
-  },
-  electionChipIcon: {
-    fontSize: 22,
-  },
-  electionChipMeta: {
-    flex: 1,
-  },
-  electionChipName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  electionChipDate: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 2,
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 28,
   },
   matchDeckBlock: {
-    marginBottom: 8,
-  },
-  matchDeckTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 6,
-  },
-  matchDeckHint: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 12,
-    lineHeight: 20,
+    flex: 1,
+    minHeight: 480,
   },
   matchDeckStack: {
     position: 'relative',
     width: '100%',
-    height: 520,
+    flex: 1,
+    minHeight: 480,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   matchActions: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 20,
-    marginBottom: 8,
+    gap: 22,
+    paddingVertical: 8,
   },
   matchActionBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    borderWidth: 1,
   },
   matchActionPass: {
     backgroundColor: colors.errorMuted,
-    borderColor: colors.swipePass + '55',
+    borderColor: colors.swipePass + '44',
   },
   matchActionMore: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.surface,
     borderColor: colors.borderLight,
   },
   matchActionLike: {
     backgroundColor: colors.successMuted,
-    borderColor: colors.swipeLike + '55',
+    borderColor: colors.swipeLike + '44',
   },
   finishedCard: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: borderRadius.xl,
-    padding: 24,
-    marginBottom: 16,
-    borderWidth: 1,
+    padding: 28,
+    marginTop: 24,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.borderLight,
   },
   finishedTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    ...typography.title3,
     color: colors.textPrimary,
     marginTop: 12,
     textAlign: 'center',
   },
   finishedSubtitle: {
-    fontSize: 14,
+    ...typography.subhead,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
-    lineHeight: 20,
     marginBottom: 20,
   },
   finishedActions: {
     width: '100%',
     gap: 10,
   },
-  categoryIcon: {
-    fontSize: 24,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
+    marginTop: 14,
+    ...typography.callout,
     color: colors.textSecondary,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 56,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    ...typography.title3,
     color: colors.textPrimary,
     marginTop: 16,
   },
   emptySubtitle: {
-    fontSize: 14,
+    ...typography.subhead,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
-    paddingHorizontal: 40,
-    lineHeight: 20,
+    paddingHorizontal: 24,
   },
   emptyActions: {
     marginTop: 20,
     alignItems: 'center',
     gap: 12,
-  },
-  sectionHeader: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
   },
   emptyCta: {
     flexDirection: 'row',
@@ -684,12 +593,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: colors.primaryMuted,
     borderRadius: borderRadius.full,
-    borderWidth: 1,
-    borderColor: colors.primary + '30',
   },
   emptyCtaText: {
-    fontSize: 16,
+    ...typography.callout,
     fontWeight: '600',
+    color: colors.primary,
+  },
+  undoToast: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderLight,
+    gap: 12,
+  },
+  undoText: {
+    flex: 1,
+    ...typography.subhead,
+    color: colors.textPrimary,
+    fontWeight: '500',
+  },
+  undoAction: {
+    ...typography.callout,
+    fontWeight: '700',
     color: colors.primary,
   },
 });

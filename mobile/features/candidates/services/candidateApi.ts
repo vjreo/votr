@@ -1,6 +1,5 @@
 import api from '../../../shared/services/api';
 
-// Candidate endpoints
 export const candidateApi = {
   getAll: (params?: {
     office?: string;

@@ -1,5 +1,5 @@
 /**
- * Seed/update NC elections for the next voting cycle.
+ * Seed/update NC elections for the current cycle plus the 2028 primary MVP target.
  * Run: node backend/db/seed-elections.js
  * Safe to run repeatedly — skips existing elections.
  */
@@ -13,18 +13,18 @@ const NC_ELECTIONS = [
     date: '2026-11-03',
     type: 'general',
     state: 'NC',
-    offices: ['Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
+    offices: ['U.S. Senate', 'U.S. House', 'State Legislature'],
     early_voting_start: '2026-10-15',
     early_voting_end: '2026-10-31',
   },
   {
-    name: '2026 Primary Election',
-    date: '2026-03-03',
+    name: '2028 Primary Election',
+    date: '2028-03-07',
     type: 'primary',
     state: 'NC',
-    offices: ['Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
-    early_voting_start: null,
-    early_voting_end: null,
+    offices: ['President', 'Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
+    early_voting_start: '2028-02-19',
+    early_voting_end: '2028-03-04',
   },
 ];
 

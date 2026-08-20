@@ -1,13 +1,3 @@
-/**
- * CandidateCard — 2026 redesign
- *
- * Visual changes:
- * - Party pill chip with color-coded border (DEM / REP / IND)
- * - Animated scale spring on press (physical feedback)
- * - Photo ring border inherits party color for instant visual grouping
- * - Selected state: amber glow border + checkmark overlay
- * - Bento-style row: compact avatar | name + meta | actions
- */
 import React, { useRef, useCallback } from 'react';
 import {
   View,
@@ -29,8 +19,7 @@ interface CandidateCardProps {
   onCompare?: () => void;
   selected?: boolean;
   size?: 'small' | 'medium' | 'large';
-  /** 0–100 when loaded with includeMatch */
-  matchScore?: number | null;
+  matchScore?: number;
 }
 
 function getPartyColor(party: string = ''): string {
@@ -103,7 +92,6 @@ const CandidateCard: React.FC<CandidateCardProps> = ({
         accessibilityLabel={`${name}, ${party}${office ? `, ${office}` : ''}`}
         accessibilityState={{ selected }}
       >
-        {/* Avatar */}
         <View
           style={[
             styles.avatarRing,
@@ -140,7 +128,6 @@ const CandidateCard: React.FC<CandidateCardProps> = ({
           )}
         </View>
 
-        {/* Info */}
         <View style={styles.info}>
           <Text style={styles.name} numberOfLines={1}>{name}</Text>
 
@@ -149,20 +136,8 @@ const CandidateCard: React.FC<CandidateCardProps> = ({
               <Text style={[styles.partyChipText, { color: partyColor }]}>{partyLabel}</Text>
             </View>
             {matchScore != null && (
-              <View
-                style={[
-                  styles.matchChip,
-                  matchScore === 0 && styles.matchChipLowSignal,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.matchChipText,
-                    matchScore === 0 && styles.matchChipTextLowSignal,
-                  ]}
-                >
-                  {matchScore === 0 ? 'Low overlap' : `${matchScore}% match`}
-                </Text>
+              <View style={styles.matchChip}>
+                <Text style={styles.matchChipText}>{matchScore}% match</Text>
               </View>
             )}
             {office && size !== 'small' && (
@@ -171,31 +146,31 @@ const CandidateCard: React.FC<CandidateCardProps> = ({
           </View>
         </View>
 
-        {/* Actions */}
         <View style={styles.actions}>
           {onCompare && (
             <TouchableOpacity
-              style={styles.compareButton}
+              style={[styles.compareButton, selected && styles.compareButtonSelected]}
               onPress={(e) => {
                 e?.stopPropagation?.();
                 onCompare();
               }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              accessibilityLabel="Add to compare"
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: selected }}
+              accessibilityLabel={selected ? `Remove ${name} from compare` : `Select ${name} to compare`}
             >
               <Ionicons
-                name="git-compare-outline"
-                size={20}
+                name={selected ? 'checkbox' : 'square-outline'}
+                size={22}
                 color={selected ? colors.primary : colors.textTertiary}
               />
+              <Text style={[styles.compareLabel, selected && styles.compareLabelSelected]}>
+                Compare
+              </Text>
             </TouchableOpacity>
           )}
 
-          {selected ? (
-            <Ionicons name="checkmark-circle" size={22} color={colors.primary} />
-          ) : (
-            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
-          )}
+          <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -211,14 +186,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 8,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderLight,
     gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 3,
   },
   containerSelected: {
     borderColor: colors.primary,
@@ -275,14 +245,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.primary,
   },
-  matchChipLowSignal: {
-    borderColor: colors.textTertiary + '66',
-    backgroundColor: colors.surfaceElevated,
-  },
-  matchChipTextLowSignal: {
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
   office: {
     ...typography.caption1,
     color: colors.textSecondary,
@@ -294,7 +256,24 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   compareButton: {
-    padding: 2,
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  compareButtonSelected: {
+    backgroundColor: colors.primaryMuted,
+    borderRadius: borderRadius.sm,
+  },
+  compareLabel: {
+    ...typography.caption2,
+    color: colors.textTertiary,
+    fontWeight: '600',
+    marginTop: 1,
+  },
+  compareLabelSelected: {
+    color: colors.primary,
   },
 });
 

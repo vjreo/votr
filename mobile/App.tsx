@@ -53,14 +53,15 @@ function MainTabs() {
         tabBarInactiveTintColor: colors.textTertiary,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.background,
           borderTopColor: colors.border,
-          borderTopWidth: 1,
-          paddingTop: 6,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '500',
+          fontWeight: '600',
+          letterSpacing: 0.2,
         },
       }}
     >
@@ -69,8 +70,20 @@ function MainTabs() {
         component={FeedScreen}
         options={{
           tabBarLabel: features.mvpMode ? 'Match' : 'Feed',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name={features.mvpMode ? 'heart-outline' : 'newspaper-outline'} size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={
+                features.mvpMode
+                  ? focused
+                    ? 'heart'
+                    : 'heart-outline'
+                  : focused
+                    ? 'newspaper'
+                    : 'newspaper-outline'
+              }
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -80,9 +93,9 @@ function MainTabs() {
           component={HomeScreen}
           options={{
             tabBarLabel: 'Discover',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="compass-outline" size={size} color={color} />
-            ),
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'compass' : 'compass-outline'} size={size} color={color} />
+          ),
           }}
         />
       ) : null}
@@ -91,8 +104,8 @@ function MainTabs() {
         component={RosterScreen}
         options={{
           tabBarLabel: features.mvpMode ? 'Shortlist' : 'My Roster',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="checkbox-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'checkbox' : 'checkbox-outline'} size={size} color={color} />
           ),
         }}
       />
@@ -102,9 +115,9 @@ function MainTabs() {
           component={JourneyScreen}
           options={{
             tabBarLabel: 'Journey',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="trophy-outline" size={size} color={color} />
-            ),
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'trophy' : 'trophy-outline'} size={size} color={color} />
+          ),
           }}
         />
       ) : null}
@@ -113,8 +126,8 @@ function MainTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
           ),
         }}
       />

@@ -16,7 +16,7 @@ import { Button, Input } from '../../../shared/components/ui';
 import { getApiErrorMessage } from '../../../shared/services/api';
 import { logEvent } from '../../../shared/services/analytics';
 import { useUser } from '../context/UserContext';
-import { colors, shadows, borderRadius } from '../../../shared/theme/colors';
+import { colors, shadows, borderRadius, typography } from '../../../shared/theme/colors';
 
 // Parse "Street, City, ST ZIP" format
 function parseAddress(fullAddress: string): { address: string; city: string; state: string; zipCode: string } {
@@ -184,15 +184,14 @@ const AddressEntryScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Form Card - demo style: orange h2, gray description */}
-        <View style={[styles.card, shadows.medium as any]}>
+        <View style={styles.card}>
           <Text style={styles.screenTitle}>
-            {isUpdateMode ? 'Update Your Address' : 'Your Ballot, Your Address'}
+            {isUpdateMode ? 'Update your address' : 'Where do you vote?'}
           </Text>
           <Text style={styles.title}>
             {isUpdateMode
-              ? 'Update your voting address to change your ballot.'
-              : 'Enter your registered voting address to see candidates on your actual ballot.'}
+              ? 'We’ll refresh the candidates on your ballot.'
+              : 'Use your North Carolina voting address so we can show races that actually appear on your ballot.'}
           </Text>
 
           <Input
@@ -326,23 +325,21 @@ const styles = StyleSheet.create({
     borderColor: colors.primary + '30',
   },
   card: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.xl,
     padding: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderLight,
   },
   screenTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.primary,
+    ...typography.title1,
+    color: colors.textPrimary,
     marginBottom: 8,
-    textAlign: 'center',
   },
   title: {
-    fontSize: 16,
+    ...typography.subhead,
     color: colors.textSecondary,
-    lineHeight: 24,
     marginBottom: 24,
-    textAlign: 'center',
   },
   row: {
     flexDirection: 'row',
