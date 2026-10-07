@@ -135,7 +135,7 @@ export function normalizeStreetTokens(raw: string): string {
 
 export function parseTypedAddress(raw: string): { house: string; street: string; zip: string | null } {
   let s = raw.toUpperCase();
-  const zipMatch = s.match(/\b(28\d{3})\b/);
+  const zipMatch = s.match(/\b(\d{5})\b/);
   const zip = zipMatch ? zipMatch[1] : null;
   if (zip) s = s.replace(zip, ' ');
   s = s.replace(/\b(APT|APARTMENT|UNIT|STE|SUITE|FL|FLOOR)\b.*$/i, ' ');
