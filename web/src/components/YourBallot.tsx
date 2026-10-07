@@ -23,7 +23,7 @@ interface Props {
 }
 
 const LEVEL_CONFIG: Record<string, { label: string; order: number }> = {
-  federal: { label: 'Federal', order: 1 },
+  federal: { label: 'Federal Offices', order: 1 },
   state: { label: 'State Courts', order: 2 },
   state_legislature: { label: 'State Legislature', order: 3 },
   local: { label: 'County & Local', order: 4 },
@@ -63,7 +63,7 @@ function groupCandidates(candidates: Candidate[]): ContestGroup[] {
 
 export default function YourBallot({ location, onChangeAddress }: Props) {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
-  const [showCalendar, setShowCalendar] = useState(false);
+  const [view, setView] = useState<'ballot' | 'dates'>('ballot');
 
   const candidates = getCandidatesForDistrict(location.district);
   const contestGroups = groupCandidates(candidates);
@@ -79,118 +79,90 @@ export default function YourBallot({ location, onChangeAddress }: Props) {
     );
   }
 
-  if (showCalendar) {
-    return (
-      <div className="calendar-view">
-        <header className="ballot-header">
-          <button className="back-btn" onClick={() => setShowCalendar(false)}>
-            ← Back
-          </button>
-          <h1 className="ballot-header__title">Key Dates</h1>
-        </header>
-        <div className="calendar-content">
-          {DEADLINES.map((d) => {
-            const days = getDaysUntil(d.date);
-            const isPast = days < 0;
-            return (
-              <div
-                key={d.date}
-                className={`calendar-item ${d.critical ? 'calendar-item--critical' : ''} ${isPast ? 'calendar-item--past' : ''}`}
-              >
-                <div className="calendar-item__date">
-                  <span className="calendar-item__month">
-                    {formatShortDate(d.date).split(' ')[0]}
-                  </span>
-                  <span className="calendar-item__day">
-                    {formatShortDate(d.date).split(' ')[1]}
-                  </span>
-                </div>
-                <div className="calendar-item__info">
-                  <span className="calendar-item__name">{d.name}</span>
-                  {!isPast && (
-                    <span className="calendar-item__days">
-                      {days === 0 ? 'Today' : `${days} days`}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <style>{calendarStyles}</style>
-      </div>
-    );
+  if (view === 'dates') {
+    return <DatesView onBack={() => setView('ballot')} />;
   }
 
   return (
     <div className="ballot">
-      <header className="ballot-header">
-        <div className="ballot-header__row">
-          <div className="ballot-header__left">
-            <h1 className="ballot-header__title">Your ballot</h1>
-            <button className="location-chip" onClick={onChangeAddress}>
-              <LocationIcon />
-              <span className="location-chip__text">{location.address}</span>
-              <ChevronDownIcon />
-            </button>
-          </div>
-          <button className="calendar-btn" onClick={() => setShowCalendar(true)}>
+      {/* Header */}
+      <header className="ballot__header">
+        <div className="ballot__header-top">
+          <h1 className="ballot__title">Your Ballot</h1>
+          <button 
+            className="ballot__dates-btn"
+            onClick={() => setView('dates')}
+            aria-label="View key dates"
+          >
             <CalendarIcon />
+            <span>Dates</span>
           </button>
         </div>
+        
+        <button className="ballot__location" onClick={onChangeAddress}>
+          <MapPinIcon />
+          <span className="ballot__location-text">{location.address}</span>
+          <span className="ballot__location-district">{location.district}</span>
+        </button>
 
         {nextDeadline && (
-          <div className="deadline-strip">
+          <div className="ballot__deadline">
             <ClockIcon />
-            <span>
-              {nextDeadline.name}:{' '}
-              <strong>
-                {formatShortDate(nextDeadline.date)} ({getDaysUntil(nextDeadline.date)} days)
-              </strong>
-            </span>
+            <div className="ballot__deadline-content">
+              <span className="ballot__deadline-label">{nextDeadline.name}</span>
+              <span className="ballot__deadline-date">
+                {formatShortDate(nextDeadline.date)} · {getDaysUntil(nextDeadline.date)} days left
+              </span>
+            </div>
           </div>
         )}
       </header>
 
-      <main className="ballot-content">
-        {/* Election info */}
-        <div className="card card--primary">
-          <h2 className="election-name">{ELECTION.name}</h2>
-          <p className="election-date">{formatDate(ELECTION.date)}</p>
-          <p className="election-desc">{ELECTION.description}</p>
-        </div>
+      <main className="ballot__content">
+        {/* Election overview */}
+        <section className="ballot__section">
+          <div className="ballot__election-card">
+            <h2 className="ballot__election-name">{ELECTION.name}</h2>
+            <p className="ballot__election-date">{formatDate(ELECTION.date)}</p>
+            <p className="ballot__election-desc">{ELECTION.description}</p>
+          </div>
+        </section>
 
-        {/* Contests */}
+        {/* Races */}
         {contestGroups.map((group) => (
-          <section key={group.level} className="section">
-            <h3 className="section-title">{group.label}</h3>
+          <section key={group.level} className="ballot__section">
+            <h3 className="ballot__section-title">{group.label}</h3>
+            
             {group.contests.map((contest) => (
-              <div key={contest.office} className="card">
-                <h4 className="office-name">{contest.office}</h4>
-                {contest.candidates.map((candidate, idx) => (
-                  <button
-                    key={candidate.id}
-                    className={`candidate-row ${idx === contest.candidates.length - 1 ? 'candidate-row--last' : ''}`}
-                    onClick={() => setSelectedCandidate(candidate)}
-                  >
-                    <div className="candidate-info">
-                      <span className="candidate-name">{candidate.name}</span>
-                      <span className="candidate-party">{candidate.party}</span>
-                    </div>
-                    <ChevronRightIcon />
-                  </button>
-                ))}
+              <div key={contest.office} className="ballot__race">
+                <h4 className="ballot__office">{contest.office}</h4>
+                <div className="ballot__candidates">
+                  {contest.candidates.map((candidate) => (
+                    <button
+                      key={candidate.id}
+                      className="ballot__candidate"
+                      onClick={() => setSelectedCandidate(candidate)}
+                    >
+                      <div className="ballot__candidate-info">
+                        <span className="ballot__candidate-name">{candidate.name}</span>
+                        <span className="ballot__candidate-party">{candidate.party}</span>
+                      </div>
+                      <ChevronRightIcon />
+                    </button>
+                  ))}
+                </div>
               </div>
             ))}
           </section>
         ))}
 
         {/* Amendments */}
-        <section className="section">
-          <h3 className="section-title">Statewide Amendments</h3>
-          <p className="section-subtitle">
-            Constitutional amendments on every NC ballot
+        <section className="ballot__section">
+          <h3 className="ballot__section-title">Statewide Questions</h3>
+          <p className="ballot__section-desc">
+            Constitutional amendments — vote For or Against each one
           </p>
+          
           {AMENDMENTS.map((measure) => (
             <MeasureCard key={measure.id} measure={measure} />
           ))}
@@ -198,39 +170,95 @@ export default function YourBallot({ location, onChangeAddress }: Props) {
 
         {/* Charlotte Bonds */}
         {bonds.length > 0 && (
-          <section className="section">
-            <h3 className="section-title">Charlotte Bonds</h3>
-            <p className="section-subtitle">
-              Bond referendums for Charlotte city voters
+          <section className="ballot__section">
+            <h3 className="ballot__section-title">Charlotte Bond Votes</h3>
+            <p className="ballot__section-desc">
+              For Charlotte city voters — vote Yes or No on each bond
             </p>
+            
             {bonds.map((measure) => (
               <MeasureCard key={measure.id} measure={measure} showAmount />
             ))}
           </section>
         )}
 
-        {/* Official link */}
-        <div className="official-section">
-          <h3 className="official-title">Official sample ballot</h3>
-          <p className="official-desc">
-            For the complete official ballot including all races, use the NC State Board of Elections lookup.
-          </p>
-          <a
-            href={NC_VOTER_SEARCH_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn--secondary btn--full"
-          >
-            View official ballot →
-          </a>
-        </div>
+        {/* Official resources */}
+        <section className="ballot__section">
+          <div className="ballot__official">
+            <h3 className="ballot__official-title">Want the official version?</h3>
+            <p className="ballot__official-desc">
+              Get your complete sample ballot with every race from the NC State Board of Elections.
+            </p>
+            <a
+              href={NC_VOTER_SEARCH_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn--secondary btn--full"
+            >
+              Go to NCSBE Voter Lookup →
+            </a>
+          </div>
+        </section>
 
-        <footer className="ballot-footer">
-          <p>VOTR informs, never endorses. We'll never tell you who to vote for.</p>
+        {/* Footer */}
+        <footer className="ballot__footer">
+          <p>
+            VOTR shows candidates in their own words. We inform — we never tell you who to vote for.
+          </p>
         </footer>
       </main>
 
-      <style>{styles}</style>
+      <style>{ballotStyles}</style>
+    </div>
+  );
+}
+
+function DatesView({ onBack }: { onBack: () => void }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return (
+    <div className="dates">
+      <header className="dates__header">
+        <button className="dates__back" onClick={onBack}>
+          <ChevronLeftIcon />
+          <span>Back to ballot</span>
+        </button>
+        <h1 className="dates__title">Key Dates</h1>
+        <p className="dates__subtitle">Mark your calendar for these important deadlines</p>
+      </header>
+
+      <main className="dates__content">
+        {DEADLINES.map((d) => {
+          const days = getDaysUntil(d.date);
+          const isPast = days < 0;
+          const isToday = days === 0;
+          const isSoon = days > 0 && days <= 3;
+
+          return (
+            <div
+              key={d.date}
+              className={`dates__item ${isPast ? 'dates__item--past' : ''} ${d.critical ? 'dates__item--critical' : ''}`}
+            >
+              <div className="dates__date">
+                <span className="dates__month">{formatShortDate(d.date).split(' ')[0]}</span>
+                <span className="dates__day">{formatShortDate(d.date).split(' ')[1]}</span>
+              </div>
+              <div className="dates__info">
+                <span className="dates__name">{d.name}</span>
+                {!isPast && (
+                  <span className={`dates__countdown ${isSoon ? 'dates__countdown--soon' : ''}`}>
+                    {isToday ? 'Today!' : `${days} days`}
+                  </span>
+                )}
+                {isPast && <span className="dates__countdown">Passed</span>}
+              </div>
+            </div>
+          );
+        })}
+      </main>
+
+      <style>{datesStyles}</style>
     </div>
   );
 }
@@ -239,28 +267,34 @@ function MeasureCard({ measure, showAmount }: { measure: BallotMeasure; showAmou
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="card measure-card">
-      <div className="measure-header">
-        <h4 className="measure-title">{measure.shortTitle}</h4>
+    <div className="measure">
+      <div className="measure__header">
+        <h4 className="measure__title">{measure.shortTitle}</h4>
         {showAmount && measure.principal && (
-          <span className="measure-amount">{formatMoney(measure.principal)}</span>
+          <span className="measure__amount">{formatMoney(measure.principal)}</span>
         )}
       </div>
-      <p className="measure-question">{measure.ballotQuestion}</p>
+      
+      <p className="measure__question">{measure.ballotQuestion}</p>
+      
       {measure.explanation && expanded && (
-        <p className="measure-explanation">{measure.explanation}</p>
+        <div className="measure__detail">
+          <p className="measure__explanation">{measure.explanation}</p>
+          {measure.estimatedTaxImpact && (
+            <p className="measure__tax">Estimated tax impact: {measure.estimatedTaxImpact}</p>
+          )}
+        </div>
       )}
-      {measure.estimatedTaxImpact && expanded && (
-        <p className="measure-tax">Est. tax impact: {measure.estimatedTaxImpact}</p>
-      )}
+      
       {measure.explanation && (
-        <button className="measure-toggle" onClick={() => setExpanded(!expanded)}>
+        <button className="measure__toggle" onClick={() => setExpanded(!expanded)}>
           {expanded ? 'Show less' : 'What does this mean?'}
         </button>
       )}
-      <div className="measure-choices">
+      
+      <div className="measure__choices">
         {measure.choices.map((choice) => (
-          <span key={choice} className="pill">{choice}</span>
+          <span key={choice} className="measure__choice">{choice}</span>
         ))}
       </div>
     </div>
@@ -268,34 +302,34 @@ function MeasureCard({ measure, showAmount }: { measure: BallotMeasure; showAmou
 }
 
 // Icons
-function LocationIcon() {
+function MapPinIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
       <circle cx="12" cy="10" r="3" />
     </svg>
   );
 }
 
-function ChevronDownIcon() {
+function ChevronRightIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="6 9 12 15 18 9" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6" />
     </svg>
   );
 }
 
-function ChevronRightIcon() {
+function ChevronLeftIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="9 18 15 12 9 6" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 18 9 12 15 6" />
     </svg>
   );
 }
 
 function CalendarIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -306,379 +340,477 @@ function CalendarIcon() {
 
 function ClockIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
     </svg>
   );
 }
 
-const styles = `
+const ballotStyles = `
   .ballot {
     min-height: 100vh;
     min-height: 100dvh;
     background-color: var(--color-bg);
   }
 
-  .ballot-header {
+  .ballot__header {
     position: sticky;
     top: 0;
-    background-color: var(--color-bg);
-    padding: 16px;
-    padding-top: max(16px, env(safe-area-inset-top));
-    border-bottom: 1px solid var(--color-border-light);
     z-index: 100;
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border-light);
+    padding: var(--space-4) var(--space-5);
+    padding-top: max(var(--space-4), env(safe-area-inset-top));
   }
 
-  .ballot-header__row {
+  .ballot__header-top {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
+    margin-bottom: var(--space-3);
   }
 
-  .ballot-header__left {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .ballot-header__title {
-    font-size: 28px;
+  .ballot__title {
+    font-size: var(--text-2xl);
     font-weight: 700;
     color: var(--color-text-primary);
-    margin: 0 0 8px;
-  }
-
-  .location-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-full);
-    font-size: 13px;
-    color: var(--color-text-primary);
-    max-width: 100%;
-    cursor: pointer;
-    transition: border-color 0.2s;
-  }
-
-  .location-chip:hover {
-    border-color: var(--color-primary);
-  }
-
-  .location-chip__text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-  }
-
-  .location-chip svg:first-child {
-    color: var(--color-primary);
-    flex-shrink: 0;
-  }
-
-  .location-chip svg:last-child {
-    color: var(--color-text-tertiary);
-    flex-shrink: 0;
-  }
-
-  .calendar-btn {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-primary);
-  }
-
-  .deadline-strip {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 12px;
-    padding: 10px 12px;
-    background-color: var(--color-warning-muted);
-    border-radius: var(--radius-md);
-    font-size: 13px;
-    color: var(--color-text-primary);
-  }
-
-  .deadline-strip svg {
-    color: var(--color-warning);
-    flex-shrink: 0;
-  }
-
-  .ballot-content {
-    padding: 16px;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-
-  .election-name {
-    font-size: 17px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 4px;
-  }
-
-  .election-date {
-    font-size: 13px;
-    color: var(--color-text-secondary);
-    margin: 0 0 8px;
-  }
-
-  .election-desc {
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    line-height: 1.5;
     margin: 0;
   }
 
-  .section {
-    margin-top: 24px;
-  }
-
-  .section-title {
-    font-size: 17px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 8px;
-  }
-
-  .section-subtitle {
-    font-size: 13px;
-    color: var(--color-text-secondary);
-    margin: 0 0 12px;
-  }
-
-  .office-name {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 8px;
-  }
-
-  .candidate-row {
+  .ballot__dates-btn {
     display: flex;
     align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-surface-subtle);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+  }
+
+  .ballot__dates-btn:hover {
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+  }
+
+  .ballot__location {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface-subtle);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
     width: 100%;
-    padding: 12px 0;
-    border-top: 1px solid var(--color-border-light);
-    cursor: pointer;
-    transition: background-color 0.2s;
     text-align: left;
+    transition: all var(--transition-fast);
+    border: 1px solid transparent;
   }
 
-  .candidate-row:hover {
-    background-color: var(--color-surface);
-    margin: 0 -16px;
-    padding-left: 16px;
-    padding-right: 16px;
-    width: calc(100% + 32px);
+  .ballot__location:hover {
+    border-color: var(--color-border);
   }
 
-  .candidate-row--last {
-    padding-bottom: 0;
+  .ballot__location svg {
+    color: var(--color-accent);
+    flex-shrink: 0;
   }
 
-  .candidate-info {
+  .ballot__location-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ballot__location-district {
+    font-weight: 600;
+    color: var(--color-accent);
+    flex-shrink: 0;
+  }
+
+  .ballot__deadline {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-warning-light);
+    border-radius: var(--radius-md);
+  }
+
+  .ballot__deadline svg {
+    color: var(--color-warning);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .ballot__deadline-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .ballot__deadline-label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .ballot__deadline-date {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+
+  .ballot__content {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: var(--space-5);
+    padding-bottom: var(--space-16);
+  }
+
+  .ballot__section {
+    margin-bottom: var(--space-8);
+  }
+
+  .ballot__section-title {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-tertiary);
+    margin: 0 0 var(--space-4);
+  }
+
+  .ballot__section-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  }
+
+  .ballot__election-card {
+    padding: var(--space-5);
+    background: var(--color-accent-light);
+    border-radius: var(--radius-lg);
+  }
+
+  .ballot__election-name {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-1);
+  }
+
+  .ballot__election-date {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--space-3);
+  }
+
+  .ballot__election-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    margin: 0;
+  }
+
+  .ballot__race {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-light);
+    overflow: hidden;
+    margin-bottom: var(--space-3);
+  }
+
+  .ballot__office {
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    padding: var(--space-4) var(--space-5);
+    margin: 0;
+    background: var(--color-surface-subtle);
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .ballot__candidates {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ballot__candidate {
+    display: flex;
+    align-items: center;
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--color-border-light);
+    transition: background-color var(--transition-fast);
+    text-align: left;
+    min-height: 64px;
+  }
+
+  .ballot__candidate:last-child {
+    border-bottom: none;
+  }
+
+  .ballot__candidate:hover {
+    background-color: var(--color-surface-subtle);
+  }
+
+  .ballot__candidate-info {
     flex: 1;
     min-width: 0;
   }
 
-  .candidate-name {
+  .ballot__candidate-name {
     display: block;
-    font-size: 15px;
+    font-size: var(--text-base);
     font-weight: 500;
     color: var(--color-text-primary);
   }
 
-  .candidate-party {
+  .ballot__candidate-party {
     display: block;
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--color-text-secondary);
-    margin-top: 2px;
+    margin-top: var(--space-1);
   }
 
-  .candidate-row svg {
+  .ballot__candidate svg {
     color: var(--color-text-tertiary);
     flex-shrink: 0;
   }
 
-  .measure-card {
-    margin-bottom: 12px;
-  }
-
-  .measure-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 8px;
-  }
-
-  .measure-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0;
-    flex: 1;
-  }
-
-  .measure-amount {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--color-primary);
-    flex-shrink: 0;
-  }
-
-  .measure-question {
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    line-height: 1.5;
-    margin: 0 0 8px;
-  }
-
-  .measure-explanation {
-    font-size: 13px;
-    color: var(--color-text-tertiary);
-    font-style: italic;
-    line-height: 1.5;
-    margin: 0 0 8px;
-  }
-
-  .measure-tax {
-    font-size: 13px;
-    color: var(--color-success);
-    margin: 0 0 8px;
-  }
-
-  .measure-toggle {
-    font-size: 13px;
-    color: var(--color-primary);
-    margin-bottom: 12px;
-    cursor: pointer;
-  }
-
-  .measure-toggle:hover {
-    text-decoration: underline;
-  }
-
-  .measure-choices {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .official-section {
-    margin-top: 32px;
-    padding: 16px;
-    background-color: var(--color-surface);
+  .ballot__official {
+    padding: var(--space-6);
+    background: var(--color-surface);
     border-radius: var(--radius-lg);
-  }
-
-  .official-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 8px;
-  }
-
-  .official-desc {
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    line-height: 1.5;
-    margin: 0 0 16px;
-  }
-
-  .ballot-footer {
-    margin-top: 32px;
-    padding: 16px 0;
+    border: 1px solid var(--color-border-light);
     text-align: center;
   }
 
-  .ballot-footer p {
-    font-size: 12px;
+  .ballot__official-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-2);
+  }
+
+  .ballot__official-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    margin: 0 0 var(--space-5);
+  }
+
+  .ballot__footer {
+    text-align: center;
+    padding: var(--space-8) 0;
+  }
+
+  .ballot__footer p {
+    font-size: var(--text-sm);
     color: var(--color-text-tertiary);
+    line-height: var(--leading-relaxed);
     margin: 0;
   }
 
-  .back-btn {
-    font-size: 15px;
-    color: var(--color-primary);
-    padding: 8px 0;
+  /* Measure cards */
+  .measure {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-light);
+    padding: var(--space-5);
+    margin-bottom: var(--space-3);
+  }
+
+  .measure__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-4);
+    margin-bottom: var(--space-3);
+  }
+
+  .measure__title {
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .measure__amount {
+    font-size: var(--text-base);
+    font-weight: 700;
+    color: var(--color-accent);
+    flex-shrink: 0;
+  }
+
+  .measure__question {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    margin: 0 0 var(--space-3);
+  }
+
+  .measure__detail {
+    padding: var(--space-4);
+    background: var(--color-surface-subtle);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-3);
+  }
+
+  .measure__explanation {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    font-style: italic;
+    line-height: var(--leading-relaxed);
+    margin: 0;
+  }
+
+  .measure__tax {
+    font-size: var(--text-sm);
+    color: var(--color-success);
+    margin: var(--space-3) 0 0;
+  }
+
+  .measure__toggle {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-accent);
+    margin-bottom: var(--space-4);
+    padding: 0;
     cursor: pointer;
+  }
+
+  .measure__toggle:hover {
+    text-decoration: underline;
+  }
+
+  .measure__choices {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  .measure__choice {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-surface-subtle);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
   }
 `;
 
-const calendarStyles = `
-  .calendar-view {
+const datesStyles = `
+  .dates {
     min-height: 100vh;
     min-height: 100dvh;
     background-color: var(--color-bg);
   }
 
-  .calendar-content {
-    padding: 16px;
-    max-width: 600px;
-    margin: 0 auto;
+  .dates__header {
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border-light);
+    padding: var(--space-4) var(--space-5);
+    padding-top: max(var(--space-4), env(safe-area-inset-top));
   }
 
-  .calendar-item {
+  .dates__back {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 16px;
-    background-color: var(--color-card);
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-accent);
+    margin-bottom: var(--space-4);
+    padding: 0;
+  }
+
+  .dates__title {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-2);
+  }
+
+  .dates__subtitle {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  .dates__content {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: var(--space-5);
+  }
+
+  .dates__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    background: var(--color-surface);
     border-radius: var(--radius-lg);
-    margin-bottom: 10px;
+    border: 1px solid var(--color-border-light);
+    margin-bottom: var(--space-3);
   }
 
-  .calendar-item--critical {
-    border-left: 3px solid var(--color-warning);
-  }
-
-  .calendar-item--past {
+  .dates__item--past {
     opacity: 0.5;
   }
 
-  .calendar-item__date {
+  .dates__item--critical {
+    border-left: 3px solid var(--color-warning);
+  }
+
+  .dates__date {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 50px;
+    min-width: 56px;
   }
 
-  .calendar-item__month {
-    font-size: 12px;
+  .dates__month {
+    font-size: var(--text-xs);
     font-weight: 600;
-    color: var(--color-text-secondary);
     text-transform: uppercase;
+    color: var(--color-text-tertiary);
   }
 
-  .calendar-item__day {
-    font-size: 24px;
+  .dates__day {
+    font-size: var(--text-2xl);
     font-weight: 700;
     color: var(--color-text-primary);
+    line-height: 1;
   }
 
-  .calendar-item__info {
+  .dates__info {
     flex: 1;
   }
 
-  .calendar-item__name {
+  .dates__name {
     display: block;
-    font-size: 15px;
+    font-size: var(--text-base);
     font-weight: 500;
     color: var(--color-text-primary);
   }
 
-  .calendar-item__days {
+  .dates__countdown {
     display: block;
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--color-text-secondary);
-    margin-top: 4px;
+    margin-top: var(--space-1);
+  }
+
+  .dates__countdown--soon {
+    color: var(--color-warning);
+    font-weight: 600;
   }
 `;

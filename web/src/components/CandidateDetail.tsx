@@ -6,47 +6,54 @@ interface Props {
 }
 
 export default function CandidateDetail({ candidate, onBack }: Props) {
+  const hasPositions = candidate.positions.length > 0;
+  const hasSources = candidate.sources.length > 0;
+
   return (
-    <div className="candidate-detail">
-      <header className="detail-header">
-        <button className="back-btn" onClick={onBack}>
-          ← Back
+    <div className="detail">
+      <header className="detail__header">
+        <button className="detail__back" onClick={onBack}>
+          <ChevronLeftIcon />
+          <span>Back to ballot</span>
         </button>
       </header>
 
-      <main className="detail-content">
-        <div className="detail-hero">
-          <div className="detail-avatar">
-            {candidate.name.charAt(0)}
+      <main className="detail__content">
+        {/* Hero */}
+        <div className="detail__hero">
+          <div className="detail__avatar">
+            {candidate.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
           </div>
-          <h1 className="detail-name">{candidate.name}</h1>
-          <p className="detail-party">{candidate.party}</p>
-          <p className="detail-office">{candidate.office}</p>
+          <h1 className="detail__name">{candidate.name}</h1>
+          <p className="detail__party">{candidate.party}</p>
+          <p className="detail__office">{candidate.office}</p>
         </div>
 
+        {/* About */}
         {candidate.bio && (
-          <section className="detail-section">
-            <h2 className="detail-section-title">About</h2>
-            <p className="detail-bio">{candidate.bio}</p>
+          <section className="detail__section">
+            <h2 className="detail__section-title">About</h2>
+            <p className="detail__bio">{candidate.bio}</p>
           </section>
         )}
 
-        {candidate.positions.length > 0 && (
-          <section className="detail-section">
-            <h2 className="detail-section-title">Positions</h2>
-            <div className="positions-list">
+        {/* Positions */}
+        {hasPositions && (
+          <section className="detail__section">
+            <h2 className="detail__section-title">On the Issues</h2>
+            <div className="detail__positions">
               {candidate.positions.map((pos, idx) => (
-                <div key={idx} className="position-item">
-                  <h3 className="position-issue">{pos.issueName}</h3>
-                  <p className="position-stance">{pos.stance}</p>
+                <div key={idx} className="detail__position">
+                  <h3 className="detail__position-issue">{pos.issueName}</h3>
+                  <p className="detail__position-stance">{pos.stance}</p>
                   {pos.source && (
                     <a
                       href={pos.source}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="position-source"
+                      className="detail__position-source"
                     >
-                      Source →
+                      View source →
                     </a>
                   )}
                 </div>
@@ -55,19 +62,33 @@ export default function CandidateDetail({ candidate, onBack }: Props) {
           </section>
         )}
 
-        {candidate.sources.length > 0 && (
-          <section className="detail-section">
-            <h2 className="detail-section-title">Sources</h2>
-            <div className="sources-list">
+        {/* Empty state for no positions */}
+        {!hasPositions && (
+          <section className="detail__section">
+            <div className="detail__empty">
+              <div className="detail__empty-icon">📋</div>
+              <h3 className="detail__empty-title">Positions coming soon</h3>
+              <p className="detail__empty-desc">
+                We're still gathering this candidate's positions from their campaign materials. Check back closer to Election Day.
+              </p>
+            </div>
+          </section>
+        )}
+
+        {/* Sources */}
+        {hasSources && (
+          <section className="detail__section">
+            <h2 className="detail__section-title">Sources</h2>
+            <div className="detail__sources">
               {candidate.sources.map((src, idx) => (
                 <a
                   key={idx}
                   href={src.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="source-link"
+                  className="detail__source"
                 >
-                  {src.title}
+                  <span className="detail__source-title">{src.title}</span>
                   <ExternalLinkIcon />
                 </a>
               ))}
@@ -75,196 +96,247 @@ export default function CandidateDetail({ candidate, onBack }: Props) {
           </section>
         )}
 
+        {/* Data status notice */}
         {candidate.dataStatus === 'incomplete' && (
-          <div className="data-status">
+          <div className="detail__notice">
             <InfoIcon />
-            <span>
-              {candidate.dataStatusNote || 'Some information for this candidate is still being gathered.'}
-            </span>
+            <p>
+              {candidate.dataStatusNote || 'Some information for this candidate is still being gathered from official sources.'}
+            </p>
           </div>
         )}
 
-        <footer className="detail-footer">
+        {/* Footer */}
+        <footer className="detail__footer">
           <p>
-            VOTR presents candidate positions from their own campaign materials and news coverage. 
-            We do not endorse any candidate.
+            All positions are from the candidate's own campaign materials or verified news coverage. VOTR does not endorse any candidate.
           </p>
         </footer>
       </main>
 
       <style>{`
-        .candidate-detail {
+        .detail {
           min-height: 100vh;
           min-height: 100dvh;
           background-color: var(--color-bg);
         }
 
-        .detail-header {
+        .detail__header {
           position: sticky;
           top: 0;
-          background-color: var(--color-bg);
-          padding: 16px;
-          padding-top: max(16px, env(safe-area-inset-top));
           z-index: 100;
+          background-color: var(--color-surface);
+          border-bottom: 1px solid var(--color-border-light);
+          padding: var(--space-4) var(--space-5);
+          padding-top: max(var(--space-4), env(safe-area-inset-top));
         }
 
-        .back-btn {
-          font-size: 15px;
-          color: var(--color-primary);
-          padding: 8px 0;
-          cursor: pointer;
+        .detail__back {
+          display: flex;
+          align-items: center;
+          gap: var(--space-1);
+          font-size: var(--text-sm);
+          font-weight: 500;
+          color: var(--color-accent);
+          padding: 0;
         }
 
-        .detail-content {
-          padding: 0 16px 32px;
-          max-width: 600px;
+        .detail__content {
+          max-width: 540px;
           margin: 0 auto;
+          padding: var(--space-5);
+          padding-bottom: var(--space-16);
         }
 
-        .detail-hero {
+        .detail__hero {
           text-align: center;
-          padding: 24px 0 32px;
+          padding: var(--space-6) 0 var(--space-8);
         }
 
-        .detail-avatar {
-          width: 80px;
-          height: 80px;
+        .detail__avatar {
+          width: 88px;
+          height: 88px;
+          margin: 0 auto var(--space-5);
+          background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%);
           border-radius: 50%;
-          background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 32px;
+          font-size: var(--text-2xl);
           font-weight: 700;
-          color: var(--color-white);
-          margin: 0 auto 16px;
+          color: var(--color-text-inverse);
+          letter-spacing: -0.02em;
         }
 
-        .detail-name {
-          font-size: 24px;
+        .detail__name {
+          font-size: var(--text-2xl);
           font-weight: 700;
           color: var(--color-text-primary);
-          margin: 0 0 4px;
+          margin: 0 0 var(--space-2);
         }
 
-        .detail-party {
-          font-size: 15px;
+        .detail__party {
+          font-size: var(--text-base);
           font-weight: 500;
           color: var(--color-text-secondary);
-          margin: 0 0 4px;
+          margin: 0 0 var(--space-1);
         }
 
-        .detail-office {
-          font-size: 14px;
+        .detail__office {
+          font-size: var(--text-sm);
           color: var(--color-text-tertiary);
           margin: 0;
         }
 
-        .detail-section {
-          margin-bottom: 24px;
+        .detail__section {
+          margin-bottom: var(--space-8);
         }
 
-        .detail-section-title {
-          font-size: 13px;
+        .detail__section-title {
+          font-size: var(--text-xs);
           font-weight: 600;
-          color: var(--color-text-tertiary);
           text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin: 0 0 12px;
+          letter-spacing: 0.05em;
+          color: var(--color-text-tertiary);
+          margin: 0 0 var(--space-4);
         }
 
-        .detail-bio {
-          font-size: 15px;
+        .detail__bio {
+          font-size: var(--text-base);
           color: var(--color-text-secondary);
-          line-height: 1.6;
+          line-height: var(--leading-relaxed);
           margin: 0;
         }
 
-        .positions-list {
+        .detail__positions {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: var(--space-4);
         }
 
-        .position-item {
-          background-color: var(--color-card);
+        .detail__position {
+          background: var(--color-surface);
           border-radius: var(--radius-lg);
-          padding: 16px;
+          border: 1px solid var(--color-border-light);
+          padding: var(--space-5);
         }
 
-        .position-issue {
-          font-size: 15px;
+        .detail__position-issue {
+          font-size: var(--text-base);
           font-weight: 600;
           color: var(--color-text-primary);
-          margin: 0 0 8px;
+          margin: 0 0 var(--space-3);
         }
 
-        .position-stance {
-          font-size: 14px;
+        .detail__position-stance {
+          font-size: var(--text-sm);
           color: var(--color-text-secondary);
-          line-height: 1.5;
+          line-height: var(--leading-relaxed);
           margin: 0;
         }
 
-        .position-source {
+        .detail__position-source {
           display: inline-block;
-          margin-top: 8px;
-          font-size: 13px;
+          margin-top: var(--space-3);
+          font-size: var(--text-sm);
+          font-weight: 500;
         }
 
-        .sources-list {
+        .detail__empty {
+          text-align: center;
+          padding: var(--space-8) var(--space-5);
+          background: var(--color-surface);
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--color-border-light);
+        }
+
+        .detail__empty-icon {
+          font-size: 40px;
+          margin-bottom: var(--space-4);
+        }
+
+        .detail__empty-title {
+          font-size: var(--text-lg);
+          font-weight: 600;
+          color: var(--color-text-primary);
+          margin: 0 0 var(--space-2);
+        }
+
+        .detail__empty-desc {
+          font-size: var(--text-sm);
+          color: var(--color-text-secondary);
+          line-height: var(--leading-relaxed);
+          margin: 0;
+        }
+
+        .detail__sources {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: var(--space-3);
         }
 
-        .source-link {
+        .detail__source {
           display: flex;
           align-items: center;
-          gap: 6px;
-          font-size: 14px;
-          color: var(--color-primary);
+          justify-content: space-between;
+          gap: var(--space-3);
+          padding: var(--space-4);
+          background: var(--color-surface);
+          border-radius: var(--radius-md);
+          border: 1px solid var(--color-border-light);
+          font-size: var(--text-sm);
+          color: var(--color-accent);
+          transition: all var(--transition-fast);
         }
 
-        .source-link svg {
-          width: 14px;
-          height: 14px;
+        .detail__source:hover {
+          border-color: var(--color-accent);
+          background: var(--color-accent-light);
+          text-decoration: none;
+        }
+
+        .detail__source-title {
+          flex: 1;
+        }
+
+        .detail__source svg {
+          flex-shrink: 0;
           opacity: 0.7;
         }
 
-        .data-status {
+        .detail__notice {
           display: flex;
           align-items: flex-start;
-          gap: 10px;
-          padding: 14px;
-          background-color: var(--color-surface);
+          gap: var(--space-3);
+          padding: var(--space-4);
+          background: var(--color-info-light);
           border-radius: var(--radius-md);
-          border: 1px solid var(--color-border-light);
-          margin-top: 24px;
+          margin-bottom: var(--space-8);
         }
 
-        .data-status svg {
+        .detail__notice svg {
           flex-shrink: 0;
-          color: var(--color-text-tertiary);
+          color: var(--color-info);
           margin-top: 2px;
         }
 
-        .data-status span {
-          font-size: 13px;
+        .detail__notice p {
+          font-size: var(--text-sm);
           color: var(--color-text-secondary);
-          line-height: 1.5;
+          line-height: var(--leading-relaxed);
+          margin: 0;
         }
 
-        .detail-footer {
-          margin-top: 32px;
-          padding-top: 16px;
+        .detail__footer {
+          text-align: center;
+          padding-top: var(--space-6);
           border-top: 1px solid var(--color-border-light);
         }
 
-        .detail-footer p {
-          font-size: 12px;
+        .detail__footer p {
+          font-size: var(--text-sm);
           color: var(--color-text-tertiary);
-          line-height: 1.5;
+          line-height: var(--leading-relaxed);
           margin: 0;
         }
       `}</style>
@@ -272,9 +344,17 @@ export default function CandidateDetail({ candidate, onBack }: Props) {
   );
 }
 
+function ChevronLeftIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
 function ExternalLinkIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
       <polyline points="15 3 21 3 21 9" />
       <line x1="10" y1="14" x2="21" y2="3" />
@@ -284,7 +364,7 @@ function ExternalLinkIcon() {
 
 function InfoIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="16" x2="12" y2="12" />
       <line x1="12" y1="8" x2="12.01" y2="8" />
