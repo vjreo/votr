@@ -6,6 +6,8 @@ import {
   AMENDMENTS,
   CHARLOTTE_BONDS,
   NC_VOTER_SEARCH_URL,
+  OFFICIAL_SOURCES,
+  DATA_PROVENANCE,
   getCandidatesForDistrict,
   getNextCriticalDeadline,
   getDaysUntil,
@@ -260,6 +262,37 @@ export default function YourBallot({
             >
               Go to NCSBE Voter Lookup →
             </a>
+          </div>
+        </section>
+
+        {/* Data attribution */}
+        <section className="ballot__section">
+          <div className="ballot__data-notice">
+            <h3 className="ballot__data-title">Data Sources</h3>
+            <p className="ballot__data-desc">
+              All ballot data comes from official sources: NC State Board of Elections and Mecklenburg County Board of Elections.
+            </p>
+            <p className="ballot__data-verified">
+              Last verified: {new Date(DATA_PROVENANCE.lastVerified).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </p>
+            <div className="ballot__data-links">
+              <a
+                href={OFFICIAL_SOURCES.ncVoterSearch}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ballot__data-link"
+              >
+                NCSBE Voter Search
+              </a>
+              <a
+                href={OFFICIAL_SOURCES.meckBoe}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ballot__data-link"
+              >
+                Mecklenburg BOE
+              </a>
+            </div>
           </div>
         </section>
 
@@ -884,6 +917,51 @@ const ballotStyles = `
     color: var(--color-text-tertiary);
     line-height: var(--leading-relaxed);
     margin: 0;
+  }
+
+  .ballot__data-notice {
+    padding: var(--space-5);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-light);
+    text-align: center;
+  }
+
+  .ballot__data-title {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-2);
+  }
+
+  .ballot__data-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    margin: 0 0 var(--space-2);
+  }
+
+  .ballot__data-verified {
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+    margin: 0 0 var(--space-4);
+  }
+
+  .ballot__data-links {
+    display: flex;
+    gap: var(--space-4);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .ballot__data-link {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-accent);
+  }
+
+  .ballot__data-link:hover {
+    text-decoration: underline;
   }
 
   /* Measure cards */

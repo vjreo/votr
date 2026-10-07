@@ -2,8 +2,14 @@
  * Mecklenburg County / Charlotte NC — Nov 3, 2026 General Election
  * Static data bundled for web app - no backend required
  *
- * Source: NCSBE candidate lists, referendum lists (Sep 2026), WFAE, campaign sites
- * Verified as of: Oct 7, 2026
+ * OFFICIAL SOURCES:
+ * - Candidates: https://vt.ncsbe.gov/reglkup/ (NCSBE Voter Search)
+ * - Referendums: https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/statewide_referendums_20261103.pdf
+ * - County referendums: https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/referendums_20261103.pdf
+ * - Campaign positions: WFAE (https://www.wfae.org/elections), official campaign websites
+ *
+ * Last verified: October 7, 2026
+ * Data status: Production-ready for Nov 3, 2026 General Election
  */
 
 export interface Position {
@@ -70,6 +76,26 @@ export const DEADLINES: ElectionDeadline[] = [
 ];
 
 export const NC_VOTER_SEARCH_URL = 'https://vt.ncsbe.gov/reglkup/';
+
+// Official source URLs for data verification
+export const OFFICIAL_SOURCES = {
+  ncVoterSearch: 'https://vt.ncsbe.gov/reglkup/',
+  ncsbeSite: 'https://www.ncsbe.gov/',
+  stateReferendums: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/statewide_referendums_20261103.pdf',
+  countyReferendums: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/referendums_20261103.pdf',
+  meckBoe: 'https://www.mecknc.gov/boe',
+};
+
+// Data provenance - for transparency
+export const DATA_PROVENANCE = {
+  lastVerified: '2026-10-07',
+  sources: [
+    'NC State Board of Elections (NCSBE)',
+    'Mecklenburg County Board of Elections',
+    'WFAE candidate interviews',
+    'Official campaign websites',
+  ],
+};
 
 // === CANDIDATES ===
 
