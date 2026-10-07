@@ -114,7 +114,7 @@ The app includes a strict CSP via meta tag:
 |-----------|--------|
 | `default-src` | Only same-origin resources |
 | `style-src` | Same-origin + inline (React CSS-in-JS) |
-| `img-src` | Same-origin + data URIs (for emoji favicon) |
+| `img-src` | Same-origin + data URIs (icons and Open Graph image are same-origin) |
 | `font-src` | Same-origin only (self-hosted Inter) |
 | `script-src` | Same-origin only (no external scripts) |
 | `connect-src` | Same-origin only (district maps and address lists are bundled) |

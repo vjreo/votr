@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { UserLocation } from '../utils/storage';
 import { DATA_PROVENANCE, NC_VOTER_SEARCH_URL, OFFICIAL_SOURCES } from '../data/ballot';
+import ShareVotr from './ShareVotr';
 import {
   DISTRICTS_ATTRIBUTION,
   lookupFromAddress,
@@ -50,6 +51,24 @@ export default function AddressEntry({ onSubmit }: Props) {
   const [activeIndex, setActiveIndex] = useState(-1);
   const listId = useId();
   const suggestGen = useRef(0);
+  const searchWrapRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const sync = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty('--keyboard-inset', `${inset}px`);
+    };
+    sync();
+    vv.addEventListener('resize', sync);
+    vv.addEventListener('scroll', sync);
+    return () => {
+      vv.removeEventListener('resize', sync);
+      vv.removeEventListener('scroll', sync);
+      document.documentElement.style.removeProperty('--keyboard-inset');
+    };
+  }, []);
 
   const showResult = (next: LookupResult) => {
     setResult(next);
@@ -143,6 +162,7 @@ export default function AddressEntry({ onSubmit }: Props) {
 
             <main id="main-content">
               <form
+                ref={searchWrapRef}
                 onSubmit={handleAddress}
                 className="entry__search-wrap"
                 aria-busy={busy}
@@ -166,7 +186,12 @@ export default function AddressEntry({ onSubmit }: Props) {
                     role="combobox"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    onFocus={() => setOpenSuggest(suggestions.length > 0)}
+                    onFocus={() => {
+                      setOpenSuggest(suggestions.length > 0);
+                      window.setTimeout(() => {
+                        searchWrapRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                      }, 300);
+                    }}
                     onBlur={() => window.setTimeout(() => setOpenSuggest(false), 120)}
                     onKeyDown={(e) => {
                       if (!openSuggest || suggestions.length === 0) return;
@@ -305,6 +330,7 @@ export default function AddressEntry({ onSubmit }: Props) {
             >
               Change
             </button>
+            <ShareVotr />
           </main>
         )}
 
@@ -424,7 +450,9 @@ export default function AddressEntry({ onSubmit }: Props) {
           align-items: center;
           padding: var(--space-6) var(--space-5);
           padding-top: max(var(--space-6), env(safe-area-inset-top, 16px));
-          padding-bottom: max(var(--space-6), env(safe-area-inset-bottom, 16px));
+          padding-bottom: calc(max(var(--space-6), env(safe-area-inset-bottom, 16px)) + var(--keyboard-inset, 0px));
+          padding-left: max(var(--space-5), env(safe-area-inset-left, 0px));
+          padding-right: max(var(--space-5), env(safe-area-inset-right, 0px));
           background: var(--color-bg);
         }
 
@@ -459,6 +487,7 @@ export default function AddressEntry({ onSubmit }: Props) {
 
         .entry__search-wrap {
           position: relative;
+          scroll-margin-bottom: 24px;
         }
 
         .entry__search {
@@ -515,7 +544,7 @@ export default function AddressEntry({ onSubmit }: Props) {
           border-radius: 0;
           min-height: var(--tap-target-min);
           padding: var(--space-2) var(--space-1);
-          font-size: var(--text-base);
+          font-size: 16px;
         }
 
         .entry__search input.entry__input:focus,
