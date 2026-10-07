@@ -1,13 +1,24 @@
 import type { Candidate } from '../data/ballot';
+import type { CandidatePick } from '../App';
 
 interface Props {
   candidate: Candidate;
+  pick?: CandidatePick;
   onBack: () => void;
+  onPick: (leaning: CandidatePick['leaning'] | null) => void;
 }
 
-export default function CandidateDetail({ candidate, onBack }: Props) {
+export default function CandidateDetail({ candidate, pick, onBack, onPick }: Props) {
   const hasPositions = candidate.positions.length > 0;
   const hasSources = candidate.sources.length > 0;
+
+  const handlePick = (leaning: CandidatePick['leaning']) => {
+    if (pick?.leaning === leaning) {
+      onPick(null); // toggle off
+    } else {
+      onPick(leaning);
+    }
+  };
 
   return (
     <div className="detail">
@@ -27,6 +38,34 @@ export default function CandidateDetail({ candidate, onBack }: Props) {
           <h1 className="detail__name">{candidate.name}</h1>
           <p className="detail__party">{candidate.party}</p>
           <p className="detail__office">{candidate.office}</p>
+        </div>
+
+        {/* Pick buttons */}
+        <div className="detail__pick-section">
+          <p className="detail__pick-label">I'm leaning:</p>
+          <div className="detail__pick-buttons">
+            <button
+              className={`detail__pick-btn detail__pick-btn--likely ${pick?.leaning === 'likely' ? 'detail__pick-btn--selected' : ''}`}
+              onClick={() => handlePick('likely')}
+            >
+              <span className="detail__pick-icon">✓</span>
+              <span>Likely voting for</span>
+            </button>
+            <button
+              className={`detail__pick-btn detail__pick-btn--considering ${pick?.leaning === 'considering' ? 'detail__pick-btn--selected' : ''}`}
+              onClick={() => handlePick('considering')}
+            >
+              <span className="detail__pick-icon">?</span>
+              <span>Still considering</span>
+            </button>
+            <button
+              className={`detail__pick-btn detail__pick-btn--unlikely ${pick?.leaning === 'unlikely' ? 'detail__pick-btn--selected' : ''}`}
+              onClick={() => handlePick('unlikely')}
+            >
+              <span className="detail__pick-icon">✗</span>
+              <span>Probably not</span>
+            </button>
+          </div>
         </div>
 
         {/* About */}
@@ -150,7 +189,7 @@ export default function CandidateDetail({ candidate, onBack }: Props) {
 
         .detail__hero {
           text-align: center;
-          padding: var(--space-6) 0 var(--space-8);
+          padding: var(--space-6) 0 var(--space-6);
         }
 
         .detail__avatar {
@@ -186,6 +225,78 @@ export default function CandidateDetail({ candidate, onBack }: Props) {
           font-size: var(--text-sm);
           color: var(--color-text-tertiary);
           margin: 0;
+        }
+
+        .detail__pick-section {
+          background: var(--color-surface);
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--color-border-light);
+          padding: var(--space-5);
+          margin-bottom: var(--space-8);
+        }
+
+        .detail__pick-label {
+          font-size: var(--text-sm);
+          color: var(--color-text-secondary);
+          margin: 0 0 var(--space-4);
+        }
+
+        .detail__pick-buttons {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-2);
+        }
+
+        .detail__pick-btn {
+          display: flex;
+          align-items: center;
+          gap: var(--space-3);
+          padding: var(--space-4);
+          background: var(--color-surface-subtle);
+          border: 1.5px solid var(--color-border);
+          border-radius: var(--radius-md);
+          font-size: var(--text-sm);
+          font-weight: 500;
+          color: var(--color-text-secondary);
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          text-align: left;
+        }
+
+        .detail__pick-btn:hover {
+          border-color: var(--color-text-tertiary);
+        }
+
+        .detail__pick-icon {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          flex-shrink: 0;
+        }
+
+        .detail__pick-btn--likely .detail__pick-icon {
+          background: var(--color-success-light);
+          color: var(--color-success);
+        }
+
+        .detail__pick-btn--considering .detail__pick-icon {
+          background: var(--color-warning-light);
+          color: var(--color-warning);
+        }
+
+        .detail__pick-btn--unlikely .detail__pick-icon {
+          background: var(--color-surface-subtle);
+          color: var(--color-text-tertiary);
+        }
+
+        .detail__pick-btn--selected {
+          border-color: var(--color-accent);
+          background: var(--color-accent-light);
+          color: var(--color-text-primary);
         }
 
         .detail__section {
