@@ -20,13 +20,27 @@ VOTR is a static web application designed for privacy and security. The core pri
 grep -riE "(api[_-]?key|secret|password|database)" dist/ | grep -v "type=.password"
 ```
 
-### 2. Device-Only Address Handling
+### 2. Device-Only Location Handling
 
-- No third-party geocoding services or APIs
-- User addresses are **never sent to any server**
-- District selection is done manually by the user
-- Address stored only in browser `localStorage`
-- No logging of user location data
+**Use my location (default path)**
+
+- The browser Geolocation API runs on-device
+- Coordinates are matched against bundled GeoJSON (point-in-polygon in the browser)
+- Coordinates **never leave the device** — no location API call
+- District maps are lazy-loaded from this origin (`/votr/districts/*.json`)
+
+**Typed address (optional Census lookup)**
+
+Bundling Mecklenburg County’s open address-point file is impractical (~210 MB statewide NCSBE address points). VOTR therefore uses the **U.S. Census Geocoder** (an official government service, no API key) **only after explicit consent**:
+
+> To find your districts, we'll send this address to the U.S. Census lookup. It isn't stored by VOTR.
+
+- The address is sent only to `https://geocoding.geo.census.gov` (one-line address geocoder)
+- VOTR does not store the address on any server (there is no backend)
+- After coordinates return, district matching is still on-device (same GeoJSON)
+- Users can skip this and pick districts by hand, or confirm with [NCSBE Voter Search](https://vt.ncsbe.gov/reglkup/)
+
+Address and district results stay in browser `localStorage` only.
 
 ### 3. No External Scripts or Trackers
 
@@ -46,6 +60,10 @@ All ballot data comes from official government sources:
 | Statewide referendums | [NCSBE Elections Files](https://dl.ncsbe.gov/) |
 | County referendums | [NCSBE County Referendums](https://dl.ncsbe.gov/) |
 | Candidate positions | Official campaign websites, WFAE interviews |
+| U.S. House districts | NCSBE / NCGA Session Law 2025-95 shapefile (2026 plan) |
+| NC Senate / House districts | NCSBE / NCGA SL 2023-146 and SL 2023-149 shapefiles |
+| County commissioner districts | Mecklenburg County GIS |
+| Charlotte city limits | U.S. Census TIGER/Line 2024 places |
 
 - **Last verified:** October 7, 2026
 - App displays verification date and links to official sources
@@ -88,7 +106,7 @@ The app includes a strict CSP via meta tag:
   img-src 'self' data:;
   font-src 'self';
   script-src 'self';
-  connect-src 'self';
+  connect-src 'self' https://geocoding.geo.census.gov;
 " />
 ```
 
@@ -99,7 +117,7 @@ The app includes a strict CSP via meta tag:
 | `img-src` | Same-origin + data URIs (for emoji favicon) |
 | `font-src` | Same-origin only (self-hosted Inter) |
 | `script-src` | Same-origin only (no external scripts) |
-| `connect-src` | Same-origin only (no external API calls) |
+| `connect-src` | Same-origin, plus `https://geocoding.geo.census.gov` for optional consented address lookup |
 
 **Note:** `frame-ancestors` is not supported on CSP delivered via a `<meta>` tag, so it is omitted here (including it only logs a console warning). An HTTP header `Content-Security-Policy: frame-ancestors 'none'` would be required for clickjacking protection. GitHub Pages sends `X-Frame-Options` by default, which covers hosted deploys.
 
@@ -142,7 +160,8 @@ Dependencies are minimal:
 
 | Data | Where | Sent to server? |
 |------|-------|-----------------|
-| User address | localStorage | ❌ Never |
+| User address | localStorage | ❌ Never (unless the user consents to the Census geocoder) |
+| Device coordinates | Memory only, then discarded | ❌ Never |
 | District selection | localStorage | ❌ Never |
 | Candidate picks | localStorage | ❌ Never |
 | Measure picks | localStorage | ❌ Never |

@@ -12,6 +12,10 @@ export interface UserLocation {
   address: string;
   district: 'NC-8' | 'NC-12' | 'NC-14';
   isCharlotte: boolean;
+  ncSenate?: string;
+  ncHouse?: string;
+  commission?: string;
+  lookupSource?: 'geolocation' | 'census' | 'manual';
 }
 
 export interface CandidatePick {

@@ -462,20 +462,49 @@ export function getAllCandidates(): Candidate[] {
  * to ensure equal visual treatment (no party gets listed first).
  */
 export function getCandidatesForDistrict(district: 'NC-8' | 'NC-12' | 'NC-14'): Candidate[] {
+  return getCandidatesForLocation({ district, isCharlotte: false });
+}
+
+/** Filter races to the voter's districts when we know them. */
+export function getCandidatesForLocation(location: {
+  district: 'NC-8' | 'NC-12' | 'NC-14';
+  isCharlotte?: boolean;
+  ncSenate?: string;
+  ncHouse?: string;
+  commission?: string;
+}): Candidate[] {
   const all: Candidate[] = [
     ...US_SENATE,
     ...NC_SUPREME_COURT,
     ...NC_COURT_OF_APPEALS,
-    ...STATE_LEGISLATURE,
-    ...LOCAL_RACES,
   ];
 
-  if (district === 'NC-8') {
-    all.push(...US_HOUSE_NC8);
-  } else if (district === 'NC-12') {
-    all.push(...US_HOUSE_NC12);
-  } else if (district === 'NC-14') {
-    all.push(...US_HOUSE_NC14);
+  if (location.district === 'NC-8') all.push(...US_HOUSE_NC8);
+  else if (location.district === 'NC-12') all.push(...US_HOUSE_NC12);
+  else all.push(...US_HOUSE_NC14);
+
+  const senate = location.ncSenate;
+  const house = location.ncHouse;
+  if (senate || house) {
+    for (const c of STATE_LEGISLATURE) {
+      if (c.office.startsWith('NC Senate') && senate) {
+        if (c.district === senate) all.push(c);
+      } else if (c.office.startsWith('NC House') && house) {
+        if (c.district === house) all.push(c);
+      } else if (!c.office.startsWith('NC Senate') && !c.office.startsWith('NC House')) {
+        all.push(c);
+      }
+    }
+  } else {
+    all.push(...STATE_LEGISLATURE);
+  }
+
+  for (const c of LOCAL_RACES) {
+    if (c.office.includes('Commission District') && location.commission) {
+      if (c.district === location.commission) all.push(c);
+    } else {
+      all.push(c);
+    }
   }
 
   return all;

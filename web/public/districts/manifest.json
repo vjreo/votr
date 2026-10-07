@@ -1,0 +1,41 @@
+{
+  "lastChecked": "2026-10-07",
+  "layers": [
+    {
+      "id": "congress",
+      "file": "congress.json",
+      "source": "NCSBE / NCGA Session Law 2025-95 (SB 249), 2026 U.S. House plan",
+      "sourceUrl": "https://dl.ncsbe.gov/?prefix=ShapeFiles/USCongress/",
+      "date": "2025-10-22"
+    },
+    {
+      "id": "ncSenate",
+      "file": "nc-senate.json",
+      "source": "NCSBE / NCGA Session Law 2023-146, NC Senate plan",
+      "sourceUrl": "https://www.ncsbe.gov/results-data/voting-maps-redistricting",
+      "date": "2023-10-25"
+    },
+    {
+      "id": "ncHouse",
+      "file": "nc-house.json",
+      "source": "NCSBE / NCGA Session Law 2023-149, NC House plan",
+      "sourceUrl": "https://www.ncsbe.gov/results-data/voting-maps-redistricting",
+      "date": "2023-10-25"
+    },
+    {
+      "id": "commission",
+      "file": "commission.json",
+      "source": "Mecklenburg County GIS, Board of County Commissioner Districts",
+      "sourceUrl": "https://maps.mecklenburgcountync.gov/metadata/item/countycommissioners/",
+      "date": "2026-10-07"
+    },
+    {
+      "id": "charlotte",
+      "file": "charlotte.json",
+      "source": "U.S. Census TIGER/Line 2024 places (Charlotte city)",
+      "sourceUrl": "https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html",
+      "date": "2024"
+    }
+  ],
+  "clip": "Clipped to Mecklenburg County GIS county boundary; simplified for on-device lookup."
+}
