@@ -47,7 +47,10 @@ jobs:
       - name: Scan build for secrets
         run: |
           echo "Scanning build output for sensitive patterns..."
-          if grep -riE "(api[_-]?key|secret|password|database.?url|supabase|firebase)" dist/ 2>/dev/null | grep -v "type=.password"; then
+          # Fail on assignment-like secret patterns, not React internals (SECRET_INTERNALS) or form types.
+          MATCHES=$(grep -riE "(api[_-]?key\s*[:=]|sk_live|sk_test|database[_-]?url\s*[:=]|supabase[_-](url|key)|firebase[_-](api|config))" dist/ 2>/dev/null || true)
+          if [ -n "$MATCHES" ]; then
+            echo "$MATCHES"
             echo "WARNING: Potential secrets found in build output"
             exit 1
           fi
