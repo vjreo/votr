@@ -228,7 +228,7 @@ export default function AddressEntry({ onSubmit }: Props) {
         )}
 
         {step === 'manual' && (
-          <main id="main-content" className="entry__districts" role="group" aria-label="Select your districts">
+          <main id="main-content" className="entry__districts">
             <p className="entry__label" id="district-label">
               Which congressional district are you in?
             </p>
@@ -268,7 +268,6 @@ export default function AddressEntry({ onSubmit }: Props) {
                   type="button"
                   className="entry__district-option"
                   onClick={() => handleManualSelect(d.id)}
-                  aria-label={`${d.name}: ${d.desc}. Charlotte city: ${isCharlotte ? 'yes' : 'no'}`}
                 >
                   <span className="entry__district-name">{d.name}</span>
                   <span className="entry__district-desc">{d.desc}</span>

@@ -148,7 +148,6 @@ export default function YourBallot({
         <button
           className="ballot__location"
           onClick={onChangeAddress}
-          aria-label={`Not right? Change it. Currently ${location.address}, ${formatLocationSummary(location)}`}
         >
           <MapPinIcon />
           <span className="ballot__location-copy">
@@ -196,7 +195,7 @@ export default function YourBallot({
             )}
             
             {group.contests.map((contest) => (
-              <article key={contest.office} className="ballot__race" role="group" aria-label={contest.office}>
+              <article key={contest.office} className="ballot__race" aria-label={contest.office}>
                 <h4 className="ballot__office">{contest.office}</h4>
                 <div className="ballot__candidates">
                   {contest.candidates.map((candidate) => {
@@ -206,11 +205,13 @@ export default function YourBallot({
                         key={candidate.id}
                         className={`ballot__candidate ${pick ? 'ballot__candidate--picked' : ''}`}
                         onClick={() => setSelectedCandidate(candidate)}
-                        aria-label={`${candidate.name}, ${candidate.party}${pick ? `, marked as ${pick.leaning}` : ''}`}
                       >
                         <div className="ballot__candidate-info">
                           <span className="ballot__candidate-name">{candidate.name}</span>
                           <span className="ballot__candidate-party">{candidate.party}</span>
+                          {pick && (
+                            <span className="visually-hidden">marked as {pick.leaning}</span>
+                          )}
                         </div>
                         {pick && (
                           <span 
