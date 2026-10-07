@@ -33,6 +33,9 @@ dist/
 build/
 *.tsbuildinfo
 
+# Netlify
+.netlify/
+
 # Expo
 .expo/
 .expo-shared/
