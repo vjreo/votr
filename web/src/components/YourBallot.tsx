@@ -9,6 +9,7 @@ import {
   OFFICIAL_SOURCES,
   DATA_PROVENANCE,
   getCandidatesForDistrict,
+  sortCandidatesAlphabetically,
   getNextCriticalDeadline,
   getDaysUntil,
   formatDate,
@@ -58,7 +59,11 @@ function groupCandidates(candidates: Candidate[]): ContestGroup[] {
       level,
       label: LEVEL_CONFIG[level]?.label || level,
       contests: Object.entries(offices)
-        .map(([office, cands]) => ({ office, candidates: cands }))
+        .map(([office, cands]) => ({ 
+          office, 
+          // Sort candidates alphabetically by last name for neutral display
+          candidates: sortCandidatesAlphabetically(cands)
+        }))
         .sort((a, b) => a.office.localeCompare(b.office)),
     }))
     .sort((a, b) => {
@@ -117,6 +122,7 @@ export default function YourBallot({
 
   return (
     <div className="ballot">
+      <a href="#ballot-main" className="skip-link">Skip to ballot</a>
       {/* Header */}
       <header className="ballot__header">
         <div className="ballot__header-top">
@@ -139,7 +145,11 @@ export default function YourBallot({
           </div>
         </div>
         
-        <button className="ballot__location" onClick={onChangeAddress}>
+        <button
+          className="ballot__location"
+          onClick={onChangeAddress}
+          aria-label={`Change location. Currently ${location.address}, ${location.district}`}
+        >
           <MapPinIcon />
           <span className="ballot__location-text">{location.address}</span>
           <span className="ballot__location-district">{location.district}</span>
@@ -158,7 +168,7 @@ export default function YourBallot({
         )}
       </header>
 
-      <main className="ballot__content">
+      <main id="ballot-main" className="ballot__content">
         {/* Privacy notice */}
         <div className="ballot__privacy">
           <LockIcon />
@@ -175,37 +185,45 @@ export default function YourBallot({
         </section>
 
         {/* Races */}
-        {contestGroups.map((group) => (
-          <section key={group.level} className="ballot__section">
-            <h3 className="ballot__section-title">{group.label}</h3>
+        {contestGroups.map((group, groupIndex) => (
+          <section key={group.level} className="ballot__section" aria-labelledby={`section-${group.level}`}>
+            <h3 id={`section-${group.level}`} className="ballot__section-title">{group.label}</h3>
+            {groupIndex === 0 && (
+              <p className="ballot__order-note">Candidates listed alphabetically by last name</p>
+            )}
             
             {group.contests.map((contest) => (
-              <div key={contest.office} className="ballot__race">
+              <article key={contest.office} className="ballot__race" role="group" aria-label={contest.office}>
                 <h4 className="ballot__office">{contest.office}</h4>
-                <div className="ballot__candidates">
+                <div className="ballot__candidates" role="list">
                   {contest.candidates.map((candidate) => {
                     const pick = getCandidatePick(candidate.id);
                     return (
                       <button
                         key={candidate.id}
+                        role="listitem"
                         className={`ballot__candidate ${pick ? 'ballot__candidate--picked' : ''}`}
                         onClick={() => setSelectedCandidate(candidate)}
+                        aria-label={`${candidate.name}, ${candidate.party}${pick ? `, marked as ${pick.leaning}` : ''}`}
                       >
                         <div className="ballot__candidate-info">
                           <span className="ballot__candidate-name">{candidate.name}</span>
                           <span className="ballot__candidate-party">{candidate.party}</span>
                         </div>
                         {pick && (
-                          <span className={`ballot__pick-badge ballot__pick-badge--${pick.leaning}`}>
+                          <span 
+                            className={`ballot__pick-badge ballot__pick-badge--${pick.leaning}`}
+                            aria-hidden="true"
+                          >
                             {pick.leaning === 'likely' ? '✓' : pick.leaning === 'considering' ? '?' : '✗'}
                           </span>
                         )}
-                        <ChevronRightIcon />
+                        <ChevronRightIcon aria-hidden="true" />
                       </button>
                     );
                   })}
                 </div>
-              </div>
+              </article>
             ))}
           </section>
         ))}
@@ -328,7 +346,7 @@ function SettingsView({
   return (
     <div className="settings">
       <header className="settings__header">
-        <button className="settings__back" onClick={onBack}>
+        <button className="settings__back" onClick={onBack} aria-label="Go back to ballot">
           <ChevronLeftIcon />
           <span>Back to ballot</span>
         </button>
@@ -409,7 +427,7 @@ function DatesView({ onBack }: { onBack: () => void }) {
   return (
     <div className="dates">
       <header className="dates__header">
-        <button className="dates__back" onClick={onBack}>
+        <button className="dates__back" onClick={onBack} aria-label="Go back to ballot">
           <ChevronLeftIcon />
           <span>Back to ballot</span>
         </button>
@@ -630,8 +648,8 @@ const ballotStyles = `
   }
 
   .ballot__action-btn {
-    width: 40px;
-    height: 40px;
+    width: var(--tap-target-min);
+    height: var(--tap-target-min);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -643,6 +661,11 @@ const ballotStyles = `
   .ballot__action-btn:hover {
     background: var(--color-surface-subtle);
     color: var(--color-accent);
+  }
+
+  .ballot__action-btn:active {
+    background: var(--color-border-light);
+    transform: scale(0.95);
   }
 
   .ballot__location {
@@ -658,6 +681,7 @@ const ballotStyles = `
     text-align: left;
     transition: all var(--transition-fast);
     border: 1px solid transparent;
+    min-height: var(--tap-target-min);
   }
 
   .ballot__location:hover {
@@ -743,6 +767,14 @@ const ballotStyles = `
     margin-bottom: var(--space-8);
   }
 
+  .ballot__order-note {
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+    font-style: italic;
+    margin-top: calc(-1 * var(--space-2));
+    margin-bottom: var(--space-4);
+  }
+
   .ballot__section-title {
     font-size: var(--text-xs);
     font-weight: 600;
@@ -812,10 +844,11 @@ const ballotStyles = `
     align-items: center;
     padding: var(--space-4) var(--space-5);
     border-bottom: 1px solid var(--color-border-light);
-    transition: background-color var(--transition-fast);
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
     text-align: left;
     min-height: 64px;
     gap: var(--space-3);
+    cursor: pointer;
   }
 
   .ballot__candidate:last-child {
@@ -826,12 +859,20 @@ const ballotStyles = `
     background-color: var(--color-surface-subtle);
   }
 
+  .ballot__candidate:active {
+    background-color: var(--color-border-light);
+  }
+
   .ballot__candidate--picked {
     background-color: var(--color-accent-light);
   }
 
   .ballot__candidate--picked:hover {
     background-color: var(--color-accent-light);
+  }
+
+  .ballot__candidate--picked:active {
+    background-color: #d5ebeb;
   }
 
   .ballot__candidate-info {
@@ -1028,7 +1069,8 @@ const ballotStyles = `
     font-weight: 500;
     color: var(--color-accent);
     margin-bottom: var(--space-4);
-    padding: 0;
+    padding: var(--space-2) 0;
+    min-height: var(--tap-target-min);
     cursor: pointer;
   }
 
@@ -1056,15 +1098,16 @@ const ballotStyles = `
   }
 
   .measure__pick-btn {
-    padding: var(--space-2) var(--space-4);
+    padding: var(--space-3) var(--space-4);
     background: var(--color-surface-subtle);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-full);
     font-size: var(--text-sm);
-    font-weight: 500;
+    font-weight: var(--font-medium);
     color: var(--color-text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
+    min-height: var(--tap-target-min);
   }
 
   .measure__pick-btn:hover {
@@ -1082,6 +1125,46 @@ const ballotStyles = `
     background: var(--color-accent-dark);
     border-color: var(--color-accent-dark);
     color: var(--color-text-inverse);
+  }
+
+  .measure__pick-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* Responsive: Desktop layout */
+  @media (min-width: 768px) {
+    .ballot__content {
+      max-width: var(--content-width-lg);
+      padding: var(--space-8);
+    }
+
+    .ballot__header {
+      padding: var(--space-5) var(--space-8);
+    }
+
+    .ballot__race {
+      margin-bottom: var(--space-4);
+    }
+
+    .ballot__candidates {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .ballot__candidate {
+      border-bottom: none;
+      border-right: 1px solid var(--color-border-light);
+    }
+
+    .ballot__candidate:last-child {
+      border-right: none;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .ballot__content {
+      padding: var(--space-10) var(--space-8);
+    }
   }
 `;
 
@@ -1107,7 +1190,8 @@ const settingsStyles = `
     font-weight: 500;
     color: var(--color-accent);
     margin-bottom: var(--space-4);
-    padding: 0;
+    padding: var(--space-2) 0;
+    min-height: var(--tap-target-min);
   }
 
   .settings__title {
@@ -1223,7 +1307,8 @@ const datesStyles = `
     font-weight: 500;
     color: var(--color-accent);
     margin-bottom: var(--space-4);
-    padding: 0;
+    padding: var(--space-2) 0;
+    min-height: var(--tap-target-min);
   }
 
   .dates__title {

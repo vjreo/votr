@@ -28,10 +28,11 @@ export default function AddressEntry({ onSubmit }: Props) {
 
   return (
     <div className="entry">
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <div className="entry__container">
         {/* Logo and welcome */}
         <header className="entry__header">
-          <div className="entry__logo">
+          <div className="entry__logo" aria-hidden="true">
             <span className="entry__logo-icon">🗳️</span>
           </div>
           <h1 className="entry__title">VOTR</h1>
@@ -50,9 +51,9 @@ export default function AddressEntry({ onSubmit }: Props) {
         </div>
 
         {!showDistrictPicker ? (
-          <>
+          <main id="main-content">
             {/* Address form */}
-            <form onSubmit={handleSubmit} className="entry__form">
+            <form onSubmit={handleSubmit} className="entry__form" role="form" aria-label="Address entry form">
               <label className="entry__label" htmlFor="address">
                 Where do you live in Mecklenburg County?
               </label>
@@ -65,25 +66,27 @@ export default function AddressEntry({ onSubmit }: Props) {
                 className="entry__input"
                 autoComplete="street-address"
                 autoFocus
+                aria-describedby="address-helper"
               />
               <button
                 type="submit"
                 className="btn btn--primary btn--full"
                 disabled={!address.trim()}
+                aria-label={address.trim() ? 'See my ballot' : 'Enter an address to continue'}
               >
                 See my ballot
               </button>
             </form>
 
             {/* Helper text */}
-            <p className="entry__helper">
-              Your address helps us show the right races for your area. We don't store it.
+            <p id="address-helper" className="entry__helper">
+              Your address stays on this device. Nothing is sent anywhere.
             </p>
-          </>
+          </main>
         ) : (
           /* District picker */
-          <div className="entry__districts">
-            <p className="entry__label">
+          <main id="main-content" className="entry__districts" role="group" aria-label="Select your congressional district">
+            <p className="entry__label" id="district-label">
               Which congressional district are you in?
             </p>
             <p className="entry__district-help">
@@ -93,7 +96,7 @@ export default function AddressEntry({ onSubmit }: Props) {
               </a>
             </p>
             
-            <div className="entry__district-list">
+            <div className="entry__district-list" role="list" aria-labelledby="district-label">
               {[
                 { id: 'NC-12' as const, name: 'NC-12', desc: 'Most of Charlotte, central Mecklenburg' },
                 { id: 'NC-14' as const, name: 'NC-14', desc: 'Western and northern edges' },
@@ -101,8 +104,10 @@ export default function AddressEntry({ onSubmit }: Props) {
               ].map((d) => (
                 <button
                   key={d.id}
+                  role="listitem"
                   className="entry__district-option"
                   onClick={() => handleDistrictSelect(d.id)}
+                  aria-label={`${d.name}: ${d.desc}`}
                 >
                   <span className="entry__district-name">{d.name}</span>
                   <span className="entry__district-desc">{d.desc}</span>
@@ -113,10 +118,11 @@ export default function AddressEntry({ onSubmit }: Props) {
             <button
               className="btn btn--ghost"
               onClick={() => setShowDistrictPicker(false)}
+              aria-label="Go back to change address"
             >
               ← Change address
             </button>
-          </div>
+          </main>
         )}
 
         {/* Footer */}
@@ -278,12 +284,17 @@ export default function AddressEntry({ onSubmit }: Props) {
           cursor: pointer;
           transition: all var(--transition-normal);
           text-align: left;
-          min-height: 72px;
+          min-height: var(--tap-target-min);
         }
 
         .entry__district-option:hover {
           border-color: var(--color-accent);
           background: var(--color-accent-light);
+        }
+
+        .entry__district-option:active {
+          transform: scale(0.98);
+          background: #d5ebeb;
         }
 
         .entry__district-name {
@@ -313,7 +324,31 @@ export default function AddressEntry({ onSubmit }: Props) {
 
         .entry__official {
           font-size: var(--text-sm);
-          font-weight: 500;
+          font-weight: var(--font-medium);
+        }
+
+        /* Responsive: Tablet and desktop */
+        @media (min-width: 768px) {
+          .entry {
+            padding: var(--space-10) var(--space-8);
+            justify-content: center;
+          }
+
+          .entry__container {
+            max-width: 480px;
+          }
+
+          .entry__header {
+            margin-bottom: var(--space-10);
+          }
+
+          .entry__title {
+            font-size: var(--text-4xl);
+          }
+
+          .entry__subtitle {
+            font-size: var(--text-xl);
+          }
         }
       `}</style>
     </div>

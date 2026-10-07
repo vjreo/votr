@@ -23,8 +23,12 @@ export default function CandidateDetail({ candidate, pick, onBack, onPick }: Pro
   return (
     <div className="detail">
       <header className="detail__header">
-        <button className="detail__back" onClick={onBack}>
-          <ChevronLeftIcon />
+        <button 
+          className="detail__back" 
+          onClick={onBack}
+          aria-label="Go back to ballot"
+        >
+          <ChevronLeftIcon aria-hidden="true" />
           <span>Back to ballot</span>
         </button>
       </header>
@@ -41,32 +45,35 @@ export default function CandidateDetail({ candidate, pick, onBack, onPick }: Pro
         </div>
 
         {/* Pick buttons */}
-        <div className="detail__pick-section">
-          <p className="detail__pick-label">I'm leaning:</p>
-          <div className="detail__pick-buttons">
+        <fieldset className="detail__pick-section">
+          <legend className="detail__pick-label">I'm leaning:</legend>
+          <div className="detail__pick-buttons" role="group" aria-label="Mark your preference for this candidate">
             <button
               className={`detail__pick-btn detail__pick-btn--likely ${pick?.leaning === 'likely' ? 'detail__pick-btn--selected' : ''}`}
               onClick={() => handlePick('likely')}
+              aria-pressed={pick?.leaning === 'likely'}
             >
-              <span className="detail__pick-icon">✓</span>
+              <span className="detail__pick-icon" aria-hidden="true">✓</span>
               <span>Likely voting for</span>
             </button>
             <button
               className={`detail__pick-btn detail__pick-btn--considering ${pick?.leaning === 'considering' ? 'detail__pick-btn--selected' : ''}`}
               onClick={() => handlePick('considering')}
+              aria-pressed={pick?.leaning === 'considering'}
             >
-              <span className="detail__pick-icon">?</span>
+              <span className="detail__pick-icon" aria-hidden="true">?</span>
               <span>Still considering</span>
             </button>
             <button
               className={`detail__pick-btn detail__pick-btn--unlikely ${pick?.leaning === 'unlikely' ? 'detail__pick-btn--selected' : ''}`}
               onClick={() => handlePick('unlikely')}
+              aria-pressed={pick?.leaning === 'unlikely'}
             >
-              <span className="detail__pick-icon">✗</span>
+              <span className="detail__pick-icon" aria-hidden="true">✗</span>
               <span>Probably not</span>
             </button>
           </div>
-        </div>
+        </fieldset>
 
         {/* About */}
         {candidate.bio && (
@@ -177,7 +184,8 @@ export default function CandidateDetail({ candidate, pick, onBack, onPick }: Pro
           font-size: var(--text-sm);
           font-weight: 500;
           color: var(--color-accent);
-          padding: 0;
+          padding: var(--space-2) 0;
+          min-height: var(--tap-target-min);
         }
 
         .detail__content {
@@ -237,8 +245,10 @@ export default function CandidateDetail({ candidate, pick, onBack, onPick }: Pro
 
         .detail__pick-label {
           font-size: var(--text-sm);
+          font-weight: var(--font-medium);
           color: var(--color-text-secondary);
           margin: 0 0 var(--space-4);
+          padding: 0;
         }
 
         .detail__pick-buttons {
@@ -256,15 +266,20 @@ export default function CandidateDetail({ candidate, pick, onBack, onPick }: Pro
           border: 1.5px solid var(--color-border);
           border-radius: var(--radius-md);
           font-size: var(--text-sm);
-          font-weight: 500;
+          font-weight: var(--font-medium);
           color: var(--color-text-secondary);
           cursor: pointer;
           transition: all var(--transition-fast);
           text-align: left;
+          min-height: var(--tap-target-min);
         }
 
         .detail__pick-btn:hover {
           border-color: var(--color-text-tertiary);
+        }
+
+        .detail__pick-btn:active {
+          transform: scale(0.98);
         }
 
         .detail__pick-icon {
@@ -449,6 +464,38 @@ export default function CandidateDetail({ candidate, pick, onBack, onPick }: Pro
           color: var(--color-text-tertiary);
           line-height: var(--leading-relaxed);
           margin: 0;
+        }
+
+        /* Responsive: Desktop layout */
+        @media (min-width: 768px) {
+          .detail__content {
+            max-width: var(--content-width-lg);
+            padding: var(--space-8);
+          }
+
+          .detail__header {
+            padding: var(--space-5) var(--space-8);
+          }
+
+          .detail__positions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-5);
+          }
+
+          .detail__pick-buttons {
+            flex-direction: row;
+          }
+
+          .detail__pick-btn {
+            flex: 1;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .detail__content {
+            padding: var(--space-10) var(--space-8);
+          }
         }
       `}</style>
     </div>

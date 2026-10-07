@@ -456,6 +456,11 @@ export function getAllCandidates(): Candidate[] {
   ];
 }
 
+/**
+ * Get candidates for a specific congressional district.
+ * Candidates are returned sorted alphabetically by last name within each race
+ * to ensure equal visual treatment (no party gets listed first).
+ */
 export function getCandidatesForDistrict(district: 'NC-8' | 'NC-12' | 'NC-14'): Candidate[] {
   const all: Candidate[] = [
     ...US_SENATE,
@@ -474,6 +479,18 @@ export function getCandidatesForDistrict(district: 'NC-8' | 'NC-12' | 'NC-14'): 
   }
 
   return all;
+}
+
+/**
+ * Sort candidates alphabetically by last name.
+ * Used to ensure neutral display order (no party advantage).
+ */
+export function sortCandidatesAlphabetically(candidates: Candidate[]): Candidate[] {
+  return [...candidates].sort((a, b) => {
+    const lastNameA = a.name.split(' ').pop() || a.name;
+    const lastNameB = b.name.split(' ').pop() || b.name;
+    return lastNameA.localeCompare(lastNameB);
+  });
 }
 
 export function groupCandidatesByOffice(candidates: Candidate[]): Map<string, Candidate[]> {
