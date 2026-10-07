@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import jwt from 'jsonwebtoken';
 import pool from '../db/connection.js';
 import logger from '../utils/logger.js';
@@ -20,7 +21,14 @@ export function generateAccessToken(userId) {
  * Generate JWT refresh token
  */
 export function generateRefreshToken(userId) {
-  return jwt.sign({ userId, type: 'refresh' }, JWT_SECRET, { expiresIn: '7d' });
+  // jwt iat is second-resolution. Without a unique jti, two sessions for the
+  // same user in the same second produce identical tokens and collide on
+  // sessions.refresh_token UNIQUE (seen as sessions_refresh_token_key in CI).
+  return jwt.sign(
+    { userId, type: 'refresh' },
+    JWT_SECRET,
+    { expiresIn: '7d', jwtid: randomUUID() }
+  );
 }
 
 /**

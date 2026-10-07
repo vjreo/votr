@@ -141,7 +141,6 @@ async function testAPI() {
         email,
         password: 'testpassword123',
       });
-      await new Promise((r) => setTimeout(r, 300));
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         email,
         password: 'testpassword123',
