@@ -90,6 +90,15 @@ async function testAPI() {
     },
   });
 
+  // Test 5c: Ballot measures (empty array is OK if table exists)
+  tests.push({
+    name: 'Ballot Measures',
+    test: async () => {
+      const response = await axios.get(`${API_BASE_URL}/ballot-measures?state=NC`);
+      return response.status === 200 && response.data.success === true && Array.isArray(response.data.measures);
+    },
+  });
+
   // Test 6: Update user preferences
   tests.push({
     name: 'Update User Preferences',

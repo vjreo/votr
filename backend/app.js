@@ -17,6 +17,7 @@ import sampleBallotRoutes from './routes/sampleBallot.js';
 import authRoutes from './routes/auth.js';
 import biasRoutes from './routes/bias.js';
 import rosterRoutes from './routes/roster.js';
+import ballotMeasuresRoutes from './routes/ballotMeasures.js';
 import logger from './utils/logger.js';
 
 dotenv.config();
@@ -108,6 +109,7 @@ app.use('/api/elections', apiLimiter, electionsRoutes);
 app.use('/api/sample-ballot', apiLimiter, sampleBallotRoutes);
 app.use('/api/bias', biasLimiter, biasRoutes);
 app.use('/api/roster', apiLimiter, rosterRoutes);
+app.use('/api/ballot-measures', apiLimiter, ballotMeasuresRoutes);
 
 // ── Global Error Handler ───────────────────────────────────────────────────────
 

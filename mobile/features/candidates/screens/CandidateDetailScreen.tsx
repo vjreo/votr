@@ -264,8 +264,7 @@ const CandidateDetailScreen: React.FC = () => {
         <View style={styles.limitedIssueBanner}>
           <Ionicons name="information-circle-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.limitedIssueText}>
-            We don&apos;t have detailed issue positions for this candidate yet. Match scores only
-            show when we have overlapping issues—no score is missing data, not a rating.
+            We're still gathering this candidate's positions. Check back later or visit their official website.
           </Text>
         </View>
       )}

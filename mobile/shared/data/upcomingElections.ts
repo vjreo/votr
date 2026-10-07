@@ -1,5 +1,5 @@
 /**
- * MVP Target: 2026 NC General Election (Mecklenburg County midterms)
+ * MVP Target: 2026 NC General Election (Mecklenburg County)
  * This is the dogfood target for VOTR.
  */
 export const MVP_TARGET = {
@@ -29,46 +29,49 @@ export interface UpcomingElection {
 }
 
 /**
- * NC Elections — focused on 2026 midterms for Mecklenburg County dogfood.
- * The primary is in March; the general is in November.
+ * NC Elections — focused on 2026 midterms for Mecklenburg County.
+ * The primary was in March; the general is in November.
  */
 const NC_ELECTIONS: UpcomingElection[] = [
   {
-    id: 'nc-primary-2026',
-    name: '2026 NC Primary',
-    date: '2026-03-03',
-    type: 'primary',
-    icon: '🗳️',
-    description: 'Party primaries for U.S. Senate, U.S. House, and NC General Assembly',
-    state: 'NC',
-    deadlines: [
-      { name: 'Voter Registration', date: '2026-02-06', icon: '📝', critical: true },
-      { name: 'Early Voting Begins', date: '2026-02-12', icon: '📅', critical: false },
-      { name: 'Primary Day', date: '2026-03-03', icon: '🗳️', critical: true },
-    ],
-    offices: ['U.S. Senate', 'U.S. House', 'NC State Senate', 'NC House'],
-  },
-  {
     id: 'nc-general-2026',
-    name: '2026 NC General Election',
-    date: MVP_TARGET.date,
+    name: '2026 General Election',
+    date: '2026-11-03',
     type: 'general',
-    icon: '🏛️',
-    description:
-      'U.S. Senate (Tillis seat), U.S. House, all 170 NC legislators, Mecklenburg County Commissioners',
+    icon: '🗳️',
+    description: 'U.S. Senate, U.S. House, state courts, state legislature, county offices, and ballot measures',
     state: 'NC',
     deadlines: [
       { name: 'Voter Registration', date: '2026-10-09', icon: '📝', critical: true },
       { name: 'Early Voting Begins', date: '2026-10-15', icon: '📅', critical: false },
+      { name: 'Absentee Request Deadline', date: '2026-10-20', icon: '✉️', critical: true },
+      { name: 'Early Voting Ends', date: '2026-10-31', icon: '📅', critical: false },
       { name: 'Election Day', date: '2026-11-03', icon: '🗳️', critical: true },
     ],
     offices: [
       'U.S. Senate',
-      'U.S. House (NC-12)',
+      'U.S. House (NC-8, NC-12, NC-14)',
+      'NC Supreme Court',
+      'NC Court of Appeals',
       'NC State Senate',
       'NC House',
       'Mecklenburg County Commissioners',
     ],
+  },
+  {
+    id: 'nc-primary-2028',
+    name: '2028 Primary Election',
+    date: '2028-03-07',
+    type: 'primary',
+    icon: '🗳️',
+    description: 'Party primaries for President, Governor, U.S. Senate, U.S. House, and the General Assembly',
+    state: 'NC',
+    deadlines: [
+      { name: 'Voter Registration', date: '2028-02-11', icon: '📝', critical: true },
+      { name: 'Early Voting Begins', date: '2028-02-19', icon: '📅', critical: false },
+      { name: 'Primary Day', date: '2028-03-07', icon: '🗳️', critical: true },
+    ],
+    offices: ['President', 'Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
   },
 ];
 

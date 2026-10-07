@@ -121,7 +121,7 @@ export default function SampleBallotScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Sample ballot" subtitle={userAddress || `Statewide · ${userState}`} />
+      <ScreenHeader title="Sample ballot" subtitle={userAddress || `${userState} statewide`} />
 
       <ScrollView
         style={styles.content}
@@ -232,12 +232,12 @@ export default function SampleBallotScreen() {
 
             {/* Official NC lookup */}
             <View style={styles.officialSection}>
-              <Text style={styles.officialTitle}>Official sample ballot</Text>
+              <Text style={styles.officialTitle}>Official ballot lookup</Text>
               <Text style={styles.officialSubtitle}>
-                The NC State Board of Elections provides an official sample ballot lookup. You may need to enter your name and address.
+                For the complete official ballot, use the NC State Board of Elections website. You'll enter your name and address.
               </Text>
               <Button
-                title="Open NC Ballot Lookup"
+                title="View official ballot"
                 onPress={() => openUrlSafely(NC_BALLOT_URL)}
                 variant="secondary"
                 fullWidth
