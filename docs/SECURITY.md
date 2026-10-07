@@ -89,7 +89,6 @@ The app includes a strict CSP via meta tag:
   font-src 'self';
   script-src 'self';
   connect-src 'self';
-  frame-ancestors 'none';
 " />
 ```
 
@@ -101,9 +100,8 @@ The app includes a strict CSP via meta tag:
 | `font-src` | Same-origin only (self-hosted Inter) |
 | `script-src` | Same-origin only (no external scripts) |
 | `connect-src` | Same-origin only (no external API calls) |
-| `frame-ancestors` | Cannot be embedded in iframes |
 
-**Note:** `frame-ancestors` in meta tags is not supported by browsers — this must be set via HTTP header if additional frame protection is needed. For GitHub Pages, the default X-Frame-Options header provides baseline protection.
+**Note:** `frame-ancestors` is not supported on CSP delivered via a `<meta>` tag, so it is omitted here (including it only logs a console warning). An HTTP header `Content-Security-Policy: frame-ancestors 'none'` would be required for clickjacking protection. GitHub Pages sends `X-Frame-Options` by default, which covers hosted deploys.
 
 ### 7. Referrer Policy
 

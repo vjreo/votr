@@ -72,7 +72,6 @@ export default function AddressEntry({ onSubmit }: Props) {
                 type="submit"
                 className="btn btn--primary btn--full"
                 disabled={!address.trim()}
-                aria-label={address.trim() ? 'See my ballot' : 'Enter an address to continue'}
               >
                 See my ballot
               </button>
