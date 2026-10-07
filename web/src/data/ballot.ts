@@ -443,28 +443,6 @@ export const CHARLOTTE_BONDS: BallotMeasure[] = [
 
 // === HELPERS ===
 
-export function getAllCandidates(): Candidate[] {
-  return [
-    ...US_SENATE,
-    ...US_HOUSE_NC12,
-    ...US_HOUSE_NC14,
-    ...US_HOUSE_NC8,
-    ...NC_SUPREME_COURT,
-    ...NC_COURT_OF_APPEALS,
-    ...STATE_LEGISLATURE,
-    ...LOCAL_RACES,
-  ];
-}
-
-/**
- * Get candidates for a specific congressional district.
- * Candidates are returned sorted alphabetically by last name within each race
- * to ensure equal visual treatment (no party gets listed first).
- */
-export function getCandidatesForDistrict(district: 'NC-8' | 'NC-12' | 'NC-14'): Candidate[] {
-  return getCandidatesForLocation({ district, isCharlotte: false });
-}
-
 /** Filter races to the voter's districts when we know them. */
 export function getCandidatesForLocation(location: {
   district: 'NC-8' | 'NC-12' | 'NC-14';
@@ -520,16 +498,6 @@ export function sortCandidatesAlphabetically(candidates: Candidate[]): Candidate
     const lastNameB = b.name.split(' ').pop() || b.name;
     return lastNameA.localeCompare(lastNameB);
   });
-}
-
-export function groupCandidatesByOffice(candidates: Candidate[]): Map<string, Candidate[]> {
-  const map = new Map<string, Candidate[]>();
-  for (const c of candidates) {
-    const list = map.get(c.office) || [];
-    list.push(c);
-    map.set(c.office, list);
-  }
-  return map;
 }
 
 export function getDaysUntil(dateString: string): number {

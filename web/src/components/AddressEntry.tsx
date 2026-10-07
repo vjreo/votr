@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { UserLocation } from '../utils/storage';
-import { NC_VOTER_SEARCH_URL } from '../data/ballot';
+import { DATA_PROVENANCE, NC_VOTER_SEARCH_URL, OFFICIAL_SOURCES } from '../data/ballot';
 import {
   DISTRICTS_ATTRIBUTION,
-  formatLocationSummary,
   lookupFromAddress,
   lookupFromGeolocation,
   manualLocation,
+  suggestAddresses,
+  type AddressSuggestion,
   type LookupResult,
 } from '../utils/lookup';
 
@@ -14,22 +15,22 @@ interface Props {
   onSubmit: (location: UserLocation) => void;
 }
 
-type Step = 'home' | 'result' | 'manual';
+type Step = 'home' | 'result' | 'manual' | 'about';
 
 const DISTRICTS: { id: 'NC-8' | 'NC-12' | 'NC-14'; name: string; desc: string }[] = [
-  { id: 'NC-12', name: 'NC-12', desc: 'Most of Charlotte, central Mecklenburg' },
-  { id: 'NC-14', name: 'NC-14', desc: 'Western and northern edges' },
-  { id: 'NC-8', name: 'NC-8', desc: 'Eastern Mecklenburg' },
+  { id: 'NC-12', name: 'NC-12', desc: 'Central Charlotte' },
+  { id: 'NC-14', name: 'NC-14', desc: 'West and north' },
+  { id: 'NC-8', name: 'NC-8', desc: 'East Mecklenburg' },
 ];
 
 function geoErrorMessage(err: unknown): string {
   if (err && typeof err === 'object' && 'code' in err) {
     const code = (err as GeolocationPositionError).code;
     if (code === 1) {
-      return 'Location is blocked for this site. Type an address, or pick your area by hand.';
+      return 'Location is blocked. Type an address, or pick your area by hand.';
     }
     if (code === 2 || code === 3) {
-      return 'We could not read your location. Type an address, or pick your area by hand.';
+      return 'Could not read your location. Type an address, or pick by hand.';
     }
   }
   if (err instanceof Error && err.message) return err.message;
@@ -44,20 +45,27 @@ export default function AddressEntry({ onSubmit }: Props) {
   const [result, setResult] = useState<LookupResult | null>(null);
   const [isCharlotte, setIsCharlotte] = useState(true);
   const [status, setStatus] = useState('');
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [openSuggest, setOpenSuggest] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const listId = useId();
+  const suggestGen = useRef(0);
 
   const showResult = (next: LookupResult) => {
     setResult(next);
     setError(null);
+    setSuggestions([]);
+    setOpenSuggest(false);
     setStep('result');
     setStatus('Districts found.');
   };
 
-  const handleLocation = async () => {
+  const runLookup = async (fn: () => Promise<LookupResult>, pending: string) => {
     setBusy(true);
     setError(null);
-    setStatus('Matching your location to district maps on this device…');
+    setStatus(pending);
     try {
-      showResult(await lookupFromGeolocation());
+      showResult(await fn());
     } catch (err) {
       setError(geoErrorMessage(err));
       setStatus('');
@@ -66,116 +74,192 @@ export default function AddressEntry({ onSubmit }: Props) {
     }
   };
 
-  const handleAddress = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!address.trim()) return;
-    setBusy(true);
-    setError(null);
-    setStatus('Looking up that address…');
-    try {
-      showResult(await lookupFromAddress(address.trim()));
-    } catch (err) {
-      setError(geoErrorMessage(err));
-      setStatus('');
-    } finally {
-      setBusy(false);
-    }
+  const handleLocation = () => runLookup(lookupFromGeolocation, 'Matching your location on this device…');
+
+  const lookupTyped = (value: string) => {
+    if (!value.trim()) return;
+    return runLookup(() => lookupFromAddress(value.trim()), 'Looking up that address…');
   };
+
+  const handleAddress = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (activeIndex >= 0 && suggestions[activeIndex]) {
+      const pick = suggestions[activeIndex];
+      setAddress(pick.query);
+      lookupTyped(pick.query);
+      return;
+    }
+    lookupTyped(address);
+  };
+
+  useEffect(() => {
+    const q = address.trim();
+    if (step !== 'home' || q.length < 3) {
+      setSuggestions([]);
+      setOpenSuggest(false);
+      setActiveIndex(-1);
+      return;
+    }
+    const gen = ++suggestGen.current;
+    const timer = window.setTimeout(() => {
+      suggestAddresses(q)
+        .then((next) => {
+          if (gen !== suggestGen.current) return;
+          setSuggestions(next);
+          setOpenSuggest(next.length > 0);
+          setActiveIndex(-1);
+        })
+        .catch(() => {
+          if (gen !== suggestGen.current) return;
+          setSuggestions([]);
+          setOpenSuggest(false);
+        });
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [address, step]);
 
   const handleManualSelect = (district: 'NC-8' | 'NC-12' | 'NC-14') => {
     onSubmit(manualLocation(address, district, isCharlotte));
   };
 
+  const goHome = () => {
+    setError(null);
+    setStep('home');
+  };
+
+  const compactFooter = step !== 'about';
+
   return (
     <div className="entry">
       <div className="entry__container">
-        <header className="entry__header">
-          <a href="#main-content" className="skip-link">Skip to main content</a>
-          <div className="entry__logo" aria-hidden="true">
-            <span className="entry__logo-icon">🗳️</span>
-          </div>
-          <h1 className="entry__title">VOTR</h1>
-          <p className="entry__subtitle">
-            Know your ballot before you vote
-          </p>
-          <div className="entry__context">
-            <div className="entry__election">
-              <span className="entry__election-label">Coming up</span>
-              <span className="entry__election-name">2026 General Election</span>
-              <span className="entry__election-date">Tuesday, November 3</span>
-            </div>
-          </div>
-        </header>
+        <a href="#main-content" className="skip-link">Skip to main content</a>
 
         {step === 'home' && (
-          <main id="main-content">
-            <div className="entry__form" role="group" aria-labelledby="find-districts">
-              <p className="entry__label" id="find-districts">
-                Find your Mecklenburg ballot
+          <>
+            <header className="entry__header">
+              <h1 className="entry__title">Find your ballot</h1>
+              <p className="entry__date">Tuesday, November 3, 2026</p>
+            </header>
+
+            <main id="main-content">
+              <form
+                onSubmit={handleAddress}
+                className="entry__search-wrap"
+                aria-busy={busy}
+              >
+                <div className="entry__search">
+                  <button
+                    type="button"
+                    className="entry__icon-btn"
+                    onClick={handleLocation}
+                    disabled={busy}
+                    aria-label="Use my location"
+                  >
+                    <PinIcon />
+                  </button>
+                  <label className="visually-hidden" htmlFor="address">
+                    Street address and ZIP
+                  </label>
+                  <input
+                    id="address"
+                    type="text"
+                    role="combobox"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    onFocus={() => setOpenSuggest(suggestions.length > 0)}
+                    onBlur={() => window.setTimeout(() => setOpenSuggest(false), 120)}
+                    onKeyDown={(e) => {
+                      if (!openSuggest || suggestions.length === 0) return;
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setActiveIndex((i) => (i + 1) % suggestions.length);
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setActiveIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+                      } else if (e.key === 'Escape') {
+                        setOpenSuggest(false);
+                        setActiveIndex(-1);
+                      }
+                    }}
+                    placeholder="Street address and ZIP"
+                    className="entry__input"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    disabled={busy}
+                    aria-autocomplete="list"
+                    aria-expanded={openSuggest && suggestions.length > 0}
+                    aria-haspopup="listbox"
+                    aria-controls={listId}
+                    aria-activedescendant={
+                      activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined
+                    }
+                  />
+                  <button
+                    type="submit"
+                    className="entry__icon-btn entry__icon-btn--go"
+                    disabled={busy || !address.trim()}
+                    aria-label="Look up"
+                  >
+                    <ArrowIcon />
+                  </button>
+                </div>
+                <ul
+                  id={listId}
+                  role="listbox"
+                  className="entry__suggest"
+                  hidden={!openSuggest || suggestions.length === 0}
+                >
+                  {suggestions.map((s, i) => (
+                    <li key={s.label} role="presentation">
+                      <button
+                        type="button"
+                        id={`${listId}-${i}`}
+                        role="option"
+                        aria-selected={i === activeIndex}
+                        className={`entry__suggest-item${i === activeIndex ? ' is-active' : ''}`}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setAddress(s.query);
+                          lookupTyped(s.query);
+                        }}
+                      >
+                        {s.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </form>
+
+              <p className="entry__privacy">
+                <LockIcon />
+                Stays on your device.
               </p>
+
+              {error && (
+                <p className="entry__error" role="alert">{error}</p>
+              )}
+              <p className="visually-hidden" aria-live="polite">{status}</p>
+
               <button
                 type="button"
-                className="btn btn--primary btn--full"
-                onClick={handleLocation}
+                className="entry__text-link"
+                onClick={() => {
+                  setError(null);
+                  setStep('manual');
+                }}
                 disabled={busy}
               >
-                {busy ? 'Looking up…' : 'Use my location'}
+                Pick my area by hand
               </button>
-              <p className="entry__helper entry__helper--tight">
-                Your location stays on this device. We match it to maps that ship with VOTR.
-              </p>
-            </div>
-
-            <p className="entry__or" aria-hidden="true">or</p>
-
-            <form onSubmit={handleAddress} className="entry__form" aria-label="Look up by address">
-              <label className="entry__label" htmlFor="address">
-                Type your street address
-              </label>
-              <input
-                id="address"
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="123 Main St, Charlotte NC 28202"
-                className="entry__input"
-                autoComplete="street-address"
-                disabled={busy}
-              />
-              <p className="entry__helper entry__helper--tight">
-                Your address stays on this device. A ZIP code helps us load a smaller map.
-              </p>
-              <button
-                type="submit"
-                className="btn btn--secondary btn--full"
-                disabled={busy || !address.trim()}
-              >
-                Look up this address
-              </button>
-            </form>
-
-            {error && (
-              <p className="entry__error" role="alert">{error}</p>
-            )}
-            <p className="visually-hidden" aria-live="polite">{status}</p>
-
-            <button
-              type="button"
-              className="btn btn--ghost btn--full"
-              onClick={() => {
-                setError(null);
-                setStep('manual');
-              }}
-              disabled={busy}
-            >
-              Pick my area by hand
-            </button>
-          </main>
+            </main>
+          </>
         )}
 
         {step === 'result' && result && (
           <main id="main-content" className="entry__result">
-            <h2 className="entry__label">Your districts</h2>
+            <h1 className="entry__title">Your districts</h1>
             <p className="entry__result-address">{result.location.address}</p>
             <dl className="entry__dl">
               <div>
@@ -196,17 +280,14 @@ export default function AddressEntry({ onSubmit }: Props) {
               </div>
               <div>
                 <dt>Charlotte city</dt>
-                <dd>{result.location.isCharlotte ? 'Yes — bonds apply' : 'No'}</dd>
+                <dd>{result.location.isCharlotte ? 'Yes' : 'No'}</dd>
               </div>
             </dl>
             {result.unmatched.length > 0 && (
               <p className="entry__error" role="status">
-                We could not match: {result.unmatched.join(', ')}. You can still continue, or pick by hand.
+                Unmatched: {result.unmatched.join(', ')}. You can still continue.
               </p>
             )}
-            <p className="entry__helper">
-              {formatLocationSummary(result.location)}
-            </p>
             <button
               type="button"
               className="btn btn--primary btn--full"
@@ -216,22 +297,20 @@ export default function AddressEntry({ onSubmit }: Props) {
             </button>
             <button
               type="button"
-              className="btn btn--ghost btn--full"
+              className="entry__text-link"
               onClick={() => {
                 setResult(null);
                 setStep('manual');
               }}
             >
-              Not right? Change it
+              Change
             </button>
           </main>
         )}
 
         {step === 'manual' && (
           <main id="main-content" className="entry__districts">
-            <p className="entry__label" id="district-label">
-              Which congressional district are you in?
-            </p>
+            <h1 className="entry__title">Pick your area</h1>
             <p className="entry__district-help">
               Not sure?{' '}
               <a href={NC_VOTER_SEARCH_URL} target="_blank" rel="noopener noreferrer">
@@ -240,7 +319,7 @@ export default function AddressEntry({ onSubmit }: Props) {
             </p>
 
             <fieldset className="entry__city">
-              <legend className="entry__city-legend">Do you live in Charlotte city limits?</legend>
+              <legend className="entry__city-legend">Charlotte city limits?</legend>
               <label className="entry__city-option">
                 <input
                   type="radio"
@@ -248,7 +327,7 @@ export default function AddressEntry({ onSubmit }: Props) {
                   checked={isCharlotte}
                   onChange={() => setIsCharlotte(true)}
                 />
-                Yes — show city bond votes
+                Yes
               </label>
               <label className="entry__city-option">
                 <input
@@ -275,33 +354,65 @@ export default function AddressEntry({ onSubmit }: Props) {
               ))}
             </div>
 
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() => setStep('home')}
-              aria-label="Go back to location lookup"
-            >
-              ← Back
+            <button type="button" className="entry__text-link" onClick={goHome}>
+              Back
             </button>
           </main>
         )}
 
-        <footer className="entry__footer">
-          <p className="entry__disclaimer">
-            VOTR helps you prepare to vote. We show candidate positions from their own words — we never tell you who to vote for.
-          </p>
-          <a
-            href={NC_VOTER_SEARCH_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="entry__official"
-          >
-            Confirm with the state (NCSBE Voter Search) →
-          </a>
-          <p className="entry__source">
-            {DISTRICTS_ATTRIBUTION.summary} Last checked {DISTRICTS_ATTRIBUTION.lastCheckedLabel}.
-          </p>
-        </footer>
+        {step === 'about' && (
+          <main id="main-content" className="entry__about">
+            <h1 className="entry__title">About &amp; sources</h1>
+            <p>
+              VOTR is nonpartisan. We show candidate positions from their own words. We never tell you who to vote for.
+            </p>
+            <p>
+              Your address and picks stay on this device. Nothing is sent to a server.
+            </p>
+            <h2 className="entry__about-h">Maps and addresses</h2>
+            <p>{DISTRICTS_ATTRIBUTION.summary}</p>
+            <p>Last checked {DISTRICTS_ATTRIBUTION.lastCheckedLabel}.</p>
+            <h2 className="entry__about-h">Ballot data</h2>
+            <p>
+              Candidates and measures: {DATA_PROVENANCE.sources.join('; ')}. Last verified{' '}
+              {new Date(DATA_PROVENANCE.lastVerified).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}.
+            </p>
+            <p className="entry__about-links">
+              <a href={OFFICIAL_SOURCES.ncVoterSearch} target="_blank" rel="noopener noreferrer">
+                NCSBE Voter Search
+              </a>
+              <a href={OFFICIAL_SOURCES.meckBoe} target="_blank" rel="noopener noreferrer">
+                Mecklenburg BOE
+              </a>
+            </p>
+            <button type="button" className="entry__text-link" onClick={goHome}>
+              Back
+            </button>
+          </main>
+        )}
+
+        {compactFooter && (
+          <footer className="entry__footer">
+            <p className="entry__tagline">Nonpartisan. We never tell you who to vote for.</p>
+            <p className="entry__footer-links">
+              <button type="button" className="entry__footer-link" onClick={() => setStep('about')}>
+                Sources
+              </button>
+              <a
+                href={NC_VOTER_SEARCH_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="entry__footer-link"
+              >
+                Confirm with the state
+              </a>
+            </p>
+          </footer>
+        )}
       </div>
 
       <style>{`
@@ -312,8 +423,9 @@ export default function AddressEntry({ onSubmit }: Props) {
           flex-direction: column;
           align-items: center;
           padding: var(--space-6) var(--space-5);
-          padding-top: max(var(--space-10), env(safe-area-inset-top, 20px));
-          background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-surface-subtle) 100%);
+          padding-top: max(var(--space-6), env(safe-area-inset-top, 16px));
+          padding-bottom: max(var(--space-6), env(safe-area-inset-bottom, 16px));
+          background: var(--color-bg);
         }
 
         .entry__container {
@@ -322,6 +434,7 @@ export default function AddressEntry({ onSubmit }: Props) {
           display: flex;
           flex-direction: column;
           flex: 1;
+          min-height: 0;
         }
 
         .entry__header {
@@ -329,118 +442,172 @@ export default function AddressEntry({ onSubmit }: Props) {
           margin-bottom: var(--space-8);
         }
 
-        .entry__logo {
-          width: 72px;
-          height: 72px;
-          margin: 0 auto var(--space-4);
-          background: var(--color-accent-light);
-          border-radius: var(--radius-xl);
+        .entry__title {
+          font-size: var(--text-2xl);
+          font-weight: 700;
+          color: var(--color-text-primary);
+          margin: 0;
+          letter-spacing: -0.03em;
+          text-align: center;
+        }
+
+        .entry__date {
+          font-size: var(--text-sm);
+          color: var(--color-text-tertiary);
+          margin: var(--space-2) 0 0;
+        }
+
+        .entry__search-wrap {
+          position: relative;
+        }
+
+        .entry__search {
+          display: flex;
+          align-items: center;
+          gap: var(--space-1);
+          background: var(--color-surface);
+          border: 1.5px solid var(--color-border);
+          border-radius: var(--radius-full);
+          padding: 4px;
+          min-height: 52px;
+        }
+
+        .entry__search:focus-within {
+          border-color: var(--color-accent);
+          box-shadow: var(--shadow-focus);
+        }
+
+        .entry__icon-btn {
+          width: var(--tap-target-min);
+          height: var(--tap-target-min);
+          border-radius: var(--radius-full);
           display: flex;
           align-items: center;
           justify-content: center;
-        }
-
-        .entry__logo-icon {
-          font-size: 36px;
-        }
-
-        .entry__title {
-          font-size: var(--text-3xl);
-          font-weight: 700;
-          color: var(--color-text-primary);
-          margin: 0 0 var(--space-2);
-          letter-spacing: -0.02em;
-        }
-
-        .entry__subtitle {
-          font-size: var(--text-lg);
-          color: var(--color-text-secondary);
-          margin: 0;
-        }
-
-        .entry__context {
-          margin-bottom: var(--space-8);
-        }
-
-        .entry__election {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: var(--space-5);
-          background: var(--color-surface);
-          border-radius: var(--radius-lg);
-          border: 1px solid var(--color-border-light);
-          text-align: center;
-        }
-
-        .entry__election-label {
-          font-size: var(--text-xs);
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
           color: var(--color-accent);
-          margin-bottom: var(--space-1);
+          flex-shrink: 0;
         }
 
-        .entry__election-name {
-          font-size: var(--text-lg);
-          font-weight: 600;
+        .entry__icon-btn:hover:not(:disabled) {
+          background: var(--color-accent-light);
+        }
+
+        .entry__icon-btn--go {
+          background: var(--color-accent);
+          color: var(--color-text-inverse);
+        }
+
+        .entry__icon-btn--go:hover:not(:disabled) {
+          background: var(--color-accent-hover);
+          color: var(--color-text-inverse);
+        }
+
+        .entry__icon-btn:disabled {
+          opacity: 0.45;
+        }
+
+        .entry__search input.entry__input {
+          flex: 1;
+          min-width: 0;
+          border: none;
+          box-shadow: none;
+          background: transparent;
+          border-radius: 0;
+          min-height: var(--tap-target-min);
+          padding: var(--space-2) var(--space-1);
+          font-size: var(--text-base);
+        }
+
+        .entry__search input.entry__input:focus,
+        .entry__search input.entry__input:focus-visible {
+          outline: none;
+          box-shadow: none;
+          border: none;
+        }
+
+        .entry__suggest[hidden] {
+          display: none;
+        }
+
+        .entry__suggest {
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: calc(100% + 6px);
+          z-index: 20;
+          margin: 0;
+          padding: var(--space-1);
+          list-style: none;
+          background: var(--color-surface);
+          border: 1px solid var(--color-border-light);
+          border-radius: var(--radius-lg);
+          box-shadow: var(--shadow-md);
+          max-height: 220px;
+          overflow: auto;
+        }
+
+        .entry__suggest-item {
+          display: block;
+          width: 100%;
+          text-align: left;
+          padding: var(--space-3) var(--space-4);
+          min-height: var(--tap-target-min);
+          border-radius: var(--radius-md);
+          font-size: var(--text-sm);
           color: var(--color-text-primary);
         }
 
-        .entry__election-date {
-          font-size: var(--text-sm);
-          color: var(--color-text-secondary);
-          margin-top: var(--space-1);
+        .entry__suggest-item:hover,
+        .entry__suggest-item.is-active {
+          background: var(--color-accent-light);
         }
 
-        .entry__form {
+        .entry__privacy {
           display: flex;
-          flex-direction: column;
-          gap: var(--space-4);
+          align-items: center;
+          justify-content: center;
+          gap: var(--space-2);
+          margin: var(--space-4) 0 0;
+          font-size: var(--text-xs);
+          color: var(--color-text-tertiary);
         }
 
-        .entry__label {
-          font-size: var(--text-base);
-          font-weight: 500;
-          color: var(--color-text-primary);
+        .entry__privacy svg {
+          flex-shrink: 0;
         }
 
-        .entry__input {
-          font-size: var(--text-base);
-        }
-
-        .entry__helper {
+        .entry__text-link {
+          display: block;
+          width: 100%;
           margin-top: var(--space-4);
+          min-height: var(--tap-target-min);
           font-size: var(--text-sm);
-          color: var(--color-text-tertiary);
+          font-weight: 500;
+          color: var(--color-accent);
           text-align: center;
-          line-height: var(--leading-relaxed);
         }
 
-        .entry__helper--tight {
-          margin-top: 0;
+        .entry__text-link:hover:not(:disabled) {
+          text-decoration: underline;
         }
 
-        .entry__or {
-          text-align: center;
-          margin: var(--space-6) 0;
-          font-size: var(--text-sm);
-          color: var(--color-text-tertiary);
-          text-transform: lowercase;
+        .entry__text-link:disabled {
+          opacity: 0.5;
         }
 
         .entry__error {
           margin-top: var(--space-4);
-          padding: var(--space-4);
+          padding: var(--space-3) var(--space-4);
           background: var(--color-warning-light);
           color: var(--color-text-primary);
           border-radius: var(--radius-md);
           font-size: var(--text-sm);
-          line-height: var(--leading-relaxed);
+          line-height: var(--leading-snug);
         }
 
-        .entry__result {
+        .entry__result,
+        .entry__districts,
+        .entry__about {
           display: flex;
           flex-direction: column;
           gap: var(--space-4);
@@ -450,6 +617,7 @@ export default function AddressEntry({ onSubmit }: Props) {
           font-size: var(--text-sm);
           color: var(--color-text-secondary);
           margin: 0;
+          text-align: center;
         }
 
         .entry__dl {
@@ -464,8 +632,10 @@ export default function AddressEntry({ onSubmit }: Props) {
           display: flex;
           justify-content: space-between;
           gap: var(--space-4);
-          padding: var(--space-4) var(--space-5);
+          padding: var(--space-3) var(--space-5);
           border-bottom: 1px solid var(--color-border-light);
+          min-height: var(--tap-target-min);
+          align-items: center;
         }
 
         .entry__dl > div:last-child {
@@ -485,16 +655,11 @@ export default function AddressEntry({ onSubmit }: Props) {
           text-align: right;
         }
 
-        .entry__districts {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-4);
-        }
-
         .entry__district-help {
           font-size: var(--text-sm);
           color: var(--color-text-secondary);
-          margin-top: calc(-1 * var(--space-2));
+          margin: 0;
+          text-align: center;
         }
 
         .entry__city {
@@ -539,12 +704,11 @@ export default function AddressEntry({ onSubmit }: Props) {
           display: flex;
           flex-direction: column;
           align-items: flex-start;
-          padding: var(--space-5);
+          padding: var(--space-4) var(--space-5);
           background: var(--color-surface);
           border: 1.5px solid var(--color-border);
           border-radius: var(--radius-lg);
           cursor: pointer;
-          transition: all var(--transition-normal);
           text-align: left;
           min-height: var(--tap-target-min);
         }
@@ -552,11 +716,6 @@ export default function AddressEntry({ onSubmit }: Props) {
         .entry__district-option:hover {
           border-color: var(--color-accent);
           background: var(--color-accent-light);
-        }
-
-        .entry__district-option:active {
-          transform: scale(0.98);
-          background: #d5ebeb;
         }
 
         .entry__district-name {
@@ -571,29 +730,60 @@ export default function AddressEntry({ onSubmit }: Props) {
           margin-top: var(--space-1);
         }
 
+        .entry__about p {
+          font-size: var(--text-sm);
+          color: var(--color-text-secondary);
+          line-height: var(--leading-relaxed);
+          margin: 0;
+        }
+
+        .entry__about-h {
+          font-size: var(--text-xs);
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--color-text-tertiary);
+          margin: var(--space-2) 0 0;
+        }
+
+        .entry__about-links {
+          display: flex;
+          gap: var(--space-4);
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+
         .entry__footer {
           margin-top: auto;
-          padding-top: var(--space-10);
+          padding-top: var(--space-8);
           text-align: center;
         }
 
-        .entry__disclaimer {
-          font-size: var(--text-sm);
-          color: var(--color-text-tertiary);
-          line-height: var(--leading-relaxed);
-          margin-bottom: var(--space-4);
-        }
-
-        .entry__official {
-          font-size: var(--text-sm);
-          font-weight: var(--font-medium);
-        }
-
-        .entry__source {
-          margin-top: var(--space-5);
+        .entry__tagline {
           font-size: var(--text-xs);
           color: var(--color-text-tertiary);
-          line-height: var(--leading-relaxed);
+          margin: 0 0 var(--space-3);
+        }
+
+        .entry__footer-links {
+          display: flex;
+          gap: var(--space-5);
+          justify-content: center;
+          align-items: center;
+          margin: 0;
+        }
+
+        .entry__footer-link {
+          font-size: var(--text-sm);
+          font-weight: 500;
+          color: var(--color-accent);
+          min-height: var(--tap-target-min);
+          display: inline-flex;
+          align-items: center;
+        }
+
+        .entry__footer-link:hover {
+          text-decoration: underline;
         }
 
         .visually-hidden {
@@ -615,22 +805,41 @@ export default function AddressEntry({ onSubmit }: Props) {
           }
 
           .entry__container {
-            max-width: 480px;
-          }
-
-          .entry__header {
-            margin-bottom: var(--space-10);
+            max-width: 440px;
           }
 
           .entry__title {
-            font-size: var(--text-4xl);
-          }
-
-          .entry__subtitle {
-            font-size: var(--text-xl);
+            font-size: var(--text-3xl);
           }
         }
       `}</style>
     </div>
+  );
+}
+
+function PinIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
+function ArrowIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
   );
 }

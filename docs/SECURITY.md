@@ -22,16 +22,18 @@ grep -riE "(api[_-]?key|secret|password|database)" dist/ | grep -v "type=.passwo
 
 ### 2. Device-Only Location Handling
 
-**Use my location (default path)**
+Lookup is a single search field. A pin button requests GPS; typing an address can show on-device suggestions. Nothing in this flow is sent to a server.
+
+**GPS (location icon)**
 
 - The browser Geolocation API runs on-device
 - Coordinates are matched against bundled GeoJSON (point-in-polygon in the browser)
 - Coordinates **never leave the device** — no location API call
 - District maps are lazy-loaded from this origin (`/votr/districts/*.json`)
 
-**Typed address (on-device)**
+**Typed address and autocomplete (on-device)**
 
-Statewide NCSBE address-point files are ~210 MB, but Mecklenburg County GIS Master Address Points compress to about 6 MB of ZIP-split `.json.gz` files. VOTR lazy-loads only the ZIP the voter typed (typically ~100–350 KB).
+Statewide NCSBE address-point files are ~210 MB, but Mecklenburg County GIS Master Address Points compress to about 6 MB of ZIP-split `.json.gz` files. VOTR lazy-loads only the ZIP the voter typed (typically ~100–350 KB). Suggestions use the same packs after a ZIP or the first few characters — they are not a network geocoder.
 
 - The address is matched on this device against bundled county address points
 - Nothing is sent to the U.S. Census Geocoder or any other server (the Census API does not allow browser CORS)

@@ -18,7 +18,7 @@ import {
   type Candidate,
   type BallotMeasure,
 } from '../data/ballot';
-import { DISTRICTS_ATTRIBUTION, formatLocationSummary } from '../utils/lookup';
+import { DISTRICTS_ATTRIBUTION } from '../utils/lookup';
 import CandidateDetail from './CandidateDetail';
 
 interface Props {
@@ -152,8 +152,7 @@ export default function YourBallot({
           <MapPinIcon />
           <span className="ballot__location-copy">
             <span className="ballot__location-text">{location.address}</span>
-            <span className="ballot__location-meta">{formatLocationSummary(location)}</span>
-            <span className="ballot__location-change">Not right? Change it</span>
+            <span className="ballot__location-change">Change</span>
           </span>
         </button>
 
@@ -171,28 +170,22 @@ export default function YourBallot({
       </header>
 
       <main id="ballot-main" className="ballot__content">
-        {/* Privacy notice */}
         <div className="ballot__privacy">
           <LockIcon />
-          <span>Your picks stay on this device. No account, nothing shared.</span>
+          <span>Picks stay on this device.</span>
         </div>
 
-        {/* Election overview */}
         <section className="ballot__section">
           <div className="ballot__election-card">
             <h2 className="ballot__election-name">{ELECTION.name}</h2>
             <p className="ballot__election-date">{formatDate(ELECTION.date)}</p>
-            <p className="ballot__election-desc">{ELECTION.description}</p>
           </div>
         </section>
 
         {/* Races */}
-        {contestGroups.map((group, groupIndex) => (
+        {contestGroups.map((group) => (
           <section key={group.level} className="ballot__section" aria-labelledby={`section-${group.level}`}>
             <h3 id={`section-${group.level}`} className="ballot__section-title">{group.label}</h3>
-            {groupIndex === 0 && (
-              <p className="ballot__order-note">Candidates listed alphabetically by last name</p>
-            )}
             
             {group.contests.map((contest) => (
               <article key={contest.office} className="ballot__race" aria-label={contest.office}>
@@ -234,9 +227,6 @@ export default function YourBallot({
         {/* Amendments */}
         <section className="ballot__section">
           <h3 className="ballot__section-title">Statewide Questions</h3>
-          <p className="ballot__section-desc">
-            Constitutional amendments — vote For or Against each one
-          </p>
           
           {AMENDMENTS.map((measure) => (
             <MeasureCard
@@ -252,9 +242,6 @@ export default function YourBallot({
         {bonds.length > 0 && (
           <section className="ballot__section">
             <h3 className="ballot__section-title">Charlotte Bond Votes</h3>
-            <p className="ballot__section-desc">
-              For Charlotte city voters — vote Yes or No on each bond
-            </p>
             
             {bonds.map((measure) => (
               <MeasureCard
@@ -268,64 +255,43 @@ export default function YourBallot({
           </section>
         )}
 
-        {/* Official resources */}
         <section className="ballot__section">
-          <div className="ballot__official">
-            <h3 className="ballot__official-title">Want the official version?</h3>
-            <p className="ballot__official-desc">
-              Get your complete sample ballot with every race from the NC State Board of Elections.
-            </p>
+          <p className="ballot__footer-links">
             <a
               href={NC_VOTER_SEARCH_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn--secondary btn--full"
             >
-              Confirm with the state →
+              Confirm with the state
             </a>
-          </div>
+          </p>
         </section>
 
-        {/* Data attribution */}
         <section className="ballot__section">
-          <div className="ballot__data-notice">
-            <h3 className="ballot__data-title">Data Sources</h3>
-            <p className="ballot__data-desc">
-              All ballot data comes from official sources: NC State Board of Elections and Mecklenburg County Board of Elections.
+          <details className="ballot__sources">
+            <summary>Sources</summary>
+            <p>
+              Ballot data: {DATA_PROVENANCE.sources.join('; ')}. Last verified{' '}
+              {new Date(DATA_PROVENANCE.lastVerified).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}.
             </p>
-            <p className="ballot__data-desc">
-              {DISTRICTS_ATTRIBUTION.summary}
-            </p>
-            <p className="ballot__data-verified">
-              Ballot data last verified: {new Date(DATA_PROVENANCE.lastVerified).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              {' · '}Maps last checked: {DISTRICTS_ATTRIBUTION.lastCheckedLabel}
-            </p>
-            <div className="ballot__data-links">
-              <a
-                href={OFFICIAL_SOURCES.ncVoterSearch}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ballot__data-link"
-              >
+            <p>{DISTRICTS_ATTRIBUTION.summary} Last checked {DISTRICTS_ATTRIBUTION.lastCheckedLabel}.</p>
+            <p className="ballot__data-links">
+              <a href={OFFICIAL_SOURCES.ncVoterSearch} target="_blank" rel="noopener noreferrer">
                 NCSBE Voter Search
               </a>
-              <a
-                href={OFFICIAL_SOURCES.meckBoe}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ballot__data-link"
-              >
+              <a href={OFFICIAL_SOURCES.meckBoe} target="_blank" rel="noopener noreferrer">
                 Mecklenburg BOE
               </a>
-            </div>
-          </div>
+            </p>
+          </details>
         </section>
 
-        {/* Footer */}
         <footer className="ballot__footer">
-          <p>
-            VOTR shows candidates in their own words. We inform — we never tell you who to vote for.
-          </p>
+          <p>Nonpartisan. We never tell you who to vote for.</p>
         </footer>
       </main>
 
@@ -714,12 +680,6 @@ const ballotStyles = `
     white-space: nowrap;
   }
 
-  .ballot__location-meta {
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    white-space: normal;
-  }
-
   .ballot__location-change {
     font-weight: 600;
     color: var(--color-accent);
@@ -787,14 +747,6 @@ const ballotStyles = `
     margin-bottom: var(--space-8);
   }
 
-  .ballot__order-note {
-    font-size: var(--text-xs);
-    color: var(--color-text-tertiary);
-    font-style: italic;
-    margin-top: calc(-1 * var(--space-2));
-    margin-bottom: var(--space-4);
-  }
-
   .ballot__section-title {
     font-size: var(--text-xs);
     font-weight: 600;
@@ -802,12 +754,6 @@ const ballotStyles = `
     letter-spacing: 0.05em;
     color: var(--color-text-tertiary);
     margin: 0 0 var(--space-4);
-  }
-
-  .ballot__section-desc {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    margin: calc(-1 * var(--space-2)) 0 var(--space-4);
   }
 
   .ballot__election-card {
@@ -826,13 +772,6 @@ const ballotStyles = `
   .ballot__election-date {
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
-    margin: 0 0 var(--space-3);
-  }
-
-  .ballot__election-desc {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    line-height: var(--leading-relaxed);
     margin: 0;
   }
 
@@ -946,26 +885,33 @@ const ballotStyles = `
     flex-shrink: 0;
   }
 
-  .ballot__official {
-    padding: var(--space-6);
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border-light);
+  .ballot__footer-links {
+    text-align: center;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    margin: 0;
+  }
+
+  .ballot__sources {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
     text-align: center;
   }
 
-  .ballot__official-title {
-    font-size: var(--text-lg);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 var(--space-2);
+  .ballot__sources summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--color-accent);
+    min-height: var(--tap-target-min);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .ballot__official-desc {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
+  .ballot__sources p {
+    margin: var(--space-3) 0 0;
     line-height: var(--leading-relaxed);
-    margin: 0 0 var(--space-5);
+    text-align: left;
   }
 
   .ballot__footer {
@@ -980,49 +926,11 @@ const ballotStyles = `
     margin: 0;
   }
 
-  .ballot__data-notice {
-    padding: var(--space-5);
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border-light);
-    text-align: center;
-  }
-
-  .ballot__data-title {
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 var(--space-2);
-  }
-
-  .ballot__data-desc {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    line-height: var(--leading-relaxed);
-    margin: 0 0 var(--space-2);
-  }
-
-  .ballot__data-verified {
-    font-size: var(--text-xs);
-    color: var(--color-text-tertiary);
-    margin: 0 0 var(--space-4);
-  }
-
   .ballot__data-links {
     display: flex;
     gap: var(--space-4);
     justify-content: center;
     flex-wrap: wrap;
-  }
-
-  .ballot__data-link {
-    font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--color-accent);
-  }
-
-  .ballot__data-link:hover {
-    text-decoration: underline;
   }
 
   /* Measure cards */

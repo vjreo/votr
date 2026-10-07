@@ -1,5 +1,21 @@
 # VOTR Deployment Guide
 
+## Web (live product)
+
+The voter-facing app is the static site in `web/`, published at **https://vjreo.github.io/votr/**.
+
+- GitHub Pages source: **GitHub Actions**
+- Workflow: `.github/workflows/deploy-web.yml`
+- Triggers: pushes to `main` that touch `web/**` or the workflow file; `workflow_dispatch`
+
+```bash
+cd web
+npm ci
+npm run build    # output: web/dist, base path /votr/
+```
+
+Backend Render and Expo/EAS below are frozen through Election Day. They are not required to ship the live site.
+
 ## Backend (Render)
 
 ### Quick Deploy
