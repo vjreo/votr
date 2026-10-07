@@ -86,6 +86,11 @@ export interface LookupResult {
   unmatched: string[];
 }
 
+export interface AddressSuggestion {
+  label: string;
+  query: string;
+}
+
 interface ZipPack {
   z: string;
   s: string[];
@@ -284,4 +289,79 @@ export async function lookupFromAddress(address: string): Promise<LookupResult> 
     throw new Error('That address is outside Mecklenburg County. You can pick your area by hand.');
   }
   return result;
+}
+
+function houseMatches(hn: string | number, house: string): boolean {
+  if (!house) return true;
+  return String(hn).startsWith(house);
+}
+
+async function zipsForStreetPrefix(prefix: string): Promise<string[]> {
+  if (!streetIndex) {
+    streetIndex = await loadPackedJson<Record<string, string[]>>(`${ADDRESSES_BASE}streets.json.gz`);
+  }
+  const zips: string[] = [];
+  const seen = new Set<string>();
+  for (const [name, list] of Object.entries(streetIndex)) {
+    if (!name.startsWith(prefix)) continue;
+    for (const zip of list) {
+      if (seen.has(zip)) continue;
+      seen.add(zip);
+      zips.push(zip);
+      if (zips.length >= 1) return zips;
+    }
+  }
+  return zips;
+}
+
+function collectSuggestions(
+  pack: ZipPack,
+  house: string,
+  street: string,
+  limit: number,
+  out: AddressSuggestion[],
+  seen: Set<string>
+): void {
+  for (const [hn, si] of pack.p) {
+    const st = pack.s[si];
+    if (street && !st.startsWith(street)) continue;
+    if (!houseMatches(hn, house)) continue;
+    const label = `${hn} ${st}, ${pack.z}`;
+    if (seen.has(label)) continue;
+    seen.add(label);
+    out.push({ label, query: label });
+    if (out.length >= limit) return;
+  }
+}
+
+/**
+ * Prefix suggestions from the on-device address packs.
+ * ZIP-gated when a ZIP is present; otherwise loads at most one pack
+ * after a house number and a short street prefix.
+ */
+export async function suggestAddresses(raw: string, limit = 8): Promise<AddressSuggestion[]> {
+  const parsed = parseTypedAddress(raw);
+  if (raw.trim().length < 3) return [];
+
+  let zips: string[] = [];
+  if (parsed.zip) {
+    if (!parsed.house && parsed.street.length < 2) return [];
+    zips = [parsed.zip];
+  } else {
+    if (!parsed.house || parsed.street.length < 4) return [];
+    zips = await zipsForStreetPrefix(parsed.street);
+  }
+  if (!zips.length) return [];
+
+  const out: AddressSuggestion[] = [];
+  const seen = new Set<string>();
+  for (const zip of zips) {
+    try {
+      collectSuggestions(await loadZip(zip), parsed.house, parsed.street, limit, out, seen);
+    } catch {
+      // missing zip file — skip
+    }
+    if (out.length >= limit) break;
+  }
+  return out;
 }
