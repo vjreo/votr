@@ -40,11 +40,12 @@ import LessonLibraryScreen from './features/gamification/screens/LessonLibrarySc
 import ElectionCalendarScreen from './features/elections/screens/ElectionCalendarScreen';
 import PollingPlaceFinderScreen from './features/elections/screens/PollingPlaceFinderScreen';
 import SampleBallotScreen from './features/elections/screens/SampleBallotScreen';
+import YourBallotScreen from './features/elections/screens/YourBallotScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Bottom Tab Navigator — MVP mode: Match + Shortlist + Profile (no Discover/Journey tabs)
+// Bottom Tab Navigator — MVP: Ballot + Match + Shortlist + Profile
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -66,21 +67,27 @@ function MainTabs() {
       }}
     >
       <Tab.Screen
+        name="Ballot"
+        component={YourBallotScreen}
+        options={{
+          tabBarLabel: 'Ballot',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? 'document-text' : 'document-text-outline'}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
         name="Feed"
         component={FeedScreen}
         options={{
-          tabBarLabel: features.mvpMode ? 'Match' : 'Feed',
+          tabBarLabel: 'Match',
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
-              name={
-                features.mvpMode
-                  ? focused
-                    ? 'heart'
-                    : 'heart-outline'
-                  : focused
-                    ? 'newspaper'
-                    : 'newspaper-outline'
-              }
+              name={focused ? 'heart' : 'heart-outline'}
               size={size}
               color={color}
             />
@@ -103,7 +110,7 @@ function MainTabs() {
         name="Roster"
         component={RosterScreen}
         options={{
-          tabBarLabel: features.mvpMode ? 'Shortlist' : 'My Roster',
+          tabBarLabel: 'Shortlist',
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? 'checkbox' : 'checkbox-outline'} size={size} color={color} />
           ),
@@ -278,6 +285,13 @@ function AppNavigator() {
             <Stack.Screen
               name="SampleBallot"
               component={SampleBallotScreen}
+              options={{
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen
+              name="YourBallot"
+              component={YourBallotScreen}
               options={{
                 presentation: 'card',
               }}

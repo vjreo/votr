@@ -278,7 +278,7 @@ const FeedScreen: React.FC = () => {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Finding candidates on your ballot...</Text>
+            <Text style={styles.loadingText}>Finding candidates for you...</Text>
           </View>
         ) : (
           <>

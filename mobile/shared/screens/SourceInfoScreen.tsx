@@ -12,75 +12,63 @@ const SourceInfoScreen: React.FC = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Understanding Bias Indicators</Text>
+        <Text style={styles.title}>About our sources</Text>
         <Text style={styles.intro}>
-          We use a hybrid approach to analyze source reliability, combining machine learning,
-          known bias databases, and user feedback to provide you with the most accurate
-          information possible.
+          We check where information comes from. Some sources are more reliable than others. Here's how we rate them.
         </Text>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Bias Tiers</Text>
+          <Text style={styles.sectionTitle}>Source ratings</Text>
           
           <View style={styles.tierItem}>
             <BiasIndicator tier="most_reliable" />
             <Text style={styles.tierDescription}>
-              Sources with minimal bias, fact-based reporting, and high reliability.
-              These are typically official government sources, peer-reviewed research,
-              or established fact-checking organizations.
+              Very reliable. Official sources, fact-checkers, or well-established news outlets known for accuracy.
             </Text>
           </View>
 
           <View style={styles.tierItem}>
             <BiasIndicator tier="reliable" />
             <Text style={styles.tierDescription}>
-              Generally reliable sources with minor bias. These sources typically
-              present facts accurately but may have slight editorial leanings.
+              Generally reliable. Good track record, though may have some editorial perspective.
             </Text>
           </View>
 
           <View style={styles.tierItem}>
             <BiasIndicator tier="use_caution" />
             <Text style={styles.tierDescription}>
-              Sources that may contain significant bias, opinion-heavy content, or
-              selective fact presentation. Verify claims with additional sources.
+              Use caution. May have significant bias or mix facts with opinion. Worth double-checking.
             </Text>
           </View>
 
           <View style={styles.tierItem}>
             <BiasIndicator tier="highly_biased" />
             <Text style={styles.tierDescription}>
-              Sources with strong bias, potential misinformation, or agenda-driven
-              content. Use extreme caution and verify all claims independently.
+              Approach carefully. Strong bias or history of inaccuracy. Verify claims elsewhere.
             </Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Our Methodology</Text>
+          <Text style={styles.sectionTitle}>How we check</Text>
           <Text style={styles.methodology}>
-            Our bias detection system combines three approaches:
+            We look at sources in a few ways:
           </Text>
           <Text style={styles.methodologyItem}>
-            • Machine Learning Analysis: We analyze content for sentiment, language patterns,
-            and fact-checking signals using advanced AI models.
+            • We compare against known fact-checking databases
           </Text>
           <Text style={styles.methodologyItem}>
-            • Known Bias Databases: We cross-reference sources with established bias rating
-            databases like Media Bias Fact Check and AllSides.
+            • We look at the source's track record
           </Text>
           <Text style={styles.methodologyItem}>
-            • User Feedback: We incorporate feedback from our community to continuously
-            improve our ratings.
+            • We note user reports about broken or misleading links
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Why This Matters</Text>
+          <Text style={styles.sectionTitle}>Our goal</Text>
           <Text style={styles.whyMatters}>
-            In today's information landscape, it's crucial to understand the reliability
-            and potential bias of sources. Our goal is to help you make informed decisions
-            by providing transparency about source quality, not by telling you what to think.
+            We want to help you find trustworthy information so you can make your own decisions. We don't tell you what to think—we just try to flag where the information comes from.
           </Text>
         </View>
       </View>

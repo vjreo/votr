@@ -17,6 +17,7 @@ export type RootStackParamList = {
   LessonLibrary: undefined;
   PollingPlaceFinder: undefined;
   SampleBallot: undefined;
+  YourBallot: undefined;
 };
 
 declare global {

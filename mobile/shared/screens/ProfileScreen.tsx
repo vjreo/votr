@@ -178,7 +178,7 @@ const ProfileScreen: React.FC = () => {
           <Text style={styles.faqTitle}>Sample ballot</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
         </View>
-        <Text style={styles.faqSubtitle}>Preview races on your ballot</Text>
+        <Text style={styles.faqSubtitle}>See who's on your ballot</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -228,10 +228,10 @@ const ProfileScreen: React.FC = () => {
       >
         <View style={styles.faqRow}>
           <Ionicons name="help-circle-outline" size={22} color={colors.primary} />
-          <Text style={styles.faqTitle}>FAQ & Bias Indicators</Text>
+          <Text style={styles.faqTitle}>Help & About Sources</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
         </View>
-        <Text style={styles.faqSubtitle}>Learn how we assess source reliability</Text>
+        <Text style={styles.faqSubtitle}>How we check where info comes from</Text>
       </TouchableOpacity>
 
       {/* Achievements - full app only */}

@@ -139,7 +139,7 @@ const HomeScreen: React.FC = () => {
           {features.mvpMode ? 'Browse candidates' : 'Discover'}
         </Text>
         <Text style={styles.headerSubtitle}>
-          Search by name or office. Check Compare on two candidates, then use the bar below.
+          Search by name or office. Select two candidates to compare them side-by-side.
         </Text>
         <View style={styles.searchWrap}>
           <SearchBar

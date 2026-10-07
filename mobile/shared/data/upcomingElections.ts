@@ -1,9 +1,8 @@
 export const MVP_TARGET = {
   state: 'NC' as const,
-  electionId: 'nc-primary-2028',
-  /** G.S. 163-1: Tuesday after the first Monday in March. NCSBE can still change this. */
-  date: '2028-03-07',
-  label: '2028 NC Primary',
+  electionId: 'nc-general-2026',
+  date: '2026-11-03',
+  label: '2026 General Election',
 };
 
 export interface ElectionDeadline {
@@ -31,20 +30,22 @@ const NC_ELECTIONS: UpcomingElection[] = [
     name: '2026 General Election',
     date: '2026-11-03',
     type: 'general',
-    icon: '🏛️',
-    description: 'U.S. Senate, U.S. House, and state legislature',
+    icon: '🗳️',
+    description: 'U.S. Senate, U.S. House, state courts, state legislature, county offices, and ballot measures',
     state: 'NC',
     deadlines: [
-      { name: 'Early Voting Begins', date: '2026-10-15', icon: '📅', critical: false },
       { name: 'Voter Registration', date: '2026-10-09', icon: '📝', critical: true },
+      { name: 'Early Voting Begins', date: '2026-10-15', icon: '📅', critical: false },
+      { name: 'Absentee Request Deadline', date: '2026-10-20', icon: '✉️', critical: true },
+      { name: 'Early Voting Ends', date: '2026-10-31', icon: '📅', critical: false },
       { name: 'Election Day', date: '2026-11-03', icon: '🗳️', critical: true },
     ],
-    offices: ['U.S. Senate', 'U.S. House', 'State Legislature'],
+    offices: ['U.S. Senate', 'U.S. House', 'NC Supreme Court', 'NC Court of Appeals', 'State Legislature', 'County Offices'],
   },
   {
     id: 'nc-primary-2028',
     name: '2028 Primary Election',
-    date: MVP_TARGET.date,
+    date: '2028-03-07',
     type: 'primary',
     icon: '🗳️',
     description:
@@ -53,7 +54,7 @@ const NC_ELECTIONS: UpcomingElection[] = [
     deadlines: [
       { name: 'Voter Registration', date: '2028-02-11', icon: '📝', critical: true },
       { name: 'Early Voting Begins', date: '2028-02-19', icon: '📅', critical: false },
-      { name: 'Primary Day', date: MVP_TARGET.date, icon: '🗳️', critical: true },
+      { name: 'Primary Day', date: '2028-03-07', icon: '🗳️', critical: true },
     ],
     offices: ['President', 'Governor', 'U.S. Senate', 'U.S. House', 'State Legislature'],
   },

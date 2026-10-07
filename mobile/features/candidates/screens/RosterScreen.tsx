@@ -100,7 +100,7 @@ const RosterScreen: React.FC = () => {
             </View>
             <Text style={styles.emptyTitle}>No one on your shortlist yet</Text>
             <Text style={styles.emptySubtitle}>
-              Heart or swipe right on Match to save candidates. Your shortlist is what you take to the polls.
+              Tap the heart on candidates you like. Build your list here, then bring it when you vote.
             </Text>
             <Button
               title="Start matching"
