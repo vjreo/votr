@@ -90,7 +90,7 @@ async function testAPI() {
     },
   });
 
-  // Test 5c: Ballot measures
+  // Test 5c: Ballot measures (empty array is OK if table exists)
   tests.push({
     name: 'Ballot Measures',
     test: async () => {
