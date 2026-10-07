@@ -8,6 +8,7 @@ on:
       - '.github/workflows/deploy-web.yml'
   workflow_dispatch:
 
+# Security: Least-privilege permissions (only what's needed for Pages deploy)
 permissions:
   contents: read
   pages: write
@@ -25,9 +26,10 @@ jobs:
         working-directory: web
 
     steps:
-      - uses: actions/checkout@v4
+      # Security: All actions pinned to specific versions
+      - uses: actions/checkout@v4.2.2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4.1.0
         with:
           node-version: '20'
           cache: npm
@@ -36,11 +38,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Security audit
+        run: npm audit --audit-level=high || true
+
       - name: Build
         run: npm run build
 
+      - name: Scan build for secrets
+        run: |
+          echo "Scanning build output for sensitive patterns..."
+          if grep -riE "(api[_-]?key|secret|password|database.?url|supabase|firebase)" dist/ 2>/dev/null | grep -v "type=.password"; then
+            echo "WARNING: Potential secrets found in build output"
+            exit 1
+          fi
+          echo "No secrets found in build output"
+
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v3.0.1
         with:
           path: web/dist
 
@@ -53,4 +67,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4.0.5

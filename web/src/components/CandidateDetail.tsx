@@ -1,19 +1,34 @@
 import type { Candidate } from '../data/ballot';
+import type { CandidatePick } from '../App';
 
 interface Props {
   candidate: Candidate;
+  pick?: CandidatePick;
   onBack: () => void;
+  onPick: (leaning: CandidatePick['leaning'] | null) => void;
 }
 
-export default function CandidateDetail({ candidate, onBack }: Props) {
+export default function CandidateDetail({ candidate, pick, onBack, onPick }: Props) {
   const hasPositions = candidate.positions.length > 0;
   const hasSources = candidate.sources.length > 0;
+
+  const handlePick = (leaning: CandidatePick['leaning']) => {
+    if (pick?.leaning === leaning) {
+      onPick(null); // toggle off
+    } else {
+      onPick(leaning);
+    }
+  };
 
   return (
     <div className="detail">
       <header className="detail__header">
-        <button className="detail__back" onClick={onBack}>
-          <ChevronLeftIcon />
+        <button 
+          className="detail__back" 
+          onClick={onBack}
+          aria-label="Go back to ballot"
+        >
+          <ChevronLeftIcon aria-hidden="true" />
           <span>Back to ballot</span>
         </button>
       </header>
@@ -28,6 +43,37 @@ export default function CandidateDetail({ candidate, onBack }: Props) {
           <p className="detail__party">{candidate.party}</p>
           <p className="detail__office">{candidate.office}</p>
         </div>
+
+        {/* Pick buttons */}
+        <fieldset className="detail__pick-section">
+          <legend className="detail__pick-label">I'm leaning:</legend>
+          <div className="detail__pick-buttons" role="group" aria-label="Mark your preference for this candidate">
+            <button
+              className={`detail__pick-btn detail__pick-btn--likely ${pick?.leaning === 'likely' ? 'detail__pick-btn--selected' : ''}`}
+              onClick={() => handlePick('likely')}
+              aria-pressed={pick?.leaning === 'likely'}
+            >
+              <span className="detail__pick-icon" aria-hidden="true">✓</span>
+              <span>Likely voting for</span>
+            </button>
+            <button
+              className={`detail__pick-btn detail__pick-btn--considering ${pick?.leaning === 'considering' ? 'detail__pick-btn--selected' : ''}`}
+              onClick={() => handlePick('considering')}
+              aria-pressed={pick?.leaning === 'considering'}
+            >
+              <span className="detail__pick-icon" aria-hidden="true">?</span>
+              <span>Still considering</span>
+            </button>
+            <button
+              className={`detail__pick-btn detail__pick-btn--unlikely ${pick?.leaning === 'unlikely' ? 'detail__pick-btn--selected' : ''}`}
+              onClick={() => handlePick('unlikely')}
+              aria-pressed={pick?.leaning === 'unlikely'}
+            >
+              <span className="detail__pick-icon" aria-hidden="true">✗</span>
+              <span>Probably not</span>
+            </button>
+          </div>
+        </fieldset>
 
         {/* About */}
         {candidate.bio && (
@@ -138,7 +184,8 @@ export default function CandidateDetail({ candidate, onBack }: Props) {
           font-size: var(--text-sm);
           font-weight: 500;
           color: var(--color-accent);
-          padding: 0;
+          padding: var(--space-2) 0;
+          min-height: var(--tap-target-min);
         }
 
         .detail__content {
@@ -150,7 +197,7 @@ export default function CandidateDetail({ candidate, onBack }: Props) {
 
         .detail__hero {
           text-align: center;
-          padding: var(--space-6) 0 var(--space-8);
+          padding: var(--space-6) 0 var(--space-6);
         }
 
         .detail__avatar {
@@ -186,6 +233,85 @@ export default function CandidateDetail({ candidate, onBack }: Props) {
           font-size: var(--text-sm);
           color: var(--color-text-tertiary);
           margin: 0;
+        }
+
+        .detail__pick-section {
+          background: var(--color-surface);
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--color-border-light);
+          padding: var(--space-5);
+          margin-bottom: var(--space-8);
+        }
+
+        .detail__pick-label {
+          font-size: var(--text-sm);
+          font-weight: var(--font-medium);
+          color: var(--color-text-secondary);
+          margin: 0 0 var(--space-4);
+          padding: 0;
+        }
+
+        .detail__pick-buttons {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-2);
+        }
+
+        .detail__pick-btn {
+          display: flex;
+          align-items: center;
+          gap: var(--space-3);
+          padding: var(--space-4);
+          background: var(--color-surface-subtle);
+          border: 1.5px solid var(--color-border);
+          border-radius: var(--radius-md);
+          font-size: var(--text-sm);
+          font-weight: var(--font-medium);
+          color: var(--color-text-secondary);
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          text-align: left;
+          min-height: var(--tap-target-min);
+        }
+
+        .detail__pick-btn:hover {
+          border-color: var(--color-text-tertiary);
+        }
+
+        .detail__pick-btn:active {
+          transform: scale(0.98);
+        }
+
+        .detail__pick-icon {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          flex-shrink: 0;
+        }
+
+        .detail__pick-btn--likely .detail__pick-icon {
+          background: var(--color-success-light);
+          color: var(--color-success);
+        }
+
+        .detail__pick-btn--considering .detail__pick-icon {
+          background: var(--color-warning-light);
+          color: var(--color-warning);
+        }
+
+        .detail__pick-btn--unlikely .detail__pick-icon {
+          background: var(--color-surface-subtle);
+          color: var(--color-text-tertiary);
+        }
+
+        .detail__pick-btn--selected {
+          border-color: var(--color-accent);
+          background: var(--color-accent-light);
+          color: var(--color-text-primary);
         }
 
         .detail__section {
@@ -338,6 +464,38 @@ export default function CandidateDetail({ candidate, onBack }: Props) {
           color: var(--color-text-tertiary);
           line-height: var(--leading-relaxed);
           margin: 0;
+        }
+
+        /* Responsive: Desktop layout */
+        @media (min-width: 768px) {
+          .detail__content {
+            max-width: var(--content-width-lg);
+            padding: var(--space-8);
+          }
+
+          .detail__header {
+            padding: var(--space-5) var(--space-8);
+          }
+
+          .detail__positions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-5);
+          }
+
+          .detail__pick-buttons {
+            flex-direction: row;
+          }
+
+          .detail__pick-btn {
+            flex: 1;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .detail__content {
+            padding: var(--space-10) var(--space-8);
+          }
         }
       `}</style>
     </div>

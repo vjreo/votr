@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import type { UserLocation } from '../App';
+import type { UserLocation, CandidatePick, MeasurePick } from '../App';
 import {
   ELECTION,
   DEADLINES,
   AMENDMENTS,
   CHARLOTTE_BONDS,
   NC_VOTER_SEARCH_URL,
+  OFFICIAL_SOURCES,
+  DATA_PROVENANCE,
   getCandidatesForDistrict,
+  sortCandidatesAlphabetically,
   getNextCriticalDeadline,
   getDaysUntil,
   formatDate,
@@ -19,7 +22,12 @@ import CandidateDetail from './CandidateDetail';
 
 interface Props {
   location: UserLocation;
+  candidatePicks: CandidatePick[];
+  measurePicks: MeasurePick[];
   onChangeAddress: () => void;
+  onCandidatePick: (candidateId: string, leaning: CandidatePick['leaning'] | null) => void;
+  onMeasurePick: (measureId: string, leaning: MeasurePick['leaning'] | null) => void;
+  onClearAll: () => void;
 }
 
 const LEVEL_CONFIG: Record<string, { label: string; order: number }> = {
@@ -51,7 +59,11 @@ function groupCandidates(candidates: Candidate[]): ContestGroup[] {
       level,
       label: LEVEL_CONFIG[level]?.label || level,
       contests: Object.entries(offices)
-        .map(([office, cands]) => ({ office, candidates: cands }))
+        .map(([office, cands]) => ({ 
+          office, 
+          // Sort candidates alphabetically by last name for neutral display
+          candidates: sortCandidatesAlphabetically(cands)
+        }))
         .sort((a, b) => a.office.localeCompare(b.office)),
     }))
     .sort((a, b) => {
@@ -61,20 +73,35 @@ function groupCandidates(candidates: Candidate[]): ContestGroup[] {
     });
 }
 
-export default function YourBallot({ location, onChangeAddress }: Props) {
+export default function YourBallot({
+  location,
+  candidatePicks,
+  measurePicks,
+  onChangeAddress,
+  onCandidatePick,
+  onMeasurePick,
+  onClearAll,
+}: Props) {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
-  const [view, setView] = useState<'ballot' | 'dates'>('ballot');
+  const [view, setView] = useState<'ballot' | 'dates' | 'settings'>('ballot');
 
   const candidates = getCandidatesForDistrict(location.district);
   const contestGroups = groupCandidates(candidates);
   const bonds = location.isCharlotte ? CHARLOTTE_BONDS : [];
   const nextDeadline = getNextCriticalDeadline();
 
+  const getCandidatePick = (id: string) => candidatePicks.find(p => p.candidateId === id);
+  const getMeasurePick = (id: string) => measurePicks.find(p => p.measureId === id);
+  const hasAnyPicks = candidatePicks.length > 0 || measurePicks.length > 0;
+
   if (selectedCandidate) {
+    const pick = getCandidatePick(selectedCandidate.id);
     return (
       <CandidateDetail
         candidate={selectedCandidate}
+        pick={pick}
         onBack={() => setSelectedCandidate(null)}
+        onPick={(leaning) => onCandidatePick(selectedCandidate.id, leaning)}
       />
     );
   }
@@ -83,23 +110,46 @@ export default function YourBallot({ location, onChangeAddress }: Props) {
     return <DatesView onBack={() => setView('ballot')} />;
   }
 
+  if (view === 'settings') {
+    return (
+      <SettingsView
+        onBack={() => setView('ballot')}
+        onClearAll={onClearAll}
+        hasAnyPicks={hasAnyPicks}
+      />
+    );
+  }
+
   return (
     <div className="ballot">
+      <a href="#ballot-main" className="skip-link">Skip to ballot</a>
       {/* Header */}
       <header className="ballot__header">
         <div className="ballot__header-top">
           <h1 className="ballot__title">Your Ballot</h1>
-          <button 
-            className="ballot__dates-btn"
-            onClick={() => setView('dates')}
-            aria-label="View key dates"
-          >
-            <CalendarIcon />
-            <span>Dates</span>
-          </button>
+          <div className="ballot__header-actions">
+            <button 
+              className="ballot__action-btn"
+              onClick={() => setView('dates')}
+              aria-label="View key dates"
+            >
+              <CalendarIcon />
+            </button>
+            <button 
+              className="ballot__action-btn"
+              onClick={() => setView('settings')}
+              aria-label="Settings"
+            >
+              <SettingsIcon />
+            </button>
+          </div>
         </div>
         
-        <button className="ballot__location" onClick={onChangeAddress}>
+        <button
+          className="ballot__location"
+          onClick={onChangeAddress}
+          aria-label={`Change location. Currently ${location.address}, ${location.district}`}
+        >
           <MapPinIcon />
           <span className="ballot__location-text">{location.address}</span>
           <span className="ballot__location-district">{location.district}</span>
@@ -118,7 +168,13 @@ export default function YourBallot({ location, onChangeAddress }: Props) {
         )}
       </header>
 
-      <main className="ballot__content">
+      <main id="ballot-main" className="ballot__content">
+        {/* Privacy notice */}
+        <div className="ballot__privacy">
+          <LockIcon />
+          <span>Your picks stay on this device. No account, nothing shared.</span>
+        </div>
+
         {/* Election overview */}
         <section className="ballot__section">
           <div className="ballot__election-card">
@@ -129,29 +185,45 @@ export default function YourBallot({ location, onChangeAddress }: Props) {
         </section>
 
         {/* Races */}
-        {contestGroups.map((group) => (
-          <section key={group.level} className="ballot__section">
-            <h3 className="ballot__section-title">{group.label}</h3>
+        {contestGroups.map((group, groupIndex) => (
+          <section key={group.level} className="ballot__section" aria-labelledby={`section-${group.level}`}>
+            <h3 id={`section-${group.level}`} className="ballot__section-title">{group.label}</h3>
+            {groupIndex === 0 && (
+              <p className="ballot__order-note">Candidates listed alphabetically by last name</p>
+            )}
             
             {group.contests.map((contest) => (
-              <div key={contest.office} className="ballot__race">
+              <article key={contest.office} className="ballot__race" role="group" aria-label={contest.office}>
                 <h4 className="ballot__office">{contest.office}</h4>
-                <div className="ballot__candidates">
-                  {contest.candidates.map((candidate) => (
-                    <button
-                      key={candidate.id}
-                      className="ballot__candidate"
-                      onClick={() => setSelectedCandidate(candidate)}
-                    >
-                      <div className="ballot__candidate-info">
-                        <span className="ballot__candidate-name">{candidate.name}</span>
-                        <span className="ballot__candidate-party">{candidate.party}</span>
-                      </div>
-                      <ChevronRightIcon />
-                    </button>
-                  ))}
+                <div className="ballot__candidates" role="list">
+                  {contest.candidates.map((candidate) => {
+                    const pick = getCandidatePick(candidate.id);
+                    return (
+                      <button
+                        key={candidate.id}
+                        role="listitem"
+                        className={`ballot__candidate ${pick ? 'ballot__candidate--picked' : ''}`}
+                        onClick={() => setSelectedCandidate(candidate)}
+                        aria-label={`${candidate.name}, ${candidate.party}${pick ? `, marked as ${pick.leaning}` : ''}`}
+                      >
+                        <div className="ballot__candidate-info">
+                          <span className="ballot__candidate-name">{candidate.name}</span>
+                          <span className="ballot__candidate-party">{candidate.party}</span>
+                        </div>
+                        {pick && (
+                          <span 
+                            className={`ballot__pick-badge ballot__pick-badge--${pick.leaning}`}
+                            aria-hidden="true"
+                          >
+                            {pick.leaning === 'likely' ? '✓' : pick.leaning === 'considering' ? '?' : '✗'}
+                          </span>
+                        )}
+                        <ChevronRightIcon aria-hidden="true" />
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
+              </article>
             ))}
           </section>
         ))}
@@ -164,7 +236,12 @@ export default function YourBallot({ location, onChangeAddress }: Props) {
           </p>
           
           {AMENDMENTS.map((measure) => (
-            <MeasureCard key={measure.id} measure={measure} />
+            <MeasureCard
+              key={measure.id}
+              measure={measure}
+              pick={getMeasurePick(measure.id)}
+              onPick={(leaning) => onMeasurePick(measure.id, leaning)}
+            />
           ))}
         </section>
 
@@ -177,7 +254,13 @@ export default function YourBallot({ location, onChangeAddress }: Props) {
             </p>
             
             {bonds.map((measure) => (
-              <MeasureCard key={measure.id} measure={measure} showAmount />
+              <MeasureCard
+                key={measure.id}
+                measure={measure}
+                pick={getMeasurePick(measure.id)}
+                onPick={(leaning) => onMeasurePick(measure.id, leaning)}
+                showAmount
+              />
             ))}
           </section>
         )}
@@ -200,6 +283,37 @@ export default function YourBallot({ location, onChangeAddress }: Props) {
           </div>
         </section>
 
+        {/* Data attribution */}
+        <section className="ballot__section">
+          <div className="ballot__data-notice">
+            <h3 className="ballot__data-title">Data Sources</h3>
+            <p className="ballot__data-desc">
+              All ballot data comes from official sources: NC State Board of Elections and Mecklenburg County Board of Elections.
+            </p>
+            <p className="ballot__data-verified">
+              Last verified: {new Date(DATA_PROVENANCE.lastVerified).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </p>
+            <div className="ballot__data-links">
+              <a
+                href={OFFICIAL_SOURCES.ncVoterSearch}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ballot__data-link"
+              >
+                NCSBE Voter Search
+              </a>
+              <a
+                href={OFFICIAL_SOURCES.meckBoe}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ballot__data-link"
+              >
+                Mecklenburg BOE
+              </a>
+            </div>
+          </div>
+        </section>
+
         {/* Footer */}
         <footer className="ballot__footer">
           <p>
@@ -213,14 +327,107 @@ export default function YourBallot({ location, onChangeAddress }: Props) {
   );
 }
 
-function DatesView({ onBack }: { onBack: () => void }) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+function SettingsView({
+  onBack,
+  onClearAll,
+  hasAnyPicks,
+}: {
+  onBack: () => void;
+  onClearAll: () => void;
+  hasAnyPicks: boolean;
+}) {
+  const [showConfirm, setShowConfirm] = useState(false);
 
+  const handleClear = () => {
+    onClearAll();
+    onBack();
+  };
+
+  return (
+    <div className="settings">
+      <header className="settings__header">
+        <button className="settings__back" onClick={onBack} aria-label="Go back to ballot">
+          <ChevronLeftIcon />
+          <span>Back to ballot</span>
+        </button>
+        <h1 className="settings__title">Settings</h1>
+      </header>
+
+      <main className="settings__content">
+        <section className="settings__section">
+          <h2 className="settings__section-title">Your Privacy</h2>
+          <div className="settings__card">
+            <div className="settings__privacy-icon">
+              <LockIcon />
+            </div>
+            <h3 className="settings__card-title">Everything stays on your device</h3>
+            <p className="settings__card-desc">
+              Your address, your picks, and how you're leaning — all stored only on this phone or computer. Nothing is sent to any server. No account, no sign-up, no tracking.
+            </p>
+            <p className="settings__card-desc">
+              Share this link with friends — each device is completely independent.
+            </p>
+          </div>
+        </section>
+
+        <section className="settings__section">
+          <h2 className="settings__section-title">Your Data</h2>
+          {hasAnyPicks ? (
+            <div className="settings__card">
+              {!showConfirm ? (
+                <>
+                  <p className="settings__card-desc">
+                    Want to start fresh? This will clear your saved address and all your picks.
+                  </p>
+                  <button
+                    className="btn btn--secondary btn--full"
+                    onClick={() => setShowConfirm(true)}
+                  >
+                    Clear my picks
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="settings__card-desc settings__card-desc--warning">
+                    Are you sure? This will remove your address and all the candidates and measures you've marked.
+                  </p>
+                  <div className="settings__confirm-buttons">
+                    <button
+                      className="btn btn--secondary"
+                      onClick={() => setShowConfirm(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="btn btn--danger"
+                      onClick={handleClear}
+                    >
+                      Yes, clear everything
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="settings__card">
+              <p className="settings__card-desc">
+                You haven't saved any picks yet. When you mark candidates or measures, they'll be stored here on your device.
+              </p>
+            </div>
+          )}
+        </section>
+      </main>
+
+      <style>{settingsStyles}</style>
+    </div>
+  );
+}
+
+function DatesView({ onBack }: { onBack: () => void }) {
   return (
     <div className="dates">
       <header className="dates__header">
-        <button className="dates__back" onClick={onBack}>
+        <button className="dates__back" onClick={onBack} aria-label="Go back to ballot">
           <ChevronLeftIcon />
           <span>Back to ballot</span>
         </button>
@@ -263,8 +470,27 @@ function DatesView({ onBack }: { onBack: () => void }) {
   );
 }
 
-function MeasureCard({ measure, showAmount }: { measure: BallotMeasure; showAmount?: boolean }) {
+function MeasureCard({
+  measure,
+  pick,
+  onPick,
+  showAmount,
+}: {
+  measure: BallotMeasure;
+  pick?: MeasurePick;
+  onPick: (leaning: MeasurePick['leaning'] | null) => void;
+  showAmount?: boolean;
+}) {
   const [expanded, setExpanded] = useState(false);
+  const isBond = measure.type === 'bond';
+
+  const handlePick = (leaning: MeasurePick['leaning']) => {
+    if (pick?.leaning === leaning) {
+      onPick(null); // toggle off
+    } else {
+      onPick(leaning);
+    }
+  };
 
   return (
     <div className="measure">
@@ -292,10 +518,30 @@ function MeasureCard({ measure, showAmount }: { measure: BallotMeasure; showAmou
         </button>
       )}
       
-      <div className="measure__choices">
-        {measure.choices.map((choice) => (
-          <span key={choice} className="measure__choice">{choice}</span>
-        ))}
+      <div className="measure__picks">
+        <span className="measure__picks-label">I'm leaning:</span>
+        <div className="measure__pick-buttons">
+          {(isBond ? ['for', 'against'] : ['for', 'against']).map((option) => {
+            const leaning = option as MeasurePick['leaning'];
+            const isSelected = pick?.leaning === leaning;
+            const label = isBond ? (option === 'for' ? 'Yes' : 'No') : (option === 'for' ? 'For' : 'Against');
+            return (
+              <button
+                key={option}
+                className={`measure__pick-btn ${isSelected ? 'measure__pick-btn--selected' : ''}`}
+                onClick={() => handlePick(leaning)}
+              >
+                {label}
+              </button>
+            );
+          })}
+          <button
+            className={`measure__pick-btn ${pick?.leaning === 'undecided' ? 'measure__pick-btn--selected' : ''}`}
+            onClick={() => handlePick('undecided')}
+          >
+            Not sure
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -329,7 +575,7 @@ function ChevronLeftIcon() {
 
 function CalendarIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -343,6 +589,24 @@ function ClockIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
   );
 }
@@ -378,22 +642,30 @@ const ballotStyles = `
     margin: 0;
   }
 
-  .ballot__dates-btn {
+  .ballot__header-actions {
+    display: flex;
+    gap: var(--space-1);
+  }
+
+  .ballot__action-btn {
+    width: var(--tap-target-min);
+    height: var(--tap-target-min);
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
-    background: var(--color-surface-subtle);
+    justify-content: center;
     border-radius: var(--radius-full);
-    font-size: var(--text-sm);
-    font-weight: 500;
     color: var(--color-text-secondary);
     transition: all var(--transition-fast);
   }
 
-  .ballot__dates-btn:hover {
-    background: var(--color-accent-light);
+  .ballot__action-btn:hover {
+    background: var(--color-surface-subtle);
     color: var(--color-accent);
+  }
+
+  .ballot__action-btn:active {
+    background: var(--color-border-light);
+    transform: scale(0.95);
   }
 
   .ballot__location {
@@ -409,6 +681,7 @@ const ballotStyles = `
     text-align: left;
     transition: all var(--transition-fast);
     border: 1px solid transparent;
+    min-height: var(--tap-target-min);
   }
 
   .ballot__location:hover {
@@ -473,8 +746,33 @@ const ballotStyles = `
     padding-bottom: var(--space-16);
   }
 
+  .ballot__privacy {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-info-light);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-5);
+  }
+
+  .ballot__privacy svg {
+    color: var(--color-info);
+    flex-shrink: 0;
+  }
+
   .ballot__section {
     margin-bottom: var(--space-8);
+  }
+
+  .ballot__order-note {
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+    font-style: italic;
+    margin-top: calc(-1 * var(--space-2));
+    margin-bottom: var(--space-4);
   }
 
   .ballot__section-title {
@@ -546,9 +844,11 @@ const ballotStyles = `
     align-items: center;
     padding: var(--space-4) var(--space-5);
     border-bottom: 1px solid var(--color-border-light);
-    transition: background-color var(--transition-fast);
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
     text-align: left;
     min-height: 64px;
+    gap: var(--space-3);
+    cursor: pointer;
   }
 
   .ballot__candidate:last-child {
@@ -557,6 +857,22 @@ const ballotStyles = `
 
   .ballot__candidate:hover {
     background-color: var(--color-surface-subtle);
+  }
+
+  .ballot__candidate:active {
+    background-color: var(--color-border-light);
+  }
+
+  .ballot__candidate--picked {
+    background-color: var(--color-accent-light);
+  }
+
+  .ballot__candidate--picked:hover {
+    background-color: var(--color-accent-light);
+  }
+
+  .ballot__candidate--picked:active {
+    background-color: #d5ebeb;
   }
 
   .ballot__candidate-info {
@@ -576,6 +892,33 @@ const ballotStyles = `
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
     margin-top: var(--space-1);
+  }
+
+  .ballot__pick-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .ballot__pick-badge--likely {
+    background: var(--color-success-light);
+    color: var(--color-success);
+  }
+
+  .ballot__pick-badge--considering {
+    background: var(--color-warning-light);
+    color: var(--color-warning);
+  }
+
+  .ballot__pick-badge--unlikely {
+    background: var(--color-surface-subtle);
+    color: var(--color-text-tertiary);
   }
 
   .ballot__candidate svg {
@@ -615,6 +958,51 @@ const ballotStyles = `
     color: var(--color-text-tertiary);
     line-height: var(--leading-relaxed);
     margin: 0;
+  }
+
+  .ballot__data-notice {
+    padding: var(--space-5);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-light);
+    text-align: center;
+  }
+
+  .ballot__data-title {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-2);
+  }
+
+  .ballot__data-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    margin: 0 0 var(--space-2);
+  }
+
+  .ballot__data-verified {
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+    margin: 0 0 var(--space-4);
+  }
+
+  .ballot__data-links {
+    display: flex;
+    gap: var(--space-4);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .ballot__data-link {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-accent);
+  }
+
+  .ballot__data-link:hover {
+    text-decoration: underline;
   }
 
   /* Measure cards */
@@ -681,7 +1069,8 @@ const ballotStyles = `
     font-weight: 500;
     color: var(--color-accent);
     margin-bottom: var(--space-4);
-    padding: 0;
+    padding: var(--space-2) 0;
+    min-height: var(--tap-target-min);
     cursor: pointer;
   }
 
@@ -689,21 +1078,210 @@ const ballotStyles = `
     text-decoration: underline;
   }
 
-  .measure__choices {
+  .measure__picks {
+    border-top: 1px solid var(--color-border-light);
+    padding-top: var(--space-4);
+    margin-top: var(--space-3);
+  }
+
+  .measure__picks-label {
+    display: block;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-3);
+  }
+
+  .measure__pick-buttons {
     display: flex;
     gap: var(--space-2);
     flex-wrap: wrap;
   }
 
-  .measure__choice {
-    display: inline-flex;
-    align-items: center;
-    padding: var(--space-2) var(--space-4);
+  .measure__pick-btn {
+    padding: var(--space-3) var(--space-4);
     background: var(--color-surface-subtle);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-full);
     font-size: var(--text-sm);
-    font-weight: 500;
+    font-weight: var(--font-medium);
     color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    min-height: var(--tap-target-min);
+  }
+
+  .measure__pick-btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .measure__pick-btn--selected {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-text-inverse);
+  }
+
+  .measure__pick-btn--selected:hover {
+    background: var(--color-accent-dark);
+    border-color: var(--color-accent-dark);
+    color: var(--color-text-inverse);
+  }
+
+  .measure__pick-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* Responsive: Desktop layout */
+  @media (min-width: 768px) {
+    .ballot__content {
+      max-width: var(--content-width-lg);
+      padding: var(--space-8);
+    }
+
+    .ballot__header {
+      padding: var(--space-5) var(--space-8);
+    }
+
+    .ballot__race {
+      margin-bottom: var(--space-4);
+    }
+
+    .ballot__candidates {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .ballot__candidate {
+      border-bottom: none;
+      border-right: 1px solid var(--color-border-light);
+    }
+
+    .ballot__candidate:last-child {
+      border-right: none;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .ballot__content {
+      padding: var(--space-10) var(--space-8);
+    }
+  }
+`;
+
+const settingsStyles = `
+  .settings {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: var(--color-bg);
+  }
+
+  .settings__header {
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border-light);
+    padding: var(--space-4) var(--space-5);
+    padding-top: max(var(--space-4), env(safe-area-inset-top));
+  }
+
+  .settings__back {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-accent);
+    margin-bottom: var(--space-4);
+    padding: var(--space-2) 0;
+    min-height: var(--tap-target-min);
+  }
+
+  .settings__title {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .settings__content {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: var(--space-5);
+  }
+
+  .settings__section {
+    margin-bottom: var(--space-8);
+  }
+
+  .settings__section-title {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-tertiary);
+    margin: 0 0 var(--space-4);
+  }
+
+  .settings__card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-light);
+    padding: var(--space-5);
+  }
+
+  .settings__privacy-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--color-accent-light);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-4);
+  }
+
+  .settings__privacy-icon svg {
+    width: 24px;
+    height: 24px;
+    color: var(--color-accent);
+  }
+
+  .settings__card-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-3);
+  }
+
+  .settings__card-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    margin: 0 0 var(--space-4);
+  }
+
+  .settings__card-desc:last-child {
+    margin-bottom: 0;
+  }
+
+  .settings__card-desc--warning {
+    color: var(--color-warning);
+  }
+
+  .settings__confirm-buttons {
+    display: flex;
+    gap: var(--space-3);
+  }
+
+  .settings__confirm-buttons .btn {
+    flex: 1;
+  }
+
+  .btn--danger {
+    background: #dc2626;
+    color: white;
+  }
+
+  .btn--danger:hover {
+    background: #b91c1c;
   }
 `;
 
@@ -729,7 +1307,8 @@ const datesStyles = `
     font-weight: 500;
     color: var(--color-accent);
     margin-bottom: var(--space-4);
-    padding: 0;
+    padding: var(--space-2) 0;
+    min-height: var(--tap-target-min);
   }
 
   .dates__title {
