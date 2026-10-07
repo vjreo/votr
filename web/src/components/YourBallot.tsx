@@ -680,12 +680,6 @@ const ballotStyles = `
     white-space: nowrap;
   }
 
-  .ballot__location-meta {
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    white-space: normal;
-  }
-
   .ballot__location-change {
     font-weight: 600;
     color: var(--color-accent);
@@ -753,14 +747,6 @@ const ballotStyles = `
     margin-bottom: var(--space-8);
   }
 
-  .ballot__order-note {
-    font-size: var(--text-xs);
-    color: var(--color-text-tertiary);
-    font-style: italic;
-    margin-top: calc(-1 * var(--space-2));
-    margin-bottom: var(--space-4);
-  }
-
   .ballot__section-title {
     font-size: var(--text-xs);
     font-weight: 600;
@@ -768,12 +754,6 @@ const ballotStyles = `
     letter-spacing: 0.05em;
     color: var(--color-text-tertiary);
     margin: 0 0 var(--space-4);
-  }
-
-  .ballot__section-desc {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    margin: calc(-1 * var(--space-2)) 0 var(--space-4);
   }
 
   .ballot__election-card {
@@ -792,13 +772,6 @@ const ballotStyles = `
   .ballot__election-date {
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
-    margin: 0 0 var(--space-3);
-  }
-
-  .ballot__election-desc {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    line-height: var(--leading-relaxed);
     margin: 0;
   }
 
@@ -912,28 +885,6 @@ const ballotStyles = `
     flex-shrink: 0;
   }
 
-  .ballot__official {
-    padding: var(--space-6);
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border-light);
-    text-align: center;
-  }
-
-  .ballot__official-title {
-    font-size: var(--text-lg);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 var(--space-2);
-  }
-
-  .ballot__official-desc {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    line-height: var(--leading-relaxed);
-    margin: 0 0 var(--space-5);
-  }
-
   .ballot__footer-links {
     text-align: center;
     font-size: var(--text-sm);
@@ -975,49 +926,11 @@ const ballotStyles = `
     margin: 0;
   }
 
-  .ballot__data-notice {
-    padding: var(--space-5);
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border-light);
-    text-align: center;
-  }
-
-  .ballot__data-title {
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 var(--space-2);
-  }
-
-  .ballot__data-desc {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    line-height: var(--leading-relaxed);
-    margin: 0 0 var(--space-2);
-  }
-
-  .ballot__data-verified {
-    font-size: var(--text-xs);
-    color: var(--color-text-tertiary);
-    margin: 0 0 var(--space-4);
-  }
-
   .ballot__data-links {
     display: flex;
     gap: var(--space-4);
     justify-content: center;
     flex-wrap: wrap;
-  }
-
-  .ballot__data-link {
-    font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--color-accent);
-  }
-
-  .ballot__data-link:hover {
-    text-decoration: underline;
   }
 
   /* Measure cards */

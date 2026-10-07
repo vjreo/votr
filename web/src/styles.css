@@ -328,20 +328,6 @@ button {
   transform: scale(0.98);
 }
 
-.btn--ghost {
-  background-color: transparent;
-  color: var(--color-accent);
-}
-
-.btn--ghost:hover {
-  background-color: var(--color-accent-light);
-}
-
-.btn--ghost:active {
-  background-color: var(--color-accent-light);
-  opacity: 0.8;
-}
-
 .btn--full {
   width: 100%;
 }
@@ -350,71 +336,6 @@ button {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
-}
-
-/* Button loading state */
-.btn--loading {
-  position: relative;
-  color: transparent;
-  pointer-events: none;
-}
-
-.btn--loading::after {
-  content: '';
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .btn--loading::after {
-    animation: none;
-    border-right-color: currentColor;
-  }
-}
-
-/* ============================================
- * CARDS
- * ============================================ */
-.card {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border-light);
-  padding: var(--space-5);
-  box-shadow: var(--shadow-sm);
-}
-
-.card--elevated {
-  box-shadow: var(--shadow-md);
-  border: none;
-}
-
-.card--accent {
-  background-color: var(--color-accent-light);
-  border-color: transparent;
-}
-
-/* Interactive card */
-.card--interactive {
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.card--interactive:hover {
-  border-color: var(--color-border);
-  box-shadow: var(--shadow-md);
-}
-
-.card--interactive:active {
-  transform: scale(0.99);
 }
 
 /* ============================================
@@ -454,7 +375,6 @@ textarea::placeholder {
   color: var(--color-text-tertiary);
 }
 
-/* Form labels */
 label {
   display: block;
   font-size: var(--text-base);
@@ -463,143 +383,6 @@ label {
   margin-bottom: var(--space-2);
 }
 
-/* Form helper text */
-.form-helper {
-  font-size: var(--text-sm);
-  color: var(--color-text-tertiary);
-  margin-top: var(--space-2);
-}
-
-/* ============================================
- * PILLS & CHIPS
- * ============================================ */
-.pill {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-2) var(--space-4);
-  background-color: var(--color-surface-subtle);
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--color-text-secondary);
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  color: var(--color-text-primary);
-  min-height: var(--tap-target-min);
-}
-
-/* ============================================
- * SECTION HEADERS
- * ============================================ */
-.section-label {
-  font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-  color: var(--color-text-tertiary);
-  margin-bottom: var(--space-3);
-}
-
-/* ============================================
- * UTILITY CLASSES
- * ============================================ */
-
-/* Containers */
-.container {
-  width: 100%;
-  max-width: var(--content-width-md);
-  margin: 0 auto;
-  padding: 0 var(--space-5);
-}
-
-.container--narrow {
-  max-width: var(--content-width-sm);
-}
-
-.container--wide {
-  max-width: var(--content-width-lg);
-}
-
-/* Screen reader only */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
-/* ============================================
- * FEEDBACK ANIMATIONS
- * Subtle, purposeful motion
- * ============================================ */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { 
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to { 
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-.animate-fade-in {
-  animation: fadeIn var(--duration-normal) var(--ease-out);
-}
-
-.animate-slide-up {
-  animation: slideUp var(--duration-normal) var(--ease-out);
-}
-
-/* Pick confirmation animation */
-@keyframes pickConfirm {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-}
-
-.animate-pick {
-  animation: pickConfirm var(--duration-fast) var(--ease-out);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-fade-in,
-  .animate-slide-up,
-  .animate-pick {
-    animation: none;
-  }
-}
-
-/* ============================================
- * RESPONSIVE BREAKPOINTS
- * Mobile-first approach
- * ============================================ */
-
-/* Tablet (768px+) */
 @media (min-width: 768px) {
   :root {
     --text-base: 1rem;
@@ -608,20 +391,4 @@ label {
     --text-2xl: 1.5rem;
     --text-3xl: 2rem;
   }
-}
-
-/* Desktop (1024px+) */
-@media (min-width: 1024px) {
-  .container {
-    padding: 0 var(--space-8);
-  }
-}
-
-/* ============================================
- * DARK MODE PLACEHOLDER
- * Future enhancement - structure in place
- * ============================================ */
-@media (prefers-color-scheme: dark) {
-  /* Dark mode tokens would go here */
-  /* Currently not implemented - using light mode only for clarity */
 }

@@ -1,7 +1,7 @@
 {
   "name": "votr",
   "version": "1.0.0",
-  "description": "VOTR - Gamified civic engagement platform",
+  "description": "VOTR — nonpartisan Mecklenburg ballot guide",
   "private": true,
   "workspaces": [
     "backend",

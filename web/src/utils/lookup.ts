@@ -53,15 +53,6 @@ const DROP_TAIL = new Set([
   'STALLINGS', 'WEDDINGTON', 'HARRISBURG',
 ]);
 
-export function formatLocationSummary(location: UserLocation): string {
-  const parts: string[] = [location.district];
-  if (location.ncSenate) parts.push(`Senate ${location.ncSenate}`);
-  if (location.ncHouse) parts.push(`House ${location.ncHouse}`);
-  if (location.commission) parts.push(`Commission ${location.commission}`);
-  parts.push(location.isCharlotte ? 'Charlotte city' : 'Not Charlotte');
-  return parts.join(' · ');
-}
-
 export function manualLocation(
   address: string,
   district: UserLocation['district'],
@@ -73,12 +64,6 @@ export function manualLocation(
     isCharlotte,
     lookupSource: 'manual',
   };
-}
-
-export interface DistrictManifest {
-  lastChecked: string;
-  layers: { id: string; file: string; source: string; sourceUrl: string; date: string }[];
-  clip: string;
 }
 
 export interface LookupResult {
@@ -105,7 +90,6 @@ let cache: {
   charlotte: DistrictCollection | null;
 } | null = null;
 
-let manifestCache: DistrictManifest | null = null;
 const zipCache = new Map<string, ZipPack>();
 let streetIndex: Record<string, string[]> | null = null;
 
@@ -130,12 +114,6 @@ async function loadPackedJson<T>(url: string): Promise<T> {
     return JSON.parse(text) as T;
   }
   return JSON.parse(new TextDecoder().decode(buf)) as T;
-}
-
-export async function loadManifest(): Promise<DistrictManifest> {
-  if (manifestCache) return manifestCache;
-  manifestCache = await loadJson<DistrictManifest>(DISTRICTS_BASE, 'manifest.json');
-  return manifestCache;
 }
 
 export async function loadBoundaries(): Promise<void> {
