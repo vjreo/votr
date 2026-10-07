@@ -1,0 +1,29 @@
+{
+  "name": "VOTR",
+  "short_name": "VOTR",
+  "description": "Know your Mecklenburg ballot for the 2026 General Election.",
+  "start_url": "/votr/",
+  "scope": "/votr/",
+  "display": "standalone",
+  "background_color": "#faf9f7",
+  "theme_color": "#faf9f7",
+  "icons": [
+    {
+      "src": "/votr/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/votr/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/votr/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

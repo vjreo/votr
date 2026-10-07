@@ -20,6 +20,7 @@ import {
 } from '../data/ballot';
 import { DISTRICTS_ATTRIBUTION } from '../utils/lookup';
 import CandidateDetail from './CandidateDetail';
+import ShareVotr from './ShareVotr';
 
 interface Props {
   location: UserLocation;
@@ -162,7 +163,10 @@ export default function YourBallot({
             <div className="ballot__deadline-content">
               <span className="ballot__deadline-label">{nextDeadline.name}</span>
               <span className="ballot__deadline-date">
-                {formatShortDate(nextDeadline.date)} · {getDaysUntil(nextDeadline.date)} days left
+                {formatShortDate(nextDeadline.date)}
+                {nextDeadline.hours ? ` · ${nextDeadline.hours}` : ''}
+                {' · '}
+                {getDaysUntil(nextDeadline.date)} days left
               </span>
             </div>
           </div>
@@ -173,6 +177,10 @@ export default function YourBallot({
         <div className="ballot__privacy">
           <LockIcon />
           <span>Picks stay on this device.</span>
+        </div>
+
+        <div className="ballot__share">
+          <ShareVotr />
         </div>
 
         <section className="ballot__section">
@@ -405,7 +413,7 @@ function DatesView({ onBack }: { onBack: () => void }) {
           <span>Back to ballot</span>
         </button>
         <h1 className="dates__title">Key Dates</h1>
-        <p className="dates__subtitle">Mark your calendar for these important deadlines</p>
+        <p className="dates__subtitle">From the NC State Board of Elections</p>
       </header>
 
       <main className="dates__content">
@@ -426,9 +434,10 @@ function DatesView({ onBack }: { onBack: () => void }) {
               </div>
               <div className="dates__info">
                 <span className="dates__name">{d.name}</span>
+                {d.hours && <span className="dates__hours">{d.hours}</span>}
                 {!isPast && (
                   <span className={`dates__countdown ${isSoon ? 'dates__countdown--soon' : ''}`}>
-                    {isToday ? 'Today!' : `${days} days`}
+                    {isToday ? 'Today' : `${days} days`}
                   </span>
                 )}
                 {isPast && <span className="dates__countdown">Passed</span>}
@@ -598,7 +607,9 @@ const ballotStyles = `
     background-color: var(--color-surface);
     border-bottom: 1px solid var(--color-border-light);
     padding: var(--space-4) var(--space-5);
-    padding-top: max(var(--space-4), env(safe-area-inset-top));
+    padding-top: max(var(--space-4), env(safe-area-inset-top, 0px));
+    padding-left: max(var(--space-5), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--space-5), env(safe-area-inset-right, 0px));
   }
 
   .ballot__header-top {
@@ -723,7 +734,7 @@ const ballotStyles = `
     max-width: 540px;
     margin: 0 auto;
     padding: var(--space-5);
-    padding-bottom: var(--space-16);
+    padding-bottom: calc(var(--space-16) + env(safe-area-inset-bottom, 0px));
   }
 
   .ballot__privacy {
@@ -741,6 +752,10 @@ const ballotStyles = `
   .ballot__privacy svg {
     color: var(--color-info);
     flex-shrink: 0;
+  }
+
+  .ballot__share {
+    margin: calc(-1 * var(--space-3)) 0 var(--space-5);
   }
 
   .ballot__section {
@@ -1107,7 +1122,7 @@ const settingsStyles = `
     background-color: var(--color-surface);
     border-bottom: 1px solid var(--color-border-light);
     padding: var(--space-4) var(--space-5);
-    padding-top: max(var(--space-4), env(safe-area-inset-top));
+    padding-top: max(var(--space-4), env(safe-area-inset-top, 0px));
   }
 
   .settings__back {
@@ -1224,7 +1239,7 @@ const datesStyles = `
     background-color: var(--color-surface);
     border-bottom: 1px solid var(--color-border-light);
     padding: var(--space-4) var(--space-5);
-    padding-top: max(var(--space-4), env(safe-area-inset-top));
+    padding-top: max(var(--space-4), env(safe-area-inset-top, 0px));
   }
 
   .dates__back {
@@ -1307,6 +1322,13 @@ const datesStyles = `
     font-size: var(--text-base);
     font-weight: 500;
     color: var(--color-text-primary);
+  }
+
+  .dates__hours {
+    display: block;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    margin-top: 2px;
   }
 
   .dates__countdown {

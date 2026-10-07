@@ -167,6 +167,7 @@ html {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 /* Respect reduced motion preference */
@@ -353,7 +354,7 @@ textarea {
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
-  font-size: var(--text-base);
+  font-size: 16px;
   font-family: inherit;
   line-height: var(--leading-normal);
   outline: none;

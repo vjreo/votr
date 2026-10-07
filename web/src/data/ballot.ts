@@ -57,6 +57,7 @@ export interface BallotMeasure {
 export interface ElectionDeadline {
   name: string;
   date: string;
+  hours?: string;
   critical: boolean;
 }
 
@@ -68,11 +69,11 @@ export const ELECTION = {
 };
 
 export const DEADLINES: ElectionDeadline[] = [
-  { name: 'Voter Registration', date: '2026-10-09', critical: true },
+  { name: 'Voter Registration', date: '2026-10-09', hours: '5 p.m.', critical: true },
   { name: 'Early Voting Begins', date: '2026-10-15', critical: false },
-  { name: 'Absentee Request Deadline', date: '2026-10-20', critical: true },
-  { name: 'Early Voting Ends', date: '2026-10-31', critical: false },
-  { name: 'Election Day', date: '2026-11-03', critical: true },
+  { name: 'Absentee Request Deadline', date: '2026-10-20', hours: '5 p.m.', critical: true },
+  { name: 'Early Voting Ends', date: '2026-10-31', hours: '3 p.m.', critical: false },
+  { name: 'Election Day', date: '2026-11-03', hours: '6:30 a.m. to 7:30 p.m.', critical: true },
 ];
 
 export const NC_VOTER_SEARCH_URL = 'https://vt.ncsbe.gov/reglkup/';
@@ -500,16 +501,21 @@ export function sortCandidatesAlphabetically(candidates: Candidate[]): Candidate
   });
 }
 
+function localDay(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export function getDaysUntil(dateString: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const target = new Date(dateString);
+  const target = localDay(dateString);
   target.setHours(0, 0, 0, 0);
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
+  return localDay(dateString).toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -518,7 +524,7 @@ export function formatDate(dateString: string): string {
 }
 
 export function formatShortDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return localDay(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 export function formatMoney(amount: number): string {

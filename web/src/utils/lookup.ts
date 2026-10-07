@@ -135,7 +135,7 @@ export function normalizeStreetTokens(raw: string): string {
 
 export function parseTypedAddress(raw: string): { house: string; street: string; zip: string | null } {
   let s = raw.toUpperCase();
-  const zipMatch = s.match(/\b(28\d{3})\b/);
+  const zipMatch = s.match(/\b(\d{5})\b/);
   const zip = zipMatch ? zipMatch[1] : null;
   if (zip) s = s.replace(zip, ' ');
   s = s.replace(/\b(APT|APARTMENT|UNIT|STE|SUITE|FL|FLOOR)\b.*$/i, ' ');
@@ -215,6 +215,20 @@ export function lookupPoint(lng: number, lat: number, address: string, source: U
   return { location, unmatched };
 }
 
+export const OUTSIDE_COUNTY_MESSAGE =
+  'VOTR covers Mecklenburg County for now. Pick your area by hand, or confirm with the state.';
+export const ADDRESS_NOT_FOUND_MESSAGE =
+  'We could not find that address. Check the spelling and ZIP, or pick your area by hand.';
+
+let zipIndex: Set<string> | null = null;
+
+async function knownZips(): Promise<Set<string>> {
+  if (zipIndex) return zipIndex;
+  const idx = await loadJson<{ zips: Record<string, unknown> }>(ADDRESSES_BASE, 'index.json');
+  zipIndex = new Set(Object.keys(idx.zips));
+  return zipIndex;
+}
+
 export async function lookupFromGeolocation(): Promise<LookupResult> {
   await loadBoundaries();
   const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -231,7 +245,7 @@ export async function lookupFromGeolocation(): Promise<LookupResult> {
   const { longitude: lng, latitude: lat } = pos.coords;
   const result = lookupPoint(lng, lat, 'Near me (this device)', 'geolocation');
   if (result.unmatched.includes('U.S. House') && !result.location.ncSenate) {
-    throw new Error('That location is outside Mecklenburg County. You can pick your area by hand.');
+    throw new Error(OUTSIDE_COUNTY_MESSAGE);
   }
   return result;
 }
@@ -240,6 +254,12 @@ export async function geocodeAddressOnDevice(address: string): Promise<{ lng: nu
   const parsed = parseTypedAddress(address);
   if (!parsed.street) {
     throw new Error('Add a street name, or pick your area by hand.');
+  }
+  if (parsed.zip) {
+    const known = await knownZips();
+    if (!known.has(parsed.zip)) {
+      throw new Error(OUTSIDE_COUNTY_MESSAGE);
+    }
   }
   let zips = parsed.zip ? [parsed.zip] : await zipsForStreet(parsed.street);
   if (parsed.zip && !zips.length) zips = [parsed.zip];
@@ -256,7 +276,7 @@ export async function geocodeAddressOnDevice(address: string): Promise<{ lng: nu
       // missing zip file — try the next
     }
   }
-  throw new Error('We could not find that address in Mecklenburg County. Check the spelling, or pick your area by hand.');
+  throw new Error(ADDRESS_NOT_FOUND_MESSAGE);
 }
 
 export async function lookupFromAddress(address: string): Promise<LookupResult> {
@@ -264,7 +284,7 @@ export async function lookupFromAddress(address: string): Promise<LookupResult> 
   await loadBoundaries();
   const result = lookupPoint(geo.lng, geo.lat, geo.matchedAddress, 'address');
   if (result.unmatched.includes('U.S. House') && !result.location.ncSenate) {
-    throw new Error('That address is outside Mecklenburg County. You can pick your area by hand.');
+    throw new Error(OUTSIDE_COUNTY_MESSAGE);
   }
   return result;
 }
