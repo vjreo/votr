@@ -64,9 +64,14 @@ export type OfficeLevel = 'federal' | 'state' | 'local';
 export interface CandidatePosition {
   issueId: string;
   issueName: string;
+  /** Neutral description of the candidate's position — use their own framing */
   stance: string;
+  /** URL to primary source (official website, government record, direct statement) */
+  sourceUrl?: string;
+  /** Legacy field — prefer sourceUrl */
   source?: string;
-  confidence: number; // 0-1, how confident we are in this position
+  /** 0-1, how confident we are in this position based on source quality */
+  confidence: number;
 }
 
 export interface CandidateSource {

@@ -80,10 +80,10 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: mobile/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install mobile dependencies
-        run: npm ci
+        run: npm install
 
       # App-source JSX errors remain with React 19 typings until RN/@types align; skipLibCheck helps deps only.
       - name: TypeScript

@@ -2,6 +2,15 @@
  * State Registry
  * Factory for creating and caching state handlers
  * Implements lazy loading and singleton pattern per state
+ *
+ * SCOPE: Currently NC-only (Mecklenburg County 2026 midterms).
+ * Other state handlers can be added here when the product expands.
+ *
+ * AGENT-LAYER SEAM: This registry is the extension point for adding
+ * state-specific ballot data adapters. Each handler encapsulates:
+ * - Election rules (early voting, registration deadlines)
+ * - Data sources (Open States, curated DB, future APIs)
+ * - Office structure (federal, state, local levels)
  */
 
 import { BaseStateHandler } from './baseStateHandler.js';
@@ -11,12 +20,12 @@ import { NCStateHandler } from './handlers/ncStateHandler.js';
 // Cache for state handler instances
 const handlerCache = new Map();
 
-// Registry of available state handlers
+/**
+ * Registry of available state handlers.
+ * NC is the only active handler for the 2026 dogfood.
+ */
 const handlerRegistry = {
-  'NC': NCStateHandler,
-  // Add more state handlers here as they're created
-  // 'CA': CAStateHandler,
-  // 'NY': NYStateHandler,
+  NC: NCStateHandler,
 };
 
 /**
