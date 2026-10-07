@@ -135,9 +135,19 @@ export function normalizeStreetTokens(raw: string): string {
 
 export function parseTypedAddress(raw: string): { house: string; street: string; zip: string | null } {
   let s = raw.toUpperCase();
-  const zipMatch = s.match(/\b(\d{5})\b/);
-  const zip = zipMatch ? zipMatch[1] : null;
-  if (zip) s = s.replace(zip, ' ');
+  // Last 5-digit token is the ZIP (optional +4). A leading 5-digit house
+  // number like 12316 is not a ZIP unless the query is only that number.
+  const zipMatches = [...s.matchAll(/\b(\d{5})(?:-\d{4})?\b/g)];
+  let zip: string | null = null;
+  if (zipMatches.length) {
+    const last = zipMatches[zipMatches.length - 1];
+    const atStart = last.index === 0;
+    const onlyToken = atStart && s.slice(last[0].length).trim() === '';
+    if (!atStart || onlyToken) {
+      zip = last[1];
+      s = `${s.slice(0, last.index)} ${s.slice((last.index ?? 0) + last[0].length)}`;
+    }
+  }
   s = s.replace(/\b(APT|APARTMENT|UNIT|STE|SUITE|FL|FLOOR)\b.*$/i, ' ');
   s = normalizeStreetTokens(s);
   const tokens = s.split(/\s+/).filter((t) => t && !DROP_TAIL.has(t) && t !== 'NC');
