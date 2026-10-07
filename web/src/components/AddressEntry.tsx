@@ -506,21 +506,23 @@ export default function AddressEntry({ onSubmit }: Props) {
           opacity: 0.45;
         }
 
-        .entry__input {
+        .entry__search input.entry__input {
           flex: 1;
           min-width: 0;
           border: none;
           box-shadow: none;
           background: transparent;
+          border-radius: 0;
           min-height: var(--tap-target-min);
           padding: var(--space-2) var(--space-1);
           font-size: var(--text-base);
         }
 
-        .entry__input:focus,
-        .entry__input:focus-visible {
+        .entry__search input.entry__input:focus,
+        .entry__search input.entry__input:focus-visible {
           outline: none;
           box-shadow: none;
+          border: none;
         }
 
         .entry__suggest[hidden] {
