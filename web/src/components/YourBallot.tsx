@@ -8,7 +8,7 @@ import {
   NC_VOTER_SEARCH_URL,
   OFFICIAL_SOURCES,
   DATA_PROVENANCE,
-  getCandidatesForDistrict,
+  getCandidatesForLocation,
   sortCandidatesAlphabetically,
   getNextCriticalDeadline,
   getDaysUntil,
@@ -18,6 +18,7 @@ import {
   type Candidate,
   type BallotMeasure,
 } from '../data/ballot';
+import { DISTRICTS_ATTRIBUTION, formatLocationSummary } from '../utils/lookup';
 import CandidateDetail from './CandidateDetail';
 
 interface Props {
@@ -85,7 +86,7 @@ export default function YourBallot({
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [view, setView] = useState<'ballot' | 'dates' | 'settings'>('ballot');
 
-  const candidates = getCandidatesForDistrict(location.district);
+  const candidates = getCandidatesForLocation(location);
   const contestGroups = groupCandidates(candidates);
   const bonds = location.isCharlotte ? CHARLOTTE_BONDS : [];
   const nextDeadline = getNextCriticalDeadline();
@@ -122,9 +123,8 @@ export default function YourBallot({
 
   return (
     <div className="ballot">
-      <a href="#ballot-main" className="skip-link">Skip to ballot</a>
-      {/* Header */}
       <header className="ballot__header">
+        <a href="#ballot-main" className="skip-link">Skip to ballot</a>
         <div className="ballot__header-top">
           <h1 className="ballot__title">Your Ballot</h1>
           <div className="ballot__header-actions">
@@ -148,11 +148,13 @@ export default function YourBallot({
         <button
           className="ballot__location"
           onClick={onChangeAddress}
-          aria-label={`Change location. Currently ${location.address}, ${location.district}`}
         >
           <MapPinIcon />
-          <span className="ballot__location-text">{location.address}</span>
-          <span className="ballot__location-district">{location.district}</span>
+          <span className="ballot__location-copy">
+            <span className="ballot__location-text">{location.address}</span>
+            <span className="ballot__location-meta">{formatLocationSummary(location)}</span>
+            <span className="ballot__location-change">Not right? Change it</span>
+          </span>
         </button>
 
         {nextDeadline && (
@@ -193,22 +195,23 @@ export default function YourBallot({
             )}
             
             {group.contests.map((contest) => (
-              <article key={contest.office} className="ballot__race" role="group" aria-label={contest.office}>
+              <article key={contest.office} className="ballot__race" aria-label={contest.office}>
                 <h4 className="ballot__office">{contest.office}</h4>
-                <div className="ballot__candidates" role="list">
+                <div className="ballot__candidates">
                   {contest.candidates.map((candidate) => {
                     const pick = getCandidatePick(candidate.id);
                     return (
                       <button
                         key={candidate.id}
-                        role="listitem"
                         className={`ballot__candidate ${pick ? 'ballot__candidate--picked' : ''}`}
                         onClick={() => setSelectedCandidate(candidate)}
-                        aria-label={`${candidate.name}, ${candidate.party}${pick ? `, marked as ${pick.leaning}` : ''}`}
                       >
                         <div className="ballot__candidate-info">
                           <span className="ballot__candidate-name">{candidate.name}</span>
                           <span className="ballot__candidate-party">{candidate.party}</span>
+                          {pick && (
+                            <span className="visually-hidden">marked as {pick.leaning}</span>
+                          )}
                         </div>
                         {pick && (
                           <span 
@@ -278,7 +281,7 @@ export default function YourBallot({
               rel="noopener noreferrer"
               className="btn btn--secondary btn--full"
             >
-              Go to NCSBE Voter Lookup →
+              Confirm with the state →
             </a>
           </div>
         </section>
@@ -290,8 +293,12 @@ export default function YourBallot({
             <p className="ballot__data-desc">
               All ballot data comes from official sources: NC State Board of Elections and Mecklenburg County Board of Elections.
             </p>
+            <p className="ballot__data-desc">
+              {DISTRICTS_ATTRIBUTION.summary}
+            </p>
             <p className="ballot__data-verified">
-              Last verified: {new Date(DATA_PROVENANCE.lastVerified).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              Ballot data last verified: {new Date(DATA_PROVENANCE.lastVerified).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              {' · '}Maps last checked: {DISTRICTS_ATTRIBUTION.lastCheckedLabel}
             </p>
             <div className="ballot__data-links">
               <a
@@ -693,17 +700,30 @@ const ballotStyles = `
     flex-shrink: 0;
   }
 
-  .ballot__location-text {
+  .ballot__location-copy {
     flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .ballot__location-text {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .ballot__location-district {
+  .ballot__location-meta {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    white-space: normal;
+  }
+
+  .ballot__location-change {
     font-weight: 600;
     color: var(--color-accent);
-    flex-shrink: 0;
+    font-size: var(--text-xs);
   }
 
   .ballot__deadline {

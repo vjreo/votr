@@ -20,13 +20,24 @@ VOTR is a static web application designed for privacy and security. The core pri
 grep -riE "(api[_-]?key|secret|password|database)" dist/ | grep -v "type=.password"
 ```
 
-### 2. Device-Only Address Handling
+### 2. Device-Only Location Handling
 
-- No third-party geocoding services or APIs
-- User addresses are **never sent to any server**
-- District selection is done manually by the user
-- Address stored only in browser `localStorage`
-- No logging of user location data
+**Use my location (default path)**
+
+- The browser Geolocation API runs on-device
+- Coordinates are matched against bundled GeoJSON (point-in-polygon in the browser)
+- Coordinates **never leave the device** — no location API call
+- District maps are lazy-loaded from this origin (`/votr/districts/*.json`)
+
+**Typed address (on-device)**
+
+Statewide NCSBE address-point files are ~210 MB, but Mecklenburg County GIS Master Address Points compress to about 6 MB of ZIP-split `.json.gz` files. VOTR lazy-loads only the ZIP the voter typed (typically ~100–350 KB).
+
+- The address is matched on this device against bundled county address points
+- Nothing is sent to the U.S. Census Geocoder or any other server (the Census API does not allow browser CORS)
+- Users can skip this and pick districts by hand, or confirm with [NCSBE Voter Search](https://vt.ncsbe.gov/reglkup/)
+
+Address and district results stay in browser `localStorage` only.
 
 ### 3. No External Scripts or Trackers
 
@@ -46,6 +57,11 @@ All ballot data comes from official government sources:
 | Statewide referendums | [NCSBE Elections Files](https://dl.ncsbe.gov/) |
 | County referendums | [NCSBE County Referendums](https://dl.ncsbe.gov/) |
 | Candidate positions | Official campaign websites, WFAE interviews |
+| U.S. House districts | NCSBE / NCGA Session Law 2025-95 shapefile (2026 plan) |
+| NC Senate / House districts | NCSBE / NCGA SL 2023-146 and SL 2023-149 shapefiles |
+| County commissioner districts | Mecklenburg County GIS |
+| Charlotte city limits | U.S. Census TIGER/Line 2024 places |
+| Street addresses | Mecklenburg County GIS Master Address Points |
 
 - **Last verified:** October 7, 2026
 - App displays verification date and links to official sources
@@ -99,7 +115,7 @@ The app includes a strict CSP via meta tag:
 | `img-src` | Same-origin + data URIs (for emoji favicon) |
 | `font-src` | Same-origin only (self-hosted Inter) |
 | `script-src` | Same-origin only (no external scripts) |
-| `connect-src` | Same-origin only (no external API calls) |
+| `connect-src` | Same-origin only (district maps and address lists are bundled) |
 
 **Note:** `frame-ancestors` is not supported on CSP delivered via a `<meta>` tag, so it is omitted here (including it only logs a console warning). An HTTP header `Content-Security-Policy: frame-ancestors 'none'` would be required for clickjacking protection. GitHub Pages sends `X-Frame-Options` by default, which covers hosted deploys.
 
@@ -143,6 +159,7 @@ Dependencies are minimal:
 | Data | Where | Sent to server? |
 |------|-------|-----------------|
 | User address | localStorage | ❌ Never |
+| Device coordinates | Memory only, then discarded | ❌ Never |
 | District selection | localStorage | ❌ Never |
 | Candidate picks | localStorage | ❌ Never |
 | Measure picks | localStorage | ❌ Never |
