@@ -1,191 +1,205 @@
-# VOTR - Making Democracy Sexy
+# VOTR — Informed Voting Without the Spin
 
-VOTR is a mobile application that gamifies civic engagement by helping users discover and learn about candidates based on their issue preferences. Built with React Native and Node.js.
+VOTR helps voters get **unbiased, synthesized ballot information** without doing heavy research alone.
+
+> **Current Scope**: Mecklenburg County, NC — 2026 midterm elections (November 3, 2026)
+>
+> This is a dogfood build for Charlotte-area voters. The architecture supports expansion to other locations.
+
+## Core Principle: UNBIASED
+
+**VOTR exists to inform, not to steer.**
+
+The problem: voters are overwhelmed by partisan takes, misleading headlines, and algorithm-driven echo chambers. VOTR cuts through the noise by presenting neutral, factual ballot information with clear source attribution.
+
+- **No endorsements.** We never tell you who to vote for.
+- **Neutral tone.** Positions are described factually, not editorially.
+- **Primary sources.** Links to official campaign sites and government records.
+- **Both sides when they conflict.** If sources disagree, we show both with links.
+- **You decide.** Match scores reflect YOUR stated priorities, not our opinion.
 
 ## Features
 
-- **Preference-Based Matching**: Users select issues they care about, and the app matches them with candidates
-- **Tinder-Style Swiping**: Swipe through candidates to discover alignment
-- **ML-Powered Bias Detection**: Sources are ranked by reliability using hybrid ML analysis
-- **Gamification**: Earn points, maintain streaks, and unlock badges
-- **Location-Based**: Get candidates and elections specific to your area
-- **Election Notifications**: Stay informed about upcoming elections
+- **Ballot Overview**: See what's on your ballot for Mecklenburg County
+- **Candidate Briefs**: Neutral summaries with positions and career history
+- **Source Transparency**: Every claim links to a verifiable source
+- **Preference Matching**: Optional — tell us your priorities, see alignment scores
+- **Reliability Indicators**: Sources ranked by factual reliability (not partisan lean)
 
 ## Project Structure
 
 ```
 votr/
-├── mobile/          # React Native app (Expo)
-│   ├── App.tsx      # Root component
-│   ├── screens/     # Screen components
-│   ├── components/  # Reusable components
-│   ├── services/    # API services
-│   ├── context/     # React context providers
-│   └── utils/       # Utility functions
-├── backend/         # Node.js/Express API
-├── shared/          # Shared TypeScript types
-└── idea.md          # Project documentation
+├── backend/              # Node.js/Express API
+│   ├── routes/           # API endpoints
+│   ├── services/         # Business logic
+│   │   └── stateHandlers/ # NC-specific ballot logic (agent seam)
+│   ├── data/             # Curated candidate data
+│   └── integrations/     # External APIs (OpenAI, bias DBs)
+├── mobile/               # React Native app (Expo)
+│   ├── features/
+│   │   ├── candidates/   # Browse & compare candidates
+│   │   ├── elections/    # Ballot, calendar, polling
+│   │   └── gamification/ # Quarantined in MVP mode
+│   └── shared/           # UI components, config
+├── shared/               # Shared TypeScript types
+└── docs/
+    └── ARCHITECTURE.md   # Agent-layer seams & unbiased rules
 ```
 
-## Getting Started
+## Quick Start (Dogfood)
 
 ### Prerequisites
 
 - Node.js 18+ and npm
 - PostgreSQL database
-- Open States API key (free; for NC legislators)
-- Expo CLI (for mobile development)
+- Open States API key (free at [openstates.org](https://openstates.org/accounts/signup/))
 
-### Backend Setup
+### 1. Backend Setup
 
-1. Navigate to the backend directory:
 ```bash
 cd backend
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
 
-3. Create a `.env` file in the backend directory:
-```bash
-cp backend/.env.example backend/.env
-```
+# Create .env from example
+cp .env.example .env
+# Edit .env: set DATABASE_URL, OPEN_STATES_API_KEY, JWT_SECRET
 
-4. Update `backend/.env` with your configuration (see Environment Variables section below)
-
-5. Set up the database:
-```bash
-# Create PostgreSQL database
+# Create database and run migrations
 createdb votr
-
-# Run migrations
 npm run db:migrate
-```
 
-6. Start the backend server:
-```bash
+# Seed NC candidate data
+npm run db:seed           # Issues, test users
+npm run db:seed:nc:force  # 2026 NC candidates (Mecklenburg focus)
+
+# Start server
 npm run dev
 ```
 
-The API will run on `http://localhost:3000`
+API runs at `http://localhost:3000`
 
-### Mobile App Setup
+### 2. Mobile Setup
 
-1. Navigate to the mobile directory:
 ```bash
 cd mobile
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
 
-3. Configure API URL in `services/api.ts`:
-   - For development: `http://localhost:3000/api`
-   - For production: `https://api.votr.app/api`
+# Create .env
+echo "EXPO_PUBLIC_API_URL=http://localhost:3000/api" > .env
 
-4. Start the Expo development server:
-```bash
+# Start Expo
 npm start
+# Press 'i' for iOS simulator or 'a' for Android
 ```
 
-5. Run on iOS or Android:
+### 3. Test the Ballot Flow
+
+1. Open app → Enter a Charlotte address (e.g., `525 N Tryon St, Charlotte, NC 28202`)
+2. Complete onboarding (select issues you care about)
+3. Browse candidates → See neutral briefs with sources
+4. View Sample Ballot → Races for Mecklenburg County 2026
+
+## Bot/CLI Integration
+
+The API can be called by a bot or CLI for ballot lookups:
+
 ```bash
-npm run ios
-# or
-npm run android
+# Get candidates for Mecklenburg County
+curl "http://localhost:3000/api/candidates?state=NC&lat=35.2271&lng=-80.8431"
+
+# Get sample ballot
+curl "http://localhost:3000/api/sample-ballot?state=NC&lat=35.2271&lng=-80.8431"
+
+# Get upcoming elections
+curl "http://localhost:3000/api/elections/upcoming"
+
+# Check source reliability
+curl -X POST "http://localhost:3000/api/bias/analyze" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/article"}'
 ```
 
-**Mobile Features:**
-- Onboarding with preference selection
-- Tinder-style candidate swiping
-- Candidate detail views
-- Gamification (points, streaks, badges)
-- Location-based candidate discovery
-- Bias-ranked source lists
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for agent-layer seams.
 
 ## API Endpoints
 
-### Health Check
-- `GET /health` - Basic liveness check
-- `GET /health/ready` - Readiness (includes DB connectivity)
+### Health
+| Endpoint | Description |
+|----------|-------------|
+| `GET /health` | Liveness check |
+| `GET /health/ready` | Readiness (includes DB) |
 
-### Users
-- `POST /api/users` - Create a new user
-- `GET /api/users/:id` - Get user by ID
-- `POST /api/users/:id/preferences` - Update user preferences
-- `POST /api/users/:id/location` - Update user location
-- `GET /api/users/:id/gamification` - Get gamification stats
-- `POST /api/users/:id/swipes` - Record a swipe
+### Candidates (Ballot Ingest + Facts)
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/candidates` | List candidates. Query: `state`, `lat`, `lng`, `office` |
+| `GET /api/candidates/:id` | Candidate detail with sources |
+| `GET /api/candidates/:id/match-score` | Match score (requires auth) |
 
-### Candidates
-- `GET /api/candidates` - Get candidates (query: office, location, state)
-- `GET /api/candidates/:id` - Get candidate by ID
-- `GET /api/candidates/:id/match-score` - Get match score (query: userId)
-- `POST /api/candidates/:id/sources` - Add a source for a candidate
+### Sample Ballot
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/sample-ballot` | Ballot by address. Query: `state`, `lat`, `lng` |
 
 ### Elections
-- `GET /api/elections` - Get elections (query: state, district)
-- `GET /api/elections/upcoming` - Get upcoming elections (query: userId)
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/elections` | List elections. Query: `state` |
+| `GET /api/elections/upcoming` | Upcoming elections |
+
+### Source Reliability
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/bias/analyze` | Full reliability analysis. Body: `{url, content?}` |
+| `GET /api/bias/quick` | Fast DB-only lookup. Query: `url` |
+| `GET /api/bias/tiers` | Tier definitions (public) |
 
 ## Environment Variables
 
-The backend requires the following environment variables (see `.env.example` for template):
+### Backend (`backend/.env`)
 
-- `PORT` - Server port (default: 3000)
-- `DATABASE_URL` - PostgreSQL connection string
-- `OPEN_STATES_API_KEY` - Open States API key (for NC legislators; free at openstates.org)
-- `JWT_SECRET` - Secret key for JWT token generation
-- `JWT_EXPIRES_IN` - JWT token expiration time (default: 15m)
-- `HUGGINGFACE_API_KEY` - Hugging Face API key (optional)
-- `OPENAI_API_KEY` - OpenAI API key (optional)
-- `MEDIA_BIAS_API_KEY` - Media Bias Fact Check API key (optional)
-- `ALLSIDES_API_KEY` - AllSides API key (optional)
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `OPEN_STATES_API_KEY` | Yes | Open States API key (free at openstates.org) |
+| `JWT_SECRET` | Yes | Secret for auth tokens (32+ chars in production) |
+| `PORT` | No | Server port (default: 3000) |
+| `HUGGINGFACE_API_KEY` | No | ML-based content analysis |
+| `OPENAI_API_KEY` | No | AI content analysis |
+
+### Mobile (`mobile/.env`)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `EXPO_PUBLIC_API_URL` | Yes | Backend API URL |
+| `EXPO_PUBLIC_MVP_MODE` | No | Set `false` to enable all features |
 
 ## Tech Stack
 
-### Backend
-- Node.js/Express
-- PostgreSQL
-- Open States API (NC legislators)
-- ML bias detection (placeholder for integration)
+- **Backend**: Node.js, Express, PostgreSQL
+- **Mobile**: React Native (Expo), TypeScript
+- **Data Sources**: Open States API (NC legislators), curated seed data
+- **Source Analysis**: Local bias DB, optional HuggingFace/OpenAI
 
-### Mobile
-- React Native (Expo)
-- TypeScript
-- React Navigation
-- Expo Location
-- AsyncStorage
+## Architecture & Agent Seams
 
-## Real Election Data (North Carolina)
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for:
+- The four-layer agent architecture (Ballot Ingest → Candidate Facts → Policy Research → Synthesizer)
+- Extension points for future automation
+- The unbiased rules that every layer must follow
 
-To pull live candidates for NC:
+## Feature Flags
 
-1. **Get an Open States API key** (free):
-   - Sign up at [Open States](https://openstates.org/accounts/signup/)
-   - Go to Profile → API Key
-   - Add to `backend/.env`: `OPEN_STATES_API_KEY=your-key`
+The mobile app uses MVP mode by default (lean dogfood):
 
-2. **Seed curated candidates** (Governor, US Senate, local):
-   ```bash
-   cd backend && npm run db:seed && npm run db:seed:nc:force
-   ```
+| Flag | Default | Description |
+|------|---------|-------------|
+| `mvpMode` | `true` | Lean mode: Match + Shortlist + Profile only |
+| `showDiscoverTab` | `false` | Browse all candidates by office |
+| `showJourneyTab` | `false` | Gamification (quarantined for dogfood) |
 
-3. **Enter your voting address** in Profile. The app uses Open States for state legislators and the DB for governor, senate, and local offices.
-
-## Launch & Demo
-
-- **Launch checklist**: See [docs/LAUNCH_CHECKLIST.md](docs/LAUNCH_CHECKLIST.md)
-- **Demo video**: Open `docs/demo/demo.html` in a browser for a slide-based demo, or follow [docs/DEMO_VIDEO_SCRIPT.md](docs/DEMO_VIDEO_SCRIPT.md) to record the live app
-
-## Development Notes
-
-- The bias detection system supports Hugging Face, OpenAI, and media bias databases when API keys are set. Without keys, it uses the local database.
-- Location services require proper permissions on iOS and Android.
-- Push notifications for elections are set up but need Expo notification configuration.
+Set `EXPO_PUBLIC_MVP_MODE=false` to enable full feature set.
 
 ## License
 

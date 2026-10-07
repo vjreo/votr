@@ -1,213 +1,204 @@
 /**
- * North Carolina Candidate Data
- * Real candidates for NC elections - 2024 cycle
+ * North Carolina / Mecklenburg County Candidate Data
+ * Curated candidates for 2026 NC General Election (Nov 3, 2026)
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * UNBIASED PRINCIPLE: This file contains factual candidate data only.
+ * - NO endorsements or recommendations
+ * - Positions described using candidates' own framing where possible
+ * - Neutral language — avoid loaded terms like "extreme," "radical," "best"
+ * - Primary sources preferred (official websites, government records)
+ * - When adding new candidates, cite where the data came from
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * SCOPE: Mecklenburg County / Charlotte area voters
+ * - U.S. Senate (Tillis seat up in 2026)
+ * - U.S. House (NC-12 Mecklenburg-area seat)
+ * - NC State Legislature (state senate/house — populated via Open States)
+ * - Local: Mecklenburg County Commissioners (2026 ballot)
  *
  * NOTE: Position stances are summarized from public statements and campaign materials.
- * Always verify with official campaign sources.
+ * Always verify with official campaign sources. This is seed data for dogfooding.
+ *
+ * TODO (agent-layer seam): Replace curated seed with automated candidate ingest
+ * once a reliable Mecklenburg ballot data source is wired up.
  */
 
 export const NC_CANDIDATES = {
-  // Federal - Governor Race
-  governor: [
-    {
-      id: 'nc-gov-stein',
-      name: 'Josh Stein',
-      party: 'Democratic Party',
-      office: 'Governor of North Carolina',
-      officeLevel: 'state',
-      currentPosition: 'NC Attorney General',
-      photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Josh_Stein_official_photo.jpg/440px-Josh_Stein_official_photo.jpg',
-      religion: 'Jewish',
-      previousProfession: 'Attorney',
-      website: 'https://joshstein.org',
-      bio: 'Josh Stein has served as North Carolina\'s Attorney General since 2017. Before that, he served in the NC State Senate from 2009 to 2016, representing Wake County. He has focused on consumer protection, fighting the opioid epidemic, and criminal justice reform.',
-      topInitiatives: [
-        'Expand Medicaid to cover 600,000 more North Carolinians',
-        'Protect public education and increase teacher pay',
-        'Defend reproductive rights',
-        'Combat the opioid crisis',
-      ],
-      positions: [
-        { issueName: 'Healthcare', issueId: 'healthcare', stance: 'Supports Medicaid expansion, protecting coverage for pre-existing conditions, and lowering prescription drug costs' },
-        { issueName: 'Education', issueId: 'education', stance: 'Advocates for increased public school funding, higher teacher pay, and opposing private school vouchers' },
-        { issueName: 'Environment', issueId: 'environment', stance: 'Supports clean energy transition, offshore wind development, and environmental protections' },
-        { issueName: 'Economy', issueId: 'economy', stance: 'Focus on workforce development, supporting small businesses, and bringing clean energy jobs to NC' },
-        { issueName: 'Criminal Justice', issueId: 'criminal_justice', stance: 'Supports criminal justice reform, addressing root causes of crime, and smart-on-crime policies' },
-        { issueName: 'Reproductive Rights', issueId: 'civil_rights', stance: 'Opposes abortion bans, supports protecting reproductive healthcare access' },
-      ],
-      career: [
-        { title: 'NC Attorney General', period: '2017 - Present', description: 'Elected as the state\'s top law enforcement officer' },
-        { title: 'NC State Senator', period: '2009 - 2016', description: 'Represented District 16 (Wake County)' },
-        { title: 'Senior Deputy Attorney General', period: '2001 - 2008', description: 'Consumer Protection Division' },
-      ],
-      endorsements: ['Governor Roy Cooper', 'NC Association of Educators', 'Sierra Club'],
-    },
-    {
-      id: 'nc-gov-robinson',
-      name: 'Mark Robinson',
-      party: 'Republican Party',
-      office: 'Governor of North Carolina',
-      officeLevel: 'state',
-      currentPosition: 'NC Lieutenant Governor',
-      photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Mark_Robinson_official_photo_%28cropped%29.jpg/440px-Mark_Robinson_official_photo_%28cropped%29.jpg',
-      religion: 'Christian',
-      previousProfession: 'Business Owner, Factory Worker',
-      website: 'https://markrobinson.com',
-      bio: 'Mark Robinson became North Carolina\'s first Black Lieutenant Governor in 2021. Before entering politics, he worked in furniture manufacturing and owned a business. He gained national attention in 2018 after a speech at a Greensboro City Council meeting about gun rights went viral.',
-      topInitiatives: [
-        'Support law enforcement and public safety',
-        'Promote school choice and parental rights in education',
-        'Lower taxes and reduce government regulations',
-        'Protect Second Amendment rights',
-      ],
-      positions: [
-        { issueName: 'Healthcare', issueId: 'healthcare', stance: 'Supports market-based healthcare solutions, opposes government-run healthcare' },
-        { issueName: 'Education', issueId: 'education', stance: 'Strong advocate for school choice, parental rights, and opposing "woke" curriculum' },
-        { issueName: 'Environment', issueId: 'environment', stance: 'Supports balanced approach between environment and economic development, skeptical of climate regulations' },
-        { issueName: 'Economy', issueId: 'economy', stance: 'Supports tax cuts, reducing regulations, and pro-business policies' },
-        { issueName: 'Criminal Justice', issueId: 'criminal_justice', stance: 'Strong support for law enforcement, tough-on-crime policies' },
-        { issueName: 'Second Amendment', issueId: 'civil_rights', stance: 'Strong defender of gun rights, opposes gun control measures' },
-      ],
-      career: [
-        { title: 'NC Lieutenant Governor', period: '2021 - Present', description: 'First Black Lt. Governor in NC history' },
-        { title: 'Political Activist', period: '2018 - 2020', description: 'Rose to prominence after viral gun rights speech' },
-        { title: 'Business Owner', period: '2000s - 2018', description: 'Various business ventures' },
-      ],
-      endorsements: ['Donald Trump', 'NC Republican Party', 'NRA'],
-    },
-  ],
-
-  // Federal - US Senate
+  /**
+   * 2026 U.S. Senate Race (Class 2 — Tillis seat)
+   * Thom Tillis is up for re-election in 2026.
+   * Challengers TBD as of this seed; add candidates as they file.
+   */
   senate: [
     {
-      id: 'nc-sen-tillis',
+      id: 'nc-sen-tillis-2026',
       name: 'Thom Tillis',
       party: 'Republican Party',
       office: 'U.S. Senate',
       officeLevel: 'federal',
-      currentPosition: 'U.S. Senator',
+      currentPosition: 'U.S. Senator (incumbent)',
       photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Thom_Tillis_official_photo.jpg/440px-Thom_Tillis_official_photo.jpg',
       religion: 'Catholic',
       previousProfession: 'Business Executive',
       website: 'https://tillis.senate.gov',
-      bio: 'Thom Tillis has served as U.S. Senator from North Carolina since 2015. He previously served as Speaker of the NC House of Representatives from 2011-2014. He focuses on economic issues, national security, and veterans affairs.',
+      bio: 'Thom Tillis has served as U.S. Senator from North Carolina since 2015. He previously served as Speaker of the NC House of Representatives from 2011-2014. First elected in 2014 and re-elected in 2020, his seat is up again in 2026.',
       positions: [
-        { issueName: 'Healthcare', issueId: 'healthcare', stance: 'Opposes ACA, supports market-based solutions and state flexibility' },
-        { issueName: 'Economy', issueId: 'economy', stance: 'Supports tax cuts, deregulation, and free market policies' },
-        { issueName: 'Immigration', issueId: 'immigration', stance: 'Supports border security, has worked on bipartisan immigration reform' },
-        { issueName: 'Environment', issueId: 'environment', stance: 'Supports innovation over regulation for environmental issues' },
+        { issueName: 'Healthcare', issueId: 'healthcare', stance: 'Favors market-based healthcare reform; has voted against ACA provisions while supporting state flexibility measures', sourceUrl: 'https://tillis.senate.gov' },
+        { issueName: 'Economy', issueId: 'economy', stance: 'Advocates for lower taxes and reduced federal regulation; supported 2017 Tax Cuts and Jobs Act', sourceUrl: 'https://tillis.senate.gov' },
+        { issueName: 'Immigration', issueId: 'immigration', stance: 'Supports increased border security funding; co-sponsored bipartisan immigration legislation', sourceUrl: 'https://tillis.senate.gov' },
+        { issueName: 'Environment', issueId: 'environment', stance: 'Favors technology and innovation approaches to environmental issues over regulatory mandates', sourceUrl: 'https://tillis.senate.gov' },
       ],
       career: [
         { title: 'U.S. Senator', period: '2015 - Present', description: 'Senior Senator from North Carolina' },
         { title: 'NC House Speaker', period: '2011 - 2014', description: 'Led Republican majority in state house' },
       ],
     },
+    // Placeholder for Democratic challenger — update when candidate files
     {
-      id: 'nc-sen-budd',
-      name: 'Ted Budd',
-      party: 'Republican Party',
+      id: 'nc-sen-dem-tbd-2026',
+      name: 'Democratic Challenger (TBD)',
+      party: 'Democratic Party',
       office: 'U.S. Senate',
       officeLevel: 'federal',
-      currentPosition: 'U.S. Senator',
-      photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Ted_Budd_117th_Congress_portrait.jpg/440px-Ted_Budd_117th_Congress_portrait.jpg',
-      religion: 'Christian',
-      previousProfession: 'Business Owner (Gun Store)',
-      website: 'https://budd.senate.gov',
-      bio: 'Ted Budd was elected to the U.S. Senate in 2022 after serving in the U.S. House representing North Carolina\'s 13th district from 2017-2023. He owns a gun store and shooting range and is known for conservative positions.',
+      currentPosition: 'Candidate',
+      photo: null,
+      bio: 'Democratic candidate for U.S. Senate has not yet been determined. Update this entry once the primary concludes or a frontrunner emerges.',
+      positions: [],
+      career: [],
+    },
+  ],
+
+  /**
+   * 2026 U.S. House — NC-12 (Mecklenburg County area)
+   * Alma Adams represents NC-12 (as of 2023 redistricting).
+   * Add challengers as they file.
+   */
+  house: [
+    {
+      id: 'nc-house-adams-2026',
+      name: 'Alma Adams',
+      party: 'Democratic Party',
+      office: 'U.S. House of Representatives (NC-12)',
+      officeLevel: 'federal',
+      currentPosition: 'U.S. Representative (incumbent)',
+      photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Alma_Adams_116th_Congress.jpg/440px-Alma_Adams_116th_Congress.jpg',
+      website: 'https://adams.house.gov',
+      bio: 'Alma Adams has represented the Charlotte-centered NC-12 district since 2014. She is known for her advocacy on education, housing, and minority business issues. A former NC House member and college professor.',
       positions: [
-        { issueName: 'Healthcare', issueId: 'healthcare', stance: 'Opposes government healthcare expansion, supports free market solutions' },
-        { issueName: 'Economy', issueId: 'economy', stance: 'Strong supporter of tax cuts and reducing government spending' },
-        { issueName: 'Second Amendment', issueId: 'civil_rights', stance: 'Gun store owner, strong defender of Second Amendment rights' },
-        { issueName: 'Immigration', issueId: 'immigration', stance: 'Supports strict border security and enforcement' },
+        { issueName: 'Education', issueId: 'education', stance: 'Advocates for increased HBCU funding, public school investment, and student debt relief programs', sourceUrl: 'https://adams.house.gov' },
+        { issueName: 'Healthcare', issueId: 'healthcare', stance: 'Supports expanding ACA coverage and legislation to lower prescription drug prices', sourceUrl: 'https://adams.house.gov' },
+        { issueName: 'Housing', issueId: 'housing', stance: 'Sponsors affordable housing legislation and policies to prevent displacement in gentrifying areas', sourceUrl: 'https://adams.house.gov' },
+        { issueName: 'Economy', issueId: 'economy', stance: 'Focuses on support for minority-owned businesses and workforce development programs', sourceUrl: 'https://adams.house.gov' },
       ],
       career: [
-        { title: 'U.S. Senator', period: '2023 - Present', description: 'Junior Senator from North Carolina' },
-        { title: 'U.S. Representative', period: '2017 - 2023', description: 'NC-13 Congressional District' },
+        { title: 'U.S. Representative (NC-12)', period: '2014 - Present', description: 'Elected via special election; re-elected multiple times' },
+        { title: 'NC House of Representatives', period: '1994 - 2014', description: 'Represented Guilford County' },
       ],
     },
   ],
 
-  // State Legislature - populated from Open States or DB when available
+  /**
+   * NC Governor — Josh Stein elected in 2024, not up until 2028
+   * Included for reference / voter context only.
+   */
+  governor: [
+    {
+      id: 'nc-gov-stein-incumbent',
+      name: 'Josh Stein',
+      party: 'Democratic Party',
+      office: 'Governor of North Carolina',
+      officeLevel: 'state',
+      currentPosition: 'Governor (incumbent, not on 2026 ballot)',
+      photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Josh_Stein_official_photo.jpg/440px-Josh_Stein_official_photo.jpg',
+      website: 'https://governor.nc.gov',
+      bio: 'Josh Stein was elected Governor of North Carolina in 2024 after serving as Attorney General. His term runs through 2028. Not on the 2026 ballot.',
+      positions: [
+        { issueName: 'Healthcare', issueId: 'healthcare', stance: 'Expanded Medicaid as Governor; advocates for lowering prescription drug costs', sourceUrl: 'https://governor.nc.gov' },
+        { issueName: 'Education', issueId: 'education', stance: 'Proposes increased public school funding and teacher compensation', sourceUrl: 'https://governor.nc.gov' },
+        { issueName: 'Environment', issueId: 'environment', stance: 'Supports clean energy investment and offshore wind development for NC coast', sourceUrl: 'https://governor.nc.gov' },
+      ],
+      career: [
+        { title: 'Governor of North Carolina', period: '2025 - Present', description: 'Elected in 2024' },
+        { title: 'NC Attorney General', period: '2017 - 2024', description: 'State\'s top law enforcement officer' },
+      ],
+    },
+  ],
+
+  /**
+   * State Legislature — NC Senate & House
+   * Populated dynamically from Open States API based on user address.
+   * All 170 seats are up in 2026 (50 Senate, 120 House).
+   */
   stateLegislature: [],
 
-  // Local - Charlotte/Mecklenburg (real candidates only)
+  /**
+   * Local — Charlotte / Mecklenburg
+   * Charlotte municipal elections are ODD years (2025, 2027), so not on 2026 ballot.
+   * Mecklenburg County Commissioners ARE on 2026 ballot (even years).
+   * TODO: Add Mecklenburg County Commissioner candidates when they file.
+   */
   local: [
     {
-      id: 'nc-clt-mayor',
-      name: 'Vi Lyles',
-      party: 'Democratic Party',
-      office: 'Mayor of Charlotte',
+      id: 'nc-meck-commissioner-placeholder',
+      name: 'Mecklenburg County Board of Commissioners',
+      party: 'Multiple',
+      office: 'Mecklenburg County Board of Commissioners',
       officeLevel: 'local',
-      currentPosition: 'Mayor of Charlotte',
+      currentPosition: 'Seats up for election in 2026',
       photo: null,
-      bio: 'Vi Lyles has served as Mayor of Charlotte since 2017 and was re-elected in 2019 and 2022. She is the first African American woman to serve as Charlotte\'s mayor. Before politics, she had a long career in city government.',
-      topInitiatives: [
-        'Affordable housing initiatives',
-        'Economic mobility and opportunity',
-        'Public safety improvements',
-        'Infrastructure investment',
-      ],
-      positions: [
-        { issueName: 'Housing', issueId: 'housing', stance: 'Champion of affordable housing, led $50M housing trust fund' },
-        { issueName: 'Economy', issueId: 'economy', stance: 'Focus on economic mobility and reducing inequality' },
-        { issueName: 'Transportation', issueId: 'economy', stance: 'Supports CATS light rail expansion and transit investment' },
-      ],
-      career: [
-        { title: 'Mayor of Charlotte', period: '2017 - Present', description: 'First Black female mayor of Charlotte' },
-        { title: 'Charlotte City Council', period: '2011 - 2015', description: 'At-Large representative' },
-        { title: 'Assistant City Manager', period: '2004 - 2011', description: 'City of Charlotte' },
-      ],
+      bio: 'Mecklenburg County is governed by a 9-member Board of Commissioners elected in partisan races. Several seats are up in 2026. Add specific candidates once filing period closes.',
+      positions: [],
+      career: [],
     },
   ],
 
-  // School Board - populated from Open States or DB when available
+  /**
+   * School Board — Charlotte-Mecklenburg Schools (CMS)
+   * CMS Board elections are nonpartisan and held in ODD years, so not on 2026 ballot.
+   */
   schoolBoard: [],
 };
 
-// Election dates and info for NC
+/**
+ * Election dates and info for NC — 2026 Midterms Focus
+ * Mecklenburg County / Charlotte area voters
+ */
 export const NC_ELECTIONS = {
-  general2024: {
-    id: 'nc-general-2024',
-    name: '2024 General Election',
-    date: '2024-11-05',
+  general2026: {
+    id: 'nc-general-2026',
+    name: '2026 NC General Election',
+    date: '2026-11-03',
     type: 'general',
     state: 'NC',
-    registrationDeadline: '2024-10-11',
-    earlyVotingStart: '2024-10-17',
-    earlyVotingEnd: '2024-11-02',
+    registrationDeadline: '2026-10-09',
+    earlyVotingStart: '2026-10-15',
+    earlyVotingEnd: '2026-10-31',
     offices: [
-      'President of the United States',
-      'Governor of North Carolina',
-      'Lieutenant Governor',
-      'U.S. Senate (if applicable)',
+      'U.S. Senate (Tillis seat)',
       'U.S. House of Representatives',
+      'NC State Senate (all 50 seats)',
+      'NC House of Representatives (all 120 seats)',
       'NC Supreme Court',
       'NC Court of Appeals',
-      'NC State Senate',
-      'NC House of Representatives',
-      'Local offices',
+      'Mecklenburg County Commissioners',
     ],
   },
-  primary2024: {
-    id: 'nc-primary-2024',
-    name: '2024 Primary Election',
-    date: '2024-03-05',
+  primary2026: {
+    id: 'nc-primary-2026',
+    name: '2026 NC Primary Election',
+    date: '2026-03-03',
     type: 'primary',
     state: 'NC',
-    registrationDeadline: '2024-02-09',
-    completed: true,
-  },
-  municipal2025: {
-    id: 'nc-municipal-2025',
-    name: '2025 Municipal Elections',
-    date: '2025-11-04',
-    type: 'municipal',
-    state: 'NC',
+    registrationDeadline: '2026-02-06',
+    earlyVotingStart: '2026-02-12',
+    earlyVotingEnd: '2026-02-28',
     offices: [
-      'Charlotte Mayor',
-      'Charlotte City Council',
-      'Town Councils',
-      'School Boards',
+      'U.S. Senate',
+      'U.S. House of Representatives',
+      'NC State Senate',
+      'NC House of Representatives',
+      'Judicial races',
     ],
   },
 };
@@ -215,8 +206,9 @@ export const NC_ELECTIONS = {
 // Helper to get all NC candidates as flat array
 export const getAllNCCandidates = () => {
   return [
-    ...NC_CANDIDATES.governor,
     ...NC_CANDIDATES.senate,
+    ...(NC_CANDIDATES.house || []),
+    ...NC_CANDIDATES.governor,
     ...NC_CANDIDATES.stateLegislature,
     ...NC_CANDIDATES.local,
     ...NC_CANDIDATES.schoolBoard,
@@ -227,7 +219,7 @@ export const getAllNCCandidates = () => {
 export const getNCCandidatesByLevel = (level) => {
   switch (level) {
     case 'federal':
-      return NC_CANDIDATES.senate;
+      return [...NC_CANDIDATES.senate, ...(NC_CANDIDATES.house || [])];
     case 'state':
       return NC_CANDIDATES.governor;
     case 'state_legislature':
@@ -243,5 +235,8 @@ export const getNCCandidatesByLevel = (level) => {
 export const findNCCandidateById = (id) => {
   return getAllNCCandidates().find((c) => c.id === id);
 };
+
+// Helper to get the target election for dogfooding
+export const getTargetElection = () => NC_ELECTIONS.general2026;
 
 export default NC_CANDIDATES;

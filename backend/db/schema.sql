@@ -74,9 +74,12 @@ CREATE TABLE IF NOT EXISTS candidates (
     positions JSONB DEFAULT '[]'::jsonb,
     api_source VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(name, office, state, COALESCE(district, ''))
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Unique index on candidates (name, office, state, district) with COALESCE for NULL districts
+CREATE UNIQUE INDEX IF NOT EXISTS idx_candidates_unique_name_office_state_district
+    ON candidates (name, office, state, COALESCE(district, ''));
 
 -- Candidate sources table
 CREATE TABLE IF NOT EXISTS candidate_sources (
@@ -158,9 +161,12 @@ CREATE TABLE IF NOT EXISTS elections (
     early_voting_start DATE,
     early_voting_end DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(name, date, state, COALESCE(district, ''))
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Unique index on elections (name, date, state, district) with COALESCE for NULL districts
+CREATE UNIQUE INDEX IF NOT EXISTS idx_elections_unique_name_date_state_district
+    ON elections (name, date, state, COALESCE(district, ''));
 
 -- User locations table (for location tracking)
 CREATE TABLE IF NOT EXISTS user_locations (

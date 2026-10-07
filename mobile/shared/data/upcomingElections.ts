@@ -1,8 +1,12 @@
+/**
+ * MVP Target: 2026 NC General Election (Mecklenburg County)
+ * This is the dogfood target for VOTR.
+ */
 export const MVP_TARGET = {
   state: 'NC' as const,
   electionId: 'nc-general-2026',
   date: '2026-11-03',
-  label: '2026 General Election',
+  label: '2026 NC Midterms',
 };
 
 export interface ElectionDeadline {
@@ -24,6 +28,10 @@ export interface UpcomingElection {
   offices: string[];
 }
 
+/**
+ * NC Elections — focused on 2026 midterms for Mecklenburg County.
+ * The primary was in March; the general is in November.
+ */
 const NC_ELECTIONS: UpcomingElection[] = [
   {
     id: 'nc-general-2026',
@@ -40,7 +48,15 @@ const NC_ELECTIONS: UpcomingElection[] = [
       { name: 'Early Voting Ends', date: '2026-10-31', icon: '📅', critical: false },
       { name: 'Election Day', date: '2026-11-03', icon: '🗳️', critical: true },
     ],
-    offices: ['U.S. Senate', 'U.S. House', 'NC Supreme Court', 'NC Court of Appeals', 'State Legislature', 'County Offices'],
+    offices: [
+      'U.S. Senate',
+      'U.S. House (NC-8, NC-12, NC-14)',
+      'NC Supreme Court',
+      'NC Court of Appeals',
+      'NC State Senate',
+      'NC House',
+      'Mecklenburg County Commissioners',
+    ],
   },
   {
     id: 'nc-primary-2028',
@@ -48,8 +64,7 @@ const NC_ELECTIONS: UpcomingElection[] = [
     date: '2028-03-07',
     type: 'primary',
     icon: '🗳️',
-    description:
-      'Party primaries for President, Governor, U.S. Senate, U.S. House, and the General Assembly',
+    description: 'Party primaries for President, Governor, U.S. Senate, U.S. House, and the General Assembly',
     state: 'NC',
     deadlines: [
       { name: 'Voter Registration', date: '2028-02-11', icon: '📝', critical: true },
