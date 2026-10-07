@@ -28,12 +28,14 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/votr_test
-      JWT_SECRET: ci-test-jwt-secret-must-be-at-least-32-chars-long
       NODE_ENV: test
       PORT: "3000"
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Generate test JWT secret
+        run: echo "JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
 
       - uses: actions/setup-node@v4
         with:
