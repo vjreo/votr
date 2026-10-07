@@ -24,6 +24,18 @@ These rules apply to:
 
 ---
 
+## Current Strategy: Web-First Through Election Day
+
+**Through November 3, 2026**, the static web app (`web/`) is the primary product.
+
+- **Web app** (`web/`): Active development. Vite + React, deploys to GitHub Pages, bundles all Mecklenburg 2026 ballot data. No backend dependency.
+- **Backend** (`backend/`): Frozen. Keep CI passing, but no new features. Preserved for post-election multi-county expansion.
+- **Native app** (`mobile/`): Frozen. Expo React Native setup preserved for future app store builds with accounts and personalization.
+
+This approach prioritizes speed-to-voters over features. Election Day is weeks away; app store review cycles are too slow. After November 3, the backend and native app will be revived for multi-county expansion and user accounts.
+
+---
+
 ## Scope
 
 **Current Focus**: Mecklenburg County, NC — 2026 midterm elections (November 3, 2026)
