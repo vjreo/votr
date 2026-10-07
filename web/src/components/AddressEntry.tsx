@@ -27,235 +27,292 @@ export default function AddressEntry({ onSubmit }: Props) {
   };
 
   return (
-    <div className="address-entry">
-      <div className="address-entry__content">
-        <div className="address-entry__header">
-          <span className="address-entry__emoji">🗳️</span>
-          <h1 className="address-entry__title">VOTR</h1>
-          <p className="address-entry__subtitle">
-            See what's on your ballot for the 2026 NC General Election
+    <div className="entry">
+      <div className="entry__container">
+        {/* Logo and welcome */}
+        <header className="entry__header">
+          <div className="entry__logo">
+            <span className="entry__logo-icon">🗳️</span>
+          </div>
+          <h1 className="entry__title">VOTR</h1>
+          <p className="entry__subtitle">
+            Know your ballot before you vote
           </p>
+        </header>
+
+        {/* Election context card */}
+        <div className="entry__context">
+          <div className="entry__election">
+            <span className="entry__election-label">Coming up</span>
+            <span className="entry__election-name">2026 General Election</span>
+            <span className="entry__election-date">Tuesday, November 3</span>
+          </div>
         </div>
 
         {!showDistrictPicker ? (
-          <form onSubmit={handleSubmit} className="address-entry__form">
-            <label className="address-entry__label">
-              Enter your Mecklenburg County address
-            </label>
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="e.g. 525 N Tryon St, Charlotte, NC"
-              className="address-entry__input"
-              autoFocus
-            />
-            <button
-              type="submit"
-              className="btn btn--primary btn--full"
-              disabled={!address.trim()}
-            >
-              See my ballot
-            </button>
-          </form>
+          <>
+            {/* Address form */}
+            <form onSubmit={handleSubmit} className="entry__form">
+              <label className="entry__label" htmlFor="address">
+                Where do you live in Mecklenburg County?
+              </label>
+              <input
+                id="address"
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Enter your address"
+                className="entry__input"
+                autoComplete="street-address"
+                autoFocus
+              />
+              <button
+                type="submit"
+                className="btn btn--primary btn--full"
+                disabled={!address.trim()}
+              >
+                See my ballot
+              </button>
+            </form>
+
+            {/* Helper text */}
+            <p className="entry__helper">
+              Your address helps us show the right races for your area. We don't store it.
+            </p>
+          </>
         ) : (
-          <div className="address-entry__district-picker">
-            <p className="address-entry__label">
+          /* District picker */
+          <div className="entry__districts">
+            <p className="entry__label">
               Which congressional district are you in?
             </p>
-            <p className="address-entry__helper">
-              If you're not sure, check the{' '}
+            <p className="entry__district-help">
+              Not sure?{' '}
               <a href={NC_VOTER_SEARCH_URL} target="_blank" rel="noopener noreferrer">
-                NC voter lookup
+                Look it up on the NC voter site
               </a>
             </p>
-            <div className="address-entry__districts">
-              <button
-                className="address-entry__district-btn"
-                onClick={() => handleDistrictSelect('NC-12')}
-              >
-                <span className="address-entry__district-name">NC-12</span>
-                <span className="address-entry__district-desc">
-                  Most of Charlotte, central Mecklenburg
-                </span>
-              </button>
-              <button
-                className="address-entry__district-btn"
-                onClick={() => handleDistrictSelect('NC-14')}
-              >
-                <span className="address-entry__district-name">NC-14</span>
-                <span className="address-entry__district-desc">
-                  Western/northern Mecklenburg edges
-                </span>
-              </button>
-              <button
-                className="address-entry__district-btn"
-                onClick={() => handleDistrictSelect('NC-8')}
-              >
-                <span className="address-entry__district-name">NC-8</span>
-                <span className="address-entry__district-desc">
-                  Parts of eastern Mecklenburg
-                </span>
-              </button>
+            
+            <div className="entry__district-list">
+              {[
+                { id: 'NC-12' as const, name: 'NC-12', desc: 'Most of Charlotte, central Mecklenburg' },
+                { id: 'NC-14' as const, name: 'NC-14', desc: 'Western and northern edges' },
+                { id: 'NC-8' as const, name: 'NC-8', desc: 'Eastern Mecklenburg' },
+              ].map((d) => (
+                <button
+                  key={d.id}
+                  className="entry__district-option"
+                  onClick={() => handleDistrictSelect(d.id)}
+                >
+                  <span className="entry__district-name">{d.name}</span>
+                  <span className="entry__district-desc">{d.desc}</span>
+                </button>
+              ))}
             </div>
+
             <button
-              className="address-entry__back"
+              className="btn btn--ghost"
               onClick={() => setShowDistrictPicker(false)}
             >
-              ← Back
+              ← Change address
             </button>
           </div>
         )}
 
-        <div className="address-entry__footer">
-          <p className="address-entry__disclaimer">
-            VOTR helps you prepare to vote. We inform, never endorse — we'll never tell you who to vote for.
+        {/* Footer */}
+        <footer className="entry__footer">
+          <p className="entry__disclaimer">
+            VOTR helps you prepare to vote. We show candidate positions from their own words — we never tell you who to vote for.
           </p>
           <a
             href={NC_VOTER_SEARCH_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="address-entry__official-link"
+            className="entry__official"
           >
-            Confirm your registration at NCSBE →
+            Check your registration at NCSBE.gov →
           </a>
-        </div>
+        </footer>
       </div>
 
       <style>{`
-        .address-entry {
+        .entry {
           min-height: 100vh;
           min-height: 100dvh;
           display: flex;
           flex-direction: column;
-          justify-content: center;
           align-items: center;
-          padding: 24px 16px;
-          background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-surface) 100%);
+          padding: var(--space-6) var(--space-5);
+          padding-top: max(var(--space-10), env(safe-area-inset-top, 20px));
+          background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-surface-subtle) 100%);
         }
 
-        .address-entry__content {
+        .entry__container {
           width: 100%;
           max-width: 400px;
+          display: flex;
+          flex-direction: column;
+          flex: 1;
         }
 
-        .address-entry__header {
+        .entry__header {
           text-align: center;
-          margin-bottom: 40px;
+          margin-bottom: var(--space-8);
         }
 
-        .address-entry__emoji {
-          font-size: 48px;
-          display: block;
-          margin-bottom: 12px;
+        .entry__logo {
+          width: 72px;
+          height: 72px;
+          margin: 0 auto var(--space-4);
+          background: var(--color-accent-light);
+          border-radius: var(--radius-xl);
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
-        .address-entry__title {
-          font-size: 32px;
+        .entry__logo-icon {
+          font-size: 36px;
+        }
+
+        .entry__title {
+          font-size: var(--text-3xl);
           font-weight: 700;
           color: var(--color-text-primary);
-          margin: 0 0 8px;
-          letter-spacing: -0.5px;
+          margin: 0 0 var(--space-2);
+          letter-spacing: -0.02em;
         }
 
-        .address-entry__subtitle {
-          font-size: 16px;
+        .entry__subtitle {
+          font-size: var(--text-lg);
           color: var(--color-text-secondary);
           margin: 0;
-          line-height: 1.5;
         }
 
-        .address-entry__form {
+        .entry__context {
+          margin-bottom: var(--space-8);
+        }
+
+        .entry__election {
           display: flex;
           flex-direction: column;
-          gap: 16px;
-        }
-
-        .address-entry__label {
-          font-size: 14px;
-          font-weight: 500;
-          color: var(--color-text-primary);
-        }
-
-        .address-entry__helper {
-          font-size: 13px;
-          color: var(--color-text-tertiary);
-          margin-top: -8px;
-          margin-bottom: 12px;
-        }
-
-        .address-entry__input {
-          font-size: 16px;
-        }
-
-        .address-entry__district-picker {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .address-entry__districts {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .address-entry__district-btn {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          padding: 16px;
-          background-color: var(--color-card);
-          border: 1px solid var(--color-border);
+          align-items: center;
+          padding: var(--space-5);
+          background: var(--color-surface);
           border-radius: var(--radius-lg);
-          cursor: pointer;
-          transition: all 0.2s ease;
-          text-align: left;
+          border: 1px solid var(--color-border-light);
+          text-align: center;
         }
 
-        .address-entry__district-btn:hover {
-          border-color: var(--color-primary);
-          background-color: var(--color-primary-muted);
+        .entry__election-label {
+          font-size: var(--text-xs);
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--color-accent);
+          margin-bottom: var(--space-1);
         }
 
-        .address-entry__district-name {
-          font-size: 17px;
+        .entry__election-name {
+          font-size: var(--text-lg);
           font-weight: 600;
           color: var(--color-text-primary);
         }
 
-        .address-entry__district-desc {
-          font-size: 13px;
+        .entry__election-date {
+          font-size: var(--text-sm);
           color: var(--color-text-secondary);
-          margin-top: 4px;
+          margin-top: var(--space-1);
         }
 
-        .address-entry__back {
-          margin-top: 8px;
-          font-size: 14px;
-          color: var(--color-text-secondary);
-          cursor: pointer;
-          padding: 8px;
+        .entry__form {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-4);
         }
 
-        .address-entry__back:hover {
+        .entry__label {
+          font-size: var(--text-base);
+          font-weight: 500;
           color: var(--color-text-primary);
         }
 
-        .address-entry__footer {
-          margin-top: 40px;
+        .entry__input {
+          font-size: var(--text-base);
+        }
+
+        .entry__helper {
+          margin-top: var(--space-4);
+          font-size: var(--text-sm);
+          color: var(--color-text-tertiary);
+          text-align: center;
+          line-height: var(--leading-relaxed);
+        }
+
+        .entry__districts {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-4);
+        }
+
+        .entry__district-help {
+          font-size: var(--text-sm);
+          color: var(--color-text-secondary);
+          margin-top: calc(-1 * var(--space-2));
+        }
+
+        .entry__district-list {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-3);
+        }
+
+        .entry__district-option {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          padding: var(--space-5);
+          background: var(--color-surface);
+          border: 1.5px solid var(--color-border);
+          border-radius: var(--radius-lg);
+          cursor: pointer;
+          transition: all var(--transition-normal);
+          text-align: left;
+          min-height: 72px;
+        }
+
+        .entry__district-option:hover {
+          border-color: var(--color-accent);
+          background: var(--color-accent-light);
+        }
+
+        .entry__district-name {
+          font-size: var(--text-lg);
+          font-weight: 600;
+          color: var(--color-text-primary);
+        }
+
+        .entry__district-desc {
+          font-size: var(--text-sm);
+          color: var(--color-text-secondary);
+          margin-top: var(--space-1);
+        }
+
+        .entry__footer {
+          margin-top: auto;
+          padding-top: var(--space-10);
           text-align: center;
         }
 
-        .address-entry__disclaimer {
-          font-size: 12px;
+        .entry__disclaimer {
+          font-size: var(--text-sm);
           color: var(--color-text-tertiary);
-          line-height: 1.5;
-          margin-bottom: 16px;
+          line-height: var(--leading-relaxed);
+          margin-bottom: var(--space-4);
         }
 
-        .address-entry__official-link {
-          font-size: 13px;
+        .entry__official {
+          font-size: var(--text-sm);
           font-weight: 500;
         }
       `}</style>
