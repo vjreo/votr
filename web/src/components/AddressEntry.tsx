@@ -39,7 +39,6 @@ function geoErrorMessage(err: unknown): string {
 export default function AddressEntry({ onSubmit }: Props) {
   const [step, setStep] = useState<Step>('home');
   const [address, setAddress] = useState('');
-  const [censusConsent, setCensusConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<LookupResult | null>(null);
@@ -69,7 +68,7 @@ export default function AddressEntry({ onSubmit }: Props) {
 
   const handleAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!address.trim() || !censusConsent) return;
+    if (!address.trim()) return;
     setBusy(true);
     setError(null);
     setStatus('Looking up that address…');
@@ -89,9 +88,9 @@ export default function AddressEntry({ onSubmit }: Props) {
 
   return (
     <div className="entry">
-      <a href="#main-content" className="skip-link">Skip to main content</a>
       <div className="entry__container">
         <header className="entry__header">
+          <a href="#main-content" className="skip-link">Skip to main content</a>
           <div className="entry__logo" aria-hidden="true">
             <span className="entry__logo-icon">🗳️</span>
           </div>
@@ -99,15 +98,14 @@ export default function AddressEntry({ onSubmit }: Props) {
           <p className="entry__subtitle">
             Know your ballot before you vote
           </p>
-        </header>
-
-        <div className="entry__context">
-          <div className="entry__election">
-            <span className="entry__election-label">Coming up</span>
-            <span className="entry__election-name">2026 General Election</span>
-            <span className="entry__election-date">Tuesday, November 3</span>
+          <div className="entry__context">
+            <div className="entry__election">
+              <span className="entry__election-label">Coming up</span>
+              <span className="entry__election-name">2026 General Election</span>
+              <span className="entry__election-date">Tuesday, November 3</span>
+            </div>
           </div>
-        </div>
+        </header>
 
         {step === 'home' && (
           <main id="main-content">
@@ -139,27 +137,18 @@ export default function AddressEntry({ onSubmit }: Props) {
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="123 Main St, Charlotte NC"
+                placeholder="123 Main St, Charlotte NC 28202"
                 className="entry__input"
                 autoComplete="street-address"
                 disabled={busy}
               />
-              <div className="entry__consent">
-                <input
-                  id="census-consent"
-                  type="checkbox"
-                  checked={censusConsent}
-                  onChange={(e) => setCensusConsent(e.target.checked)}
-                  disabled={busy}
-                />
-                <label htmlFor="census-consent">
-                  To find your districts, we'll send this address to the U.S. Census lookup. It isn't stored by VOTR.
-                </label>
-              </div>
+              <p className="entry__helper entry__helper--tight">
+                Your address stays on this device. A ZIP code helps us load a smaller map.
+              </p>
               <button
                 type="submit"
                 className="btn btn--secondary btn--full"
-                disabled={busy || !address.trim() || !censusConsent}
+                disabled={busy || !address.trim()}
               >
                 Look up this address
               </button>
@@ -440,34 +429,6 @@ export default function AddressEntry({ onSubmit }: Props) {
           font-size: var(--text-sm);
           color: var(--color-text-tertiary);
           text-transform: lowercase;
-        }
-
-        .entry__consent {
-          display: flex;
-          align-items: flex-start;
-          gap: var(--space-3);
-          padding: var(--space-4);
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-md);
-        }
-
-        .entry__consent input {
-          width: 20px;
-          height: 20px;
-          margin-top: 2px;
-          flex-shrink: 0;
-          accent-color: var(--color-accent);
-        }
-
-        .entry__consent label {
-          display: inline;
-          margin-bottom: 0;
-          font-weight: var(--font-normal);
-          font-size: var(--text-sm);
-          color: var(--color-text-secondary);
-          line-height: var(--leading-relaxed);
-          cursor: pointer;
         }
 
         .entry__error {

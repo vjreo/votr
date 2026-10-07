@@ -29,15 +29,12 @@ grep -riE "(api[_-]?key|secret|password|database)" dist/ | grep -v "type=.passwo
 - Coordinates **never leave the device** — no location API call
 - District maps are lazy-loaded from this origin (`/votr/districts/*.json`)
 
-**Typed address (optional Census lookup)**
+**Typed address (on-device)**
 
-Bundling Mecklenburg County’s open address-point file is impractical (~210 MB statewide NCSBE address points). VOTR therefore uses the **U.S. Census Geocoder** (an official government service, no API key) **only after explicit consent**:
+Statewide NCSBE address-point files are ~210 MB, but Mecklenburg County GIS Master Address Points compress to about 6 MB of ZIP-split `.json.gz` files. VOTR lazy-loads only the ZIP the voter typed (typically ~100–350 KB).
 
-> To find your districts, we'll send this address to the U.S. Census lookup. It isn't stored by VOTR.
-
-- The address is sent only to `https://geocoding.geo.census.gov` (one-line address geocoder)
-- VOTR does not store the address on any server (there is no backend)
-- After coordinates return, district matching is still on-device (same GeoJSON)
+- The address is matched on this device against bundled county address points
+- Nothing is sent to the U.S. Census Geocoder or any other server (the Census API does not allow browser CORS)
 - Users can skip this and pick districts by hand, or confirm with [NCSBE Voter Search](https://vt.ncsbe.gov/reglkup/)
 
 Address and district results stay in browser `localStorage` only.
@@ -64,6 +61,7 @@ All ballot data comes from official government sources:
 | NC Senate / House districts | NCSBE / NCGA SL 2023-146 and SL 2023-149 shapefiles |
 | County commissioner districts | Mecklenburg County GIS |
 | Charlotte city limits | U.S. Census TIGER/Line 2024 places |
+| Street addresses | Mecklenburg County GIS Master Address Points |
 
 - **Last verified:** October 7, 2026
 - App displays verification date and links to official sources
@@ -106,7 +104,7 @@ The app includes a strict CSP via meta tag:
   img-src 'self' data:;
   font-src 'self';
   script-src 'self';
-  connect-src 'self' https://geocoding.geo.census.gov;
+  connect-src 'self';
 " />
 ```
 
@@ -117,7 +115,7 @@ The app includes a strict CSP via meta tag:
 | `img-src` | Same-origin + data URIs (for emoji favicon) |
 | `font-src` | Same-origin only (self-hosted Inter) |
 | `script-src` | Same-origin only (no external scripts) |
-| `connect-src` | Same-origin, plus `https://geocoding.geo.census.gov` for optional consented address lookup |
+| `connect-src` | Same-origin only (district maps and address lists are bundled) |
 
 **Note:** `frame-ancestors` is not supported on CSP delivered via a `<meta>` tag, so it is omitted here (including it only logs a console warning). An HTTP header `Content-Security-Policy: frame-ancestors 'none'` would be required for clickjacking protection. GitHub Pages sends `X-Frame-Options` by default, which covers hosted deploys.
 
@@ -160,7 +158,7 @@ Dependencies are minimal:
 
 | Data | Where | Sent to server? |
 |------|-------|-----------------|
-| User address | localStorage | ❌ Never (unless the user consents to the Census geocoder) |
+| User address | localStorage | ❌ Never |
 | Device coordinates | Memory only, then discarded | ❌ Never |
 | District selection | localStorage | ❌ Never |
 | Candidate picks | localStorage | ❌ Never |

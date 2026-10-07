@@ -1,0 +1,150 @@
+{
+  "source": "Mecklenburg County GIS Master Address Points",
+  "sourceUrl": "https://meckgis.mecklenburgcountync.gov/server/rest/services/MasterAddressPoints/FeatureServer",
+  "date": "2026-10-07",
+  "zips": {
+    "28027": {
+      "n": 15,
+      "file": "28027.json.gz"
+    },
+    "28031": {
+      "n": 18949,
+      "file": "28031.json.gz"
+    },
+    "28036": {
+      "n": 8990,
+      "file": "28036.json.gz"
+    },
+    "28075": {
+      "n": 13,
+      "file": "28075.json.gz"
+    },
+    "28078": {
+      "n": 39854,
+      "file": "28078.json.gz"
+    },
+    "28104": {
+      "n": 377,
+      "file": "28104.json.gz"
+    },
+    "28105": {
+      "n": 23906,
+      "file": "28105.json.gz"
+    },
+    "28107": {
+      "n": 189,
+      "file": "28107.json.gz"
+    },
+    "28115": {
+      "n": 1,
+      "file": "28115.json.gz"
+    },
+    "28134": {
+      "n": 8589,
+      "file": "28134.json.gz"
+    },
+    "28202": {
+      "n": 15214,
+      "file": "28202.json.gz"
+    },
+    "28203": {
+      "n": 18744,
+      "file": "28203.json.gz"
+    },
+    "28204": {
+      "n": 6467,
+      "file": "28204.json.gz"
+    },
+    "28205": {
+      "n": 32351,
+      "file": "28205.json.gz"
+    },
+    "28206": {
+      "n": 17609,
+      "file": "28206.json.gz"
+    },
+    "28207": {
+      "n": 5265,
+      "file": "28207.json.gz"
+    },
+    "28208": {
+      "n": 31827,
+      "file": "28208.json.gz"
+    },
+    "28209": {
+      "n": 17437,
+      "file": "28209.json.gz"
+    },
+    "28210": {
+      "n": 24910,
+      "file": "28210.json.gz"
+    },
+    "28211": {
+      "n": 18141,
+      "file": "28211.json.gz"
+    },
+    "28212": {
+      "n": 20075,
+      "file": "28212.json.gz"
+    },
+    "28213": {
+      "n": 27406,
+      "file": "28213.json.gz"
+    },
+    "28214": {
+      "n": 24928,
+      "file": "28214.json.gz"
+    },
+    "28215": {
+      "n": 33833,
+      "file": "28215.json.gz"
+    },
+    "28216": {
+      "n": 33960,
+      "file": "28216.json.gz"
+    },
+    "28217": {
+      "n": 25161,
+      "file": "28217.json.gz"
+    },
+    "28223": {
+      "n": 284,
+      "file": "28223.json.gz"
+    },
+    "28226": {
+      "n": 20701,
+      "file": "28226.json.gz"
+    },
+    "28227": {
+      "n": 29505,
+      "file": "28227.json.gz"
+    },
+    "28262": {
+      "n": 33501,
+      "file": "28262.json.gz"
+    },
+    "28269": {
+      "n": 43780,
+      "file": "28269.json.gz"
+    },
+    "28270": {
+      "n": 15208,
+      "file": "28270.json.gz"
+    },
+    "28273": {
+      "n": 24495,
+      "file": "28273.json.gz"
+    },
+    "28277": {
+      "n": 35556,
+      "file": "28277.json.gz"
+    },
+    "28278": {
+      "n": 20541,
+      "file": "28278.json.gz"
+    }
+  },
+  "streetsFile": "streets.json.gz",
+  "streets": 139347,
+  "uniqueAddresses": 677782
+}

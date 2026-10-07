@@ -15,7 +15,7 @@ export interface UserLocation {
   ncSenate?: string;
   ncHouse?: string;
   commission?: string;
-  lookupSource?: 'geolocation' | 'census' | 'manual';
+  lookupSource?: 'geolocation' | 'address' | 'manual';
 }
 
 export interface CandidatePick {

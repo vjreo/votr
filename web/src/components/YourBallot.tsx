@@ -123,9 +123,8 @@ export default function YourBallot({
 
   return (
     <div className="ballot">
-      <a href="#ballot-main" className="skip-link">Skip to ballot</a>
-      {/* Header */}
       <header className="ballot__header">
+        <a href="#ballot-main" className="skip-link">Skip to ballot</a>
         <div className="ballot__header-top">
           <h1 className="ballot__title">Your Ballot</h1>
           <div className="ballot__header-actions">
@@ -155,8 +154,8 @@ export default function YourBallot({
           <span className="ballot__location-copy">
             <span className="ballot__location-text">{location.address}</span>
             <span className="ballot__location-meta">{formatLocationSummary(location)}</span>
+            <span className="ballot__location-change">Not right? Change it</span>
           </span>
-          <span className="ballot__location-district">Not right? Change it</span>
         </button>
 
         {nextDeadline && (
@@ -199,13 +198,12 @@ export default function YourBallot({
             {group.contests.map((contest) => (
               <article key={contest.office} className="ballot__race" role="group" aria-label={contest.office}>
                 <h4 className="ballot__office">{contest.office}</h4>
-                <div className="ballot__candidates" role="list">
+                <div className="ballot__candidates">
                   {contest.candidates.map((candidate) => {
                     const pick = getCandidatePick(candidate.id);
                     return (
                       <button
                         key={candidate.id}
-                        role="listitem"
                         className={`ballot__candidate ${pick ? 'ballot__candidate--picked' : ''}`}
                         onClick={() => setSelectedCandidate(candidate)}
                         aria-label={`${candidate.name}, ${candidate.party}${pick ? `, marked as ${pick.leaning}` : ''}`}
@@ -721,14 +719,10 @@ const ballotStyles = `
     white-space: normal;
   }
 
-  .ballot__location-district {
+  .ballot__location-change {
     font-weight: 600;
     color: var(--color-accent);
-    flex-shrink: 0;
     font-size: var(--text-xs);
-    max-width: 7.5rem;
-    text-align: right;
-    line-height: var(--leading-snug);
   }
 
   .ballot__deadline {

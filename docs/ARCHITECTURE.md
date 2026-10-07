@@ -28,7 +28,7 @@ These rules apply to:
 
 **Through November 3, 2026**, the static web app (`web/`) is the primary product.
 
-- **Web app** (`web/`): Active development. Vite + React, deploys to GitHub Pages, bundles all Mecklenburg 2026 ballot data. No backend dependency. District lookup is on-device (browser geolocation + bundled GeoJSON). Typed addresses use the U.S. Census Geocoder only after explicit consent.
+- **Web app** (`web/`): Active development. Vite + React, deploys to GitHub Pages, bundles all Mecklenburg 2026 ballot data. No backend dependency. District lookup is on-device (browser geolocation or typed address against bundled county address points + GeoJSON).
 - **Backend** (`backend/`): Frozen. Keep CI passing, but no new features. Preserved for post-election multi-county expansion.
 - **Native app** (`mobile/`): Frozen. Expo React Native setup preserved for future app store builds with accounts and personalization.
 
