@@ -473,7 +473,6 @@ function MeasureCard({
   onPick: (leaning: MeasurePick['leaning'] | null) => void;
   showAmount?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
   const isBond = measure.type === 'bond';
   const civic = explainerForMeasure(measure.id);
 
@@ -493,16 +492,17 @@ function MeasureCard({
           <span className="measure__amount">{formatMoney(measure.principal)}</span>
         )}
       </div>
-      
-      <p className="measure__question">{civic?.oneLiner || measure.ballotQuestion}</p>
-      
-      {expanded && (
+
+      <details className="measure__xpl">
+        <summary className="measure__summary">
+          <span>{civic?.oneLiner || measure.ballotQuestion}</span>
+          <span className="measure__more-label">More</span>
+        </summary>
         <div className="measure__detail">
           {civic ? (
             <>
               <p className="measure__fact">{civic.yesMeans}</p>
               <p className="measure__fact">{civic.noMeans}</p>
-              <p className="measure__you-label">What this means for you</p>
               <ul className="measure__impact">
                 {civic.localImpact.map((item) => (
                   <li key={item}>{item}</li>
@@ -528,11 +528,7 @@ function MeasureCard({
             <p className="measure__tax">Estimated tax impact: {measure.estimatedTaxImpact}</p>
           )}
         </div>
-      )}
-      
-      <button className="measure__toggle" onClick={() => setExpanded(!expanded)}>
-        {expanded ? 'Show less' : 'What does a yes or no do?'}
-      </button>
+      </details>
       
       <div className="measure__picks">
         <span className="measure__picks-label">I'm leaning:</span>
@@ -1018,18 +1014,30 @@ const ballotStyles = `
     flex-shrink: 0;
   }
 
-  .measure__question {
+  .measure__summary {
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
-    line-height: var(--leading-relaxed);
-    margin: 0 0 var(--space-3);
+    line-height: var(--leading-snug);
+    cursor: pointer;
+    list-style: none;
+    min-height: var(--tap-target-min);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-2);
   }
+  .measure__summary::-webkit-details-marker { display: none; }
+  .measure__more-label {
+    flex-shrink: 0;
+    color: var(--color-accent);
+    font-weight: 500;
+    font-size: var(--text-sm);
+  }
+  .measure__xpl[open] .measure__more-label { visibility: hidden; }
 
   .measure__detail {
-    padding: var(--space-4);
-    background: var(--color-surface-subtle);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--space-3);
+    padding: 0 0 var(--space-3);
   }
 
   .measure__explanation {
@@ -1045,13 +1053,6 @@ const ballotStyles = `
     color: var(--color-text-secondary);
     line-height: var(--leading-snug);
     margin: 0 0 var(--space-2);
-  }
-
-  .measure__you-label {
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: var(--space-3) 0 var(--space-2);
   }
 
   .measure__impact {
@@ -1071,20 +1072,6 @@ const ballotStyles = `
     font-size: var(--text-sm);
     color: var(--color-success);
     margin: var(--space-3) 0 0;
-  }
-
-  .measure__toggle {
-    font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--color-accent);
-    margin-bottom: var(--space-4);
-    padding: var(--space-2) 0;
-    min-height: var(--tap-target-min);
-    cursor: pointer;
-  }
-
-  .measure__toggle:hover {
-    text-decoration: underline;
   }
 
   .measure__picks {

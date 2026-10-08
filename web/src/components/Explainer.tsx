@@ -8,44 +8,46 @@ function asSentence(s: string) {
 interface Props {
   explainer: OfficeExplainer;
   district?: string | null;
+  jargon?: { term: string; meaning: string }[];
 }
 
-export function ExplainerBody({ explainer, district }: Props) {
+/** One-liner as the summary; term, impact, and source stay collapsed. */
+export default function Explainer({ explainer, district, jargon = [] }: Props) {
   const now = currentHolderFor(explainer, district);
-  return (
-    <>
-      <p className="xpl__line">{explainer.oneLiner}</p>
-      <p>{explainer.controls}</p>
-      <p>
-        Term: {explainer.term}. Seats: {explainer.seats}.
-      </p>
-      {now && <p>Now: {asSentence(now)}</p>}
-      {explainer.jargon?.map((j) => (
-        <p key={j.term}>
-          {j.term}: {j.meaning}.
-        </p>
-      ))}
-      <p className="xpl__you-label">What this means for you</p>
-      <ul>
-        {explainer.localImpact.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-      <p className="xpl__src">
-        <a href={explainer.source.url} target="_blank" rel="noopener noreferrer">
-          {explainer.source.title}
-        </a>
-      </p>
-    </>
-  );
-}
+  const meta = [
+    explainer.term,
+    explainer.seats,
+    now ? `Now: ${asSentence(now)}` : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
-export default function Explainer({ explainer, district }: Props) {
   return (
-    <div className="xpl">
-      <ExplainerBody explainer={explainer} district={district} />
+    <details className="xpl">
+      <summary className="xpl__summary">
+        <span>{explainer.oneLiner}</span>
+        <span className="xpl__more-label">More</span>
+      </summary>
+      <div className="xpl__more">
+        {jargon.map((j) => (
+          <p key={j.term}>
+            {j.term}: {j.meaning}.
+          </p>
+        ))}
+        <ul>
+          {explainer.localImpact.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+        {meta && <p className="xpl__meta">{meta}</p>}
+        <p className="xpl__src">
+          <a href={explainer.source.url} target="_blank" rel="noopener noreferrer">
+            {explainer.source.title}
+          </a>
+        </p>
+      </div>
       <style>{xplStyles}</style>
-    </div>
+    </details>
   );
 }
 
@@ -55,24 +57,39 @@ export const xplStyles = `
     color: var(--color-text-secondary);
     line-height: var(--leading-snug);
   }
-  .xpl__line {
-    margin: 0 0 var(--space-2);
-    color: var(--color-text-primary);
+  .xpl__summary {
+    cursor: pointer;
+    list-style: none;
+    min-height: var(--tap-target-min);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    color: var(--color-text-secondary);
+    font-weight: 400;
   }
-  .xpl p {
+  .xpl__summary::-webkit-details-marker { display: none; }
+  .xpl__more-label {
+    flex-shrink: 0;
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+  .xpl[open] .xpl__more-label { visibility: hidden; }
+  .xpl__more {
+    padding-bottom: var(--space-2);
+  }
+  .xpl__more p {
     margin: 0 0 var(--space-2);
   }
   .xpl ul {
-    margin: 0 0 var(--space-3);
+    margin: 0 0 var(--space-2);
     padding-left: 1.15em;
   }
   .xpl li {
     margin-bottom: var(--space-1);
   }
-  .xpl__you-label {
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: var(--space-3) 0 var(--space-2) !important;
+  .xpl__meta {
+    margin: 0 0 var(--space-2);
   }
   .xpl__src {
     margin: 0 !important;
