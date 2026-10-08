@@ -495,8 +495,10 @@ function MeasureCard({
 
       <details className="measure__xpl">
         <summary className="measure__summary">
-          <span>{civic?.oneLiner || measure.ballotQuestion}</span>
-          <span className="measure__more-label">More</span>
+          <span>
+            {civic?.oneLiner || measure.ballotQuestion}{' '}
+            <span className="measure__more-label">More</span>
+          </span>
         </summary>
         <div className="measure__detail">
           {civic ? (
@@ -1023,18 +1025,16 @@ const ballotStyles = `
     min-height: var(--tap-target-min);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
     margin: 0 0 var(--space-2);
   }
   .measure__summary::-webkit-details-marker { display: none; }
   .measure__more-label {
-    flex-shrink: 0;
     color: var(--color-accent);
     font-weight: 500;
     font-size: var(--text-sm);
+    white-space: nowrap;
   }
-  .measure__xpl[open] .measure__more-label { visibility: hidden; }
+  .measure__xpl[open] .measure__more-label { display: none; }
 
   .measure__detail {
     padding: 0 0 var(--space-3);

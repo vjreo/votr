@@ -25,8 +25,10 @@ export default function Explainer({ explainer, district, jargon = [] }: Props) {
   return (
     <details className="xpl">
       <summary className="xpl__summary">
-        <span>{explainer.oneLiner}</span>
-        <span className="xpl__more-label">More</span>
+        <span>
+          {explainer.oneLiner}{' '}
+          <span className="xpl__more-label">More</span>
+        </span>
       </summary>
       <div className="xpl__more">
         {jargon.map((j) => (
@@ -63,18 +65,16 @@ export const xplStyles = `
     min-height: var(--tap-target-min);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
     color: var(--color-text-secondary);
     font-weight: 400;
   }
   .xpl__summary::-webkit-details-marker { display: none; }
   .xpl__more-label {
-    flex-shrink: 0;
     color: var(--color-accent);
     font-weight: 500;
+    white-space: nowrap;
   }
-  .xpl[open] .xpl__more-label { visibility: hidden; }
+  .xpl[open] .xpl__more-label { display: none; }
   .xpl__more {
     padding-bottom: var(--space-2);
   }
