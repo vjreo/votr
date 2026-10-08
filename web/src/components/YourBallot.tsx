@@ -202,7 +202,7 @@ export default function YourBallot({
               <article key={contest.office} className="ballot__race" aria-label={contest.office}>
                 <div className="ballot__office-block">
                   <h4 className="ballot__office">{contest.office}</h4>
-                  <RaceContext office={contest.office} location={location} candidate={contest.candidates[0]} />
+                  <RaceContext office={contest.office} location={location} />
                 </div>
                 <div className="ballot__candidates">
                   {contest.candidates.map((candidate) => {

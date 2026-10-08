@@ -177,8 +177,8 @@ export const OFFICES: Record<string, OfficeExplainer> = {
     ],
     currentHolder: 'Leigh Altman, Yvette Townsend-Ingram, and Arthur Griffin, Jr.',
     source: {
-      title: 'Mecklenburg Board of County Commissioners',
-      url: 'https://bocc.mecknc.gov/',
+      title: 'UNC School of Government — County and Municipal Government in North Carolina',
+      url: 'https://www.sog.unc.edu/publications/books/county-and-municipal-government-north-carolina-2025-edition',
     },
     lastChecked: OFFICES_LAST_CHECKED,
     jargon: [{ term: 'at-large', meaning: 'elected by the whole county' }],

@@ -37,7 +37,9 @@ export default function RaceContext({
   const explainer = explainerForOffice(office);
   if (!explainer) return null;
   const district = districtFor(candidate, office, location);
-  const extraJargon = candidate ? jargonForCandidate(candidate) : [];
+  const extraJargon = candidate
+    ? jargonForCandidate(candidate)
+    : (explainer.jargon || []).filter((j) => j.term !== 'incumbent');
   const now = currentHolderFor(explainer, district);
 
   return (

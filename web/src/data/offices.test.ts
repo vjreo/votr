@@ -49,4 +49,12 @@ describe('office explainers', () => {
     expect(OFFICES['meck-clerk'].source.url).toContain('nccourts.gov');
     expect(Object.keys(MEASURES).length).toBe(6);
   });
+
+  it('gives every stored office a source and local impact', () => {
+    for (const explainer of Object.values(OFFICES)) {
+      expect(explainer.source.url.startsWith('https://'), explainer.id).toBe(true);
+      expect(explainer.localImpact.length).toBeGreaterThanOrEqual(2);
+      expect(explainer.oneLiner.length).toBeGreaterThan(20);
+    }
+  });
 });

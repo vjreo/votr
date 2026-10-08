@@ -48,7 +48,7 @@ Browser (https://vjreo.github.io/votr/)
 **Data**
 
 - Candidates and measures: `web/src/data/ballot.ts` (NCSBE / Mecklenburg BOE / campaign and WFAE sources).
-- Office and measure explainers: `web/src/data/offices.ts` (NCGA, NC Courts, Mecklenburg BOCC, City of Charlotte, NCSBE, UNC School of Government / Judicial Branch). One-liners plus tap-for-more: powers, term, seats, current holder when known, and 2–3 local “what this means for you” facts. Sources and `lastChecked` on each record.
+- Office and measure explainers: `web/src/data/offices.ts` (NCGA, NC Courts, Mecklenburg BOCC, City of Charlotte, NCSBE, UNC School of Government, N.C. Judicial Branch). One-liners plus tap-for-more: powers, term, seats, current holder when known, and 2–3 local “what this means for you” facts. Sources and `lastChecked` on each record. Clerk of Superior Court is documented even though that race is not yet in `ballot.ts`.
 - Maps and addresses: see `web/public/districts/manifest.json` and `web/public/addresses/index.json`. City/town on Your districts uses the Charlotte polygon, then ZIP-to-town for Cornelius, Davidson, Huntersville, Matthews, and Pineville.
 
 ### Local development
