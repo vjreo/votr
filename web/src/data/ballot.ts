@@ -514,6 +514,20 @@ export function getDaysUntil(dateString: string): number {
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+/** Deadline banner: "Last day", "1 day left", "12 days left". */
+export function formatDaysLeft(days: number): string {
+  if (days <= 0) return 'Last day';
+  if (days === 1) return '1 day left';
+  return `${days} days left`;
+}
+
+/** Dates list: "Today", "1 day", "12 days". */
+export function formatDaysShort(days: number): string {
+  if (days <= 0) return 'Today';
+  if (days === 1) return '1 day';
+  return `${days} days`;
+}
+
 export function formatDate(dateString: string): string {
   return localDay(dateString).toLocaleDateString('en-US', {
     weekday: 'long',

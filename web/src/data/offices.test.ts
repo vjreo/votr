@@ -54,7 +54,25 @@ describe('office explainers', () => {
     for (const explainer of Object.values(OFFICES)) {
       expect(explainer.source.url.startsWith('https://'), explainer.id).toBe(true);
       expect(explainer.localImpact.length).toBeGreaterThanOrEqual(2);
+      expect(explainer.localImpact.length).toBeLessThanOrEqual(3);
       expect(explainer.oneLiner.length).toBeGreaterThan(20);
+    }
+  });
+
+  it('keeps County place copy off the commission seat', () => {
+    expect(OFFICES['meck-county'].hideMeta).toBe(true);
+    expect(OFFICES['meck-county'].currentHolder).toBeUndefined();
+    expect(OFFICES['meck-commission-district'].seats).toMatch(/at-large/);
+    expect(OFFICES['meck-commission-atlarge'].currentHolder).toMatch(/Altman/);
+  });
+
+  it('does not repeat the one-liner as a bullet', () => {
+    for (const explainer of Object.values(OFFICES)) {
+      const line = explainer.oneLiner.toLowerCase();
+      for (const bullet of explainer.localImpact) {
+        const head = bullet.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').trim().split(/\s+/).slice(0, 6).join(' ');
+        expect(line.includes(head), `${explainer.id}: ${bullet}`).toBe(false);
+      }
     }
   });
 });

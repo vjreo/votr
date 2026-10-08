@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import type { Candidate } from '../data/ballot';
 import type { CandidatePick, UserLocation } from '../App';
 import RaceContext from './RaceContext';
+import JargonText from './Term';
 
 interface Props {
   candidate: Candidate;
@@ -48,7 +49,9 @@ export default function CandidateDetail({ candidate, pick, location, onBack, onP
           </div>
           <h1 className="detail__name">{candidate.name}</h1>
           <p className="detail__party">{candidate.party}</p>
-          <p className="detail__office">{candidate.office}</p>
+          <p className="detail__office">
+            <JargonText text={candidate.office} />
+          </p>
         </div>
 
         <RaceContext office={candidate.office} location={location} candidate={candidate} compact />
@@ -88,7 +91,9 @@ export default function CandidateDetail({ candidate, pick, location, onBack, onP
         {candidate.bio && (
           <section className="detail__section">
             <h2 className="detail__section-title">About</h2>
-            <p className="detail__bio">{candidate.bio}</p>
+            <p className="detail__bio">
+              <JargonText text={candidate.bio} />
+            </p>
           </section>
         )}
 

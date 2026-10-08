@@ -48,7 +48,7 @@ Browser (https://vjreo.github.io/votr/)
 **Data**
 
 - Candidates and measures: `web/src/data/ballot.ts` (NCSBE / Mecklenburg BOE / campaign and WFAE sources).
-- Office and measure explainers: `web/src/data/offices.ts` (NCGA, NC Courts, Mecklenburg BOCC, City of Charlotte, NCSBE, UNC School of Government, N.C. Judicial Branch). One short line visible by default; tap **More** for term, seats, current holder, and 2–3 local facts. Sources and `lastChecked` on each record. Clerk of Superior Court is documented even though that race is not yet in `ballot.ts`. Your districts keeps the original scan order (House, Senate, House, County, Commission, City/Town).
+- Office and measure explainers: `web/src/data/offices.ts` (NCGA, NC Courts, Mecklenburg BOCC, City of Charlotte, NCSBE, UNC School of Government, N.C. Judicial Branch). One short line visible by default; tap **More** for 2–3 local facts plus term/seats/current holder when the row is an elected seat. The County row describes county government; commission term and members live on the County Commission row. Jargon (incumbent, at-large) is a dotted-underline tap. Sources and `lastChecked` on each record. Clerk of Superior Court is documented even though that race is not yet in `ballot.ts`. Your districts keeps the original scan order (House, Senate, House, County, Commission, City/Town).
 - Maps and addresses: see `web/public/districts/manifest.json` and `web/public/addresses/index.json`. City/town on Your districts uses the Charlotte polygon, then ZIP-to-town for Cornelius, Davidson, Huntersville, Matthews, and Pineville.
 
 ### Local development

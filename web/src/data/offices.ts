@@ -24,6 +24,8 @@ export interface OfficeExplainer {
   source: CivicSource;
   lastChecked: string;
   jargon?: { term: string; meaning: string }[];
+  /** Hide term / seats / current holder (place rows, not an elected seat). */
+  hideMeta?: boolean;
 }
 
 export interface MeasureExplainer {
@@ -40,6 +42,26 @@ export interface MeasureExplainer {
 export const OFFICES_LAST_CHECKED = '2026-10-08';
 
 export const OFFICES: Record<string, OfficeExplainer> = {
+  'meck-county': {
+    id: 'meck-county',
+    name: 'Mecklenburg County',
+    oneLiner: 'County government funds schools, parks, libraries, and public health, and it sets the county property tax.',
+    controls:
+      'North Carolina counties provide services such as health, social services, and a share of school funding. The elected Board of County Commissioners adopts the budget and tax rate. Other county offices (sheriff, clerk, district attorney) are elected separately.',
+    term: '',
+    seats: '',
+    hideMeta: true,
+    localImpact: [
+      'Funds Charlotte-Mecklenburg Schools. It does not run the elected school board.',
+      'Runs parks, libraries, public health, and social services.',
+      'Sheriff, clerk, and district attorney are separate elected offices.',
+    ],
+    source: {
+      title: 'UNC School of Government — County and Municipal Government in North Carolina',
+      url: 'https://www.sog.unc.edu/publications/books/county-and-municipal-government-north-carolina-2025-edition',
+    },
+    lastChecked: OFFICES_LAST_CHECKED,
+  },
   'us-senate': {
     id: 'us-senate',
     name: 'U.S. Senate',
@@ -51,7 +73,6 @@ export const OFFICES: Record<string, OfficeExplainer> = {
     localImpact: [
       'Votes on federal highway, transit, and housing money that can reach Mecklenburg.',
       'Votes on federal taxes and programs such as Medicare and Social Security.',
-      'Confirms federal judges who sit in North Carolina courts.',
     ],
     currentHolder: 'Open seat. Current senator in this class: Thom Tillis (term ends January 2027).',
     source: {
@@ -70,7 +91,6 @@ export const OFFICES: Record<string, OfficeExplainer> = {
     seats: '435 voting members',
     localImpact: [
       'Votes on federal funds that can pay for local roads, transit, and housing.',
-      'Votes on federal tax and health-care rules that apply in your ZIP.',
       'Helps set disaster and military spending that can affect this region.',
     ],
     currentByDistrict: {
@@ -94,7 +114,6 @@ export const OFFICES: Record<string, OfficeExplainer> = {
     term: '2 years',
     seats: '50 (one per Senate district)',
     localImpact: [
-      'Helps set how much state money goes to roads in this area.',
       'Helps set the school-funding formula that pays for CMS classrooms.',
       'Votes on state rules for Medicaid, elections, and local government power.',
     ],
@@ -113,7 +132,6 @@ export const OFFICES: Record<string, OfficeExplainer> = {
     term: '2 years',
     seats: '120 (one per House district)',
     localImpact: [
-      'Helps set how much state money goes to roads in this area.',
       'Helps set the school-funding formula that pays for CMS classrooms.',
       'Votes on state tax and local-government rules that show up on your county bill.',
     ],
@@ -132,7 +150,6 @@ export const OFFICES: Record<string, OfficeExplainer> = {
     term: '8 years',
     seats: '7 (Chief Justice and 6 associate justices), elected statewide',
     localImpact: [
-      'Has the last word on North Carolina statutes and the state constitution.',
       'Its rulings bind every trial court in Mecklenburg.',
       'Does not write the budget or set your tax rate.',
     ],
@@ -171,7 +188,6 @@ export const OFFICES: Record<string, OfficeExplainer> = {
     term: '2 years',
     seats: '3 at-large (countywide), plus 6 district seats',
     localImpact: [
-      'Sets the county property tax rate on your bill.',
       'Funds Charlotte-Mecklenburg Schools. It does not run the elected school board.',
       'Funds parks, libraries, public health, and social services.',
     ],
@@ -190,11 +206,10 @@ export const OFFICES: Record<string, OfficeExplainer> = {
     controls:
       'Six district commissioners sit on the nine-member board with three at-large members. The whole board, not one district, adopts the budget and tax rate.',
     term: '2 years',
-    seats: '6 district seats (one per commission district)',
+    seats: '9 members (3 at-large, 6 district)',
     localImpact: [
-      'Votes on the county property tax rate and the county budget.',
-      'Votes on county money for CMS, parks, libraries, and public health.',
-      'Represents your commission district in those countywide votes.',
+      'Represents your commission district in countywide budget and tax votes.',
+      'The whole board, not one district, adopts the budget and tax rate.',
     ],
     currentByDistrict: {
       '1': 'Elaine Powell',
@@ -220,7 +235,6 @@ export const OFFICES: Record<string, OfficeExplainer> = {
     seats: '1 per county',
     localImpact: [
       'Operates the Mecklenburg County jail.',
-      'Provides security at the courthouse and serves court papers.',
       'Patrols parts of the county that are not inside a city police department.',
     ],
     currentHolder: 'Garry L. McFadden',
@@ -239,7 +253,6 @@ export const OFFICES: Record<string, OfficeExplainer> = {
     term: '4 years',
     seats: '1 per county (100 statewide)',
     localImpact: [
-      'Files and keeps Mecklenburg civil, criminal, and estate records.',
       'Handles probate of wills and many guardianship cases.',
       'Can issue some warrants and hold initial criminal appearances.',
     ],
@@ -259,7 +272,6 @@ export const OFFICES: Record<string, OfficeExplainer> = {
     seats: '1 per prosecutorial district',
     localImpact: [
       'Decides charging and prosecution of criminal cases filed here.',
-      'Sets the criminal trial docket in Mecklenburg courts.',
       'Does not decide civil lawsuits or write county tax policy.',
     ],
     currentHolder: 'Spencer Merriweather (Prosecutorial District 26)',
