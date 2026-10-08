@@ -1,14 +1,16 @@
 import type { Candidate } from '../data/ballot';
-import type { CandidatePick } from '../App';
+import type { CandidatePick, UserLocation } from '../App';
+import RaceContext from './RaceContext';
 
 interface Props {
   candidate: Candidate;
   pick?: CandidatePick;
+  location?: UserLocation | null;
   onBack: () => void;
   onPick: (leaning: CandidatePick['leaning'] | null) => void;
 }
 
-export default function CandidateDetail({ candidate, pick, onBack, onPick }: Props) {
+export default function CandidateDetail({ candidate, pick, location, onBack, onPick }: Props) {
   const hasPositions = candidate.positions.length > 0;
   const hasSources = candidate.sources.length > 0;
 
@@ -43,6 +45,8 @@ export default function CandidateDetail({ candidate, pick, onBack, onPick }: Pro
           <p className="detail__party">{candidate.party}</p>
           <p className="detail__office">{candidate.office}</p>
         </div>
+
+        <RaceContext office={candidate.office} location={location} candidate={candidate} compact />
 
         {/* Pick buttons */}
         <fieldset className="detail__pick-section">

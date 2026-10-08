@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { UserLocation } from '../utils/storage';
 import { DATA_PROVENANCE, NC_VOTER_SEARCH_URL, OFFICIAL_SOURCES } from '../data/ballot';
 import ShareVotr from './ShareVotr';
+import DistrictRows from './DistrictRows';
 import {
   DISTRICTS_ATTRIBUTION,
   lookupFromAddress,
@@ -286,28 +287,8 @@ export default function AddressEntry({ onSubmit }: Props) {
           <main id="main-content" className="entry__result">
             <h1 className="entry__title">Your districts</h1>
             <p className="entry__result-address">{result.location.address}</p>
-            <dl className="entry__dl">
-              <div>
-                <dt>U.S. House</dt>
-                <dd>{result.location.district}</dd>
-              </div>
-              <div>
-                <dt>NC Senate</dt>
-                <dd>{result.location.ncSenate ? `District ${result.location.ncSenate}` : 'Not matched'}</dd>
-              </div>
-              <div>
-                <dt>NC House</dt>
-                <dd>{result.location.ncHouse ? `District ${result.location.ncHouse}` : 'Not matched'}</dd>
-              </div>
-              <div>
-                <dt>County Commission</dt>
-                <dd>{result.location.commission ? `District ${result.location.commission}` : 'Not matched'}</dd>
-              </div>
-              <div>
-                <dt>Charlotte city</dt>
-                <dd>{result.location.isCharlotte ? 'Yes' : 'No'}</dd>
-              </div>
-            </dl>
+            <DistrictRows location={result.location} />
+            <p className="entry__hint">Tap a row to see what that office does.</p>
             {result.unmatched.length > 0 && (
               <p className="entry__error" role="status">
                 Unmatched: {result.unmatched.join(', ')}. You can still continue.
@@ -649,39 +630,11 @@ export default function AddressEntry({ onSubmit }: Props) {
           text-align: center;
         }
 
-        .entry__dl {
+        .entry__hint {
           margin: 0;
-          background: var(--color-surface);
-          border: 1px solid var(--color-border-light);
-          border-radius: var(--radius-lg);
-          overflow: hidden;
-        }
-
-        .entry__dl > div {
-          display: flex;
-          justify-content: space-between;
-          gap: var(--space-4);
-          padding: var(--space-3) var(--space-5);
-          border-bottom: 1px solid var(--color-border-light);
-          min-height: var(--tap-target-min);
-          align-items: center;
-        }
-
-        .entry__dl > div:last-child {
-          border-bottom: none;
-        }
-
-        .entry__dl dt {
-          font-size: var(--text-sm);
-          color: var(--color-text-secondary);
-        }
-
-        .entry__dl dd {
-          font-size: var(--text-sm);
-          font-weight: 600;
-          color: var(--color-text-primary);
-          margin: 0;
-          text-align: right;
+          font-size: var(--text-xs);
+          color: var(--color-text-tertiary);
+          text-align: center;
         }
 
         .entry__district-help {

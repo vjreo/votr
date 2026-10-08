@@ -10,7 +10,7 @@ VOTR helps you see what is on your ballot. We show candidate positions from thei
 
 Through Election Day, **the static web app is the product**.
 
-- **Web** (`web/`): Vite + React. Deploys to GitHub Pages. Bundles Mecklenburg 2026 races, maps, and address points. No backend. Address and GPS lookup stay on the device.
+- **Web** (`web/`): Vite + React. Deploys to GitHub Pages. Bundles Mecklenburg 2026 races, office explainers, maps, and address points. No backend. Address and GPS lookup stay on the device.
 - **Backend** (`backend/`) and **native app** (`mobile/`): Frozen. Keep CI passing. No new features until after November 3.
 
 ## Unbiased rules
@@ -35,6 +35,7 @@ Open [http://localhost:5173/votr/](http://localhost:5173/votr/) (the app is serv
 
 ```bash
 npm run typecheck
+npm test
 npm run build
 npm run preview   # production build at http://localhost:4173/votr/
 ```

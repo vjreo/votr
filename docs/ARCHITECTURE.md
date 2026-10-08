@@ -11,7 +11,7 @@ VOTR exists to help voters make informed choices — not to steer them.
 5. **Clear attribution.** Every claim should trace to a source the user can verify.
 6. **Do not editorialize.** Summarize; do not opine.
 
-These rules apply to ballot copy in `web/src/data/ballot.ts`, UI labels, and any future AI-generated content.
+These rules apply to ballot copy in `web/src/data/ballot.ts`, office explainers in `web/src/data/offices.ts`, UI labels, and any future AI-generated content. Explainers describe powers and duties only — never which candidate would do what.
 
 ---
 
@@ -48,7 +48,8 @@ Browser (https://vjreo.github.io/votr/)
 **Data**
 
 - Candidates and measures: `web/src/data/ballot.ts` (NCSBE / Mecklenburg BOE / campaign and WFAE sources).
-- Maps and addresses: see `web/public/districts/manifest.json` and `web/public/addresses/index.json`.
+- Office and measure explainers: `web/src/data/offices.ts` (NCGA, NC Courts, Mecklenburg BOCC, City of Charlotte, NCSBE, UNC School of Government / Judicial Branch). One-liners plus tap-for-more: powers, term, seats, current holder when known, and 2–3 local “what this means for you” facts. Sources and `lastChecked` on each record.
+- Maps and addresses: see `web/public/districts/manifest.json` and `web/public/addresses/index.json`. City/town on Your districts uses the Charlotte polygon, then ZIP-to-town for Cornelius, Davidson, Huntersville, Matthews, and Pineville.
 
 ### Local development
 
@@ -57,6 +58,7 @@ cd web
 npm ci
 npm run dev          # http://localhost:5173/votr/
 npm run typecheck
+npm test
 npm run build
 ```
 
