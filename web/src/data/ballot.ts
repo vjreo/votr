@@ -534,6 +534,25 @@ export function formatMoney(amount: number): string {
   return `$${amount}`;
 }
 
+/** Unique office titles on the bundled 2026 ballot. */
+export function allBallotOffices(): string[] {
+  const people = [
+    ...US_SENATE,
+    ...US_HOUSE_NC8,
+    ...US_HOUSE_NC12,
+    ...US_HOUSE_NC14,
+    ...NC_SUPREME_COURT,
+    ...NC_COURT_OF_APPEALS,
+    ...STATE_LEGISLATURE,
+    ...LOCAL_RACES,
+  ];
+  return [...new Set(people.map((c) => c.office))].sort();
+}
+
+export function allMeasureIds(): string[] {
+  return [...AMENDMENTS, ...CHARLOTTE_BONDS].map((m) => m.id);
+}
+
 export function getNextCriticalDeadline(): ElectionDeadline | null {
   for (const d of DEADLINES) {
     if (d.critical && getDaysUntil(d.date) >= 0) {

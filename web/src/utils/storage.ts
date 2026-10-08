@@ -15,6 +15,9 @@ export interface UserLocation {
   ncSenate?: string;
   ncHouse?: string;
   commission?: string;
+  /** City or town label, e.g. Charlotte, Huntersville, Unincorporated Mecklenburg. */
+  place?: string;
+  zip?: string;
   lookupSource?: 'geolocation' | 'address' | 'manual';
 }
 

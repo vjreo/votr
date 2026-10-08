@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { copyFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
@@ -25,5 +26,8 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+  },
+  test: {
+    environment: 'node',
   },
 });

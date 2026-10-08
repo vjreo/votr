@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { UserLocation, CandidatePick, MeasurePick } from '../App';
 import {
   ELECTION,
@@ -21,6 +21,8 @@ import {
 import { DISTRICTS_ATTRIBUTION } from '../utils/lookup';
 import CandidateDetail from './CandidateDetail';
 import ShareVotr from './ShareVotr';
+import RaceContext from './RaceContext';
+import { explainerForMeasure } from '../data/offices';
 
 interface Props {
   location: UserLocation;
@@ -87,6 +89,10 @@ export default function YourBallot({
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [view, setView] = useState<'ballot' | 'dates' | 'settings'>('ballot');
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [view, selectedCandidate]);
+
   const candidates = getCandidatesForLocation(location);
   const contestGroups = groupCandidates(candidates);
   const bonds = location.isCharlotte ? CHARLOTTE_BONDS : [];
@@ -102,6 +108,7 @@ export default function YourBallot({
       <CandidateDetail
         candidate={selectedCandidate}
         pick={pick}
+        location={location}
         onBack={() => setSelectedCandidate(null)}
         onPick={(leaning) => onCandidatePick(selectedCandidate.id, leaning)}
       />
@@ -197,7 +204,10 @@ export default function YourBallot({
             
             {group.contests.map((contest) => (
               <article key={contest.office} className="ballot__race" aria-label={contest.office}>
-                <h4 className="ballot__office">{contest.office}</h4>
+                <div className="ballot__office-block">
+                  <h4 className="ballot__office">{contest.office}</h4>
+                  <RaceContext office={contest.office} location={location} />
+                </div>
                 <div className="ballot__candidates">
                   {contest.candidates.map((candidate) => {
                     const pick = getCandidatePick(candidate.id);
@@ -465,6 +475,7 @@ function MeasureCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const isBond = measure.type === 'bond';
+  const civic = explainerForMeasure(measure.id);
 
   const handlePick = (leaning: MeasurePick['leaning']) => {
     if (pick?.leaning === leaning) {
@@ -483,22 +494,45 @@ function MeasureCard({
         )}
       </div>
       
-      <p className="measure__question">{measure.ballotQuestion}</p>
+      <p className="measure__question">{civic?.oneLiner || measure.ballotQuestion}</p>
       
-      {measure.explanation && expanded && (
+      {expanded && (
         <div className="measure__detail">
-          <p className="measure__explanation">{measure.explanation}</p>
+          {civic ? (
+            <>
+              <p className="measure__fact">{civic.yesMeans}</p>
+              <p className="measure__fact">{civic.noMeans}</p>
+              <p className="measure__you-label">What this means for you</p>
+              <ul className="measure__impact">
+                {civic.localImpact.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              {civic.projectListUrl && (
+                <p>
+                  <a href={civic.projectListUrl} target="_blank" rel="noopener noreferrer">
+                    City project list
+                  </a>
+                </p>
+              )}
+              <p>
+                <a href={civic.source.url} target="_blank" rel="noopener noreferrer">
+                  {civic.source.title}
+                </a>
+              </p>
+            </>
+          ) : (
+            <p className="measure__explanation">{measure.explanation}</p>
+          )}
           {measure.estimatedTaxImpact && (
             <p className="measure__tax">Estimated tax impact: {measure.estimatedTaxImpact}</p>
           )}
         </div>
       )}
       
-      {measure.explanation && (
-        <button className="measure__toggle" onClick={() => setExpanded(!expanded)}>
-          {expanded ? 'Show less' : 'What does this mean?'}
-        </button>
-      )}
+      <button className="measure__toggle" onClick={() => setExpanded(!expanded)}>
+        {expanded ? 'Show less' : 'What does a yes or no do?'}
+      </button>
       
       <div className="measure__picks">
         <span className="measure__picks-label">I'm leaning:</span>
@@ -798,14 +832,19 @@ const ballotStyles = `
     margin-bottom: var(--space-3);
   }
 
+  .ballot__office-block {
+    padding: var(--space-4) 0 var(--space-2);
+    background: var(--color-surface-subtle);
+    border-bottom: 1px solid var(--color-border-light);
+    scroll-margin-top: 8rem;
+  }
+
   .ballot__office {
     font-size: var(--text-base);
     font-weight: 600;
     color: var(--color-text-primary);
-    padding: var(--space-4) var(--space-5);
+    padding: 0 var(--space-5);
     margin: 0;
-    background: var(--color-surface-subtle);
-    border-bottom: 1px solid var(--color-border-light);
   }
 
   .ballot__candidates {
@@ -999,6 +1038,33 @@ const ballotStyles = `
     font-style: italic;
     line-height: var(--leading-relaxed);
     margin: 0;
+  }
+
+  .measure__fact {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-snug);
+    margin: 0 0 var(--space-2);
+  }
+
+  .measure__you-label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: var(--space-3) 0 var(--space-2);
+  }
+
+  .measure__impact {
+    margin: 0 0 var(--space-3);
+    padding-left: 1.15em;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+
+  .measure__detail a {
+    color: var(--color-accent);
+    font-weight: 500;
+    font-size: var(--text-sm);
   }
 
   .measure__tax {

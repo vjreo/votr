@@ -6,6 +6,7 @@
 
 import type { UserLocation } from './storage';
 import { findFeature, type DistrictCollection } from './geo';
+import { placeName, zipFromAddress } from './place';
 
 const DISTRICTS_BASE = `${import.meta.env.BASE_URL}districts/`;
 const ADDRESSES_BASE = `${import.meta.env.BASE_URL}addresses/`;
@@ -58,10 +59,14 @@ export function manualLocation(
   district: UserLocation['district'],
   isCharlotte: boolean
 ): UserLocation {
+  const trimmed = address.trim() || 'Picked by hand';
+  const zip = zipFromAddress(trimmed);
   return {
-    address: address.trim() || 'Picked by hand',
+    address: trimmed,
     district,
     isCharlotte,
+    zip,
+    place: placeName({ isCharlotte, zip, address: trimmed }),
     lookupSource: 'manual',
   };
 }
@@ -212,13 +217,17 @@ export function lookupPoint(lng: number, lat: number, address: string, source: U
     unmatched.push('U.S. House');
   }
 
+  const zip = zipFromAddress(address);
+  const isCharlotte = Boolean(city);
   const location: UserLocation = {
     address,
     district: district === 'NC-8' || district === 'NC-12' || district === 'NC-14' ? district : 'NC-12',
-    isCharlotte: Boolean(city),
+    isCharlotte,
     ncSenate: senate?.properties.id,
     ncHouse: house?.properties.id,
     commission: commission?.properties.id,
+    zip,
+    place: placeName({ isCharlotte, zip, address }),
     lookupSource: source,
   };
 
