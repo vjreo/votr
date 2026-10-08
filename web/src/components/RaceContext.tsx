@@ -1,12 +1,13 @@
 import type { Candidate } from '../data/ballot';
-import { explainerForOffice, currentHolderFor } from '../data/offices';
+import { explainerForOffice } from '../data/offices';
 import type { UserLocation } from '../utils/storage';
+import Explainer from './Explainer';
 
-function asSentence(s: string) {
-  return /[.!?]$/.test(s.trim()) ? s : `${s}.`;
-}
-
-function districtFor(candidate: Candidate | undefined, office: string, location?: UserLocation | null): string | undefined {
+function districtFor(
+  candidate: Candidate | undefined,
+  office: string,
+  location?: UserLocation | null
+): string | undefined {
   if (office.startsWith('U.S. House')) {
     return candidate?.district || location?.district;
   }
@@ -41,77 +42,20 @@ export default function RaceContext({
   const explainer = explainerForOffice(office);
   if (!explainer) return null;
   const district = districtFor(candidate, office, location);
-  const extraJargon = candidate
-    ? jargonForCandidate(candidate)
-    : (explainer.jargon || []).filter((j) => j.term !== 'incumbent');
-  const now = currentHolderFor(explainer, district);
+  const jargon = candidate ? jargonForCandidate(candidate) : [];
 
   return (
     <div className={`race-ctx${compact ? ' race-ctx--compact' : ''}`}>
-      <p className="race-ctx__line">{explainer.oneLiner}</p>
-      {extraJargon.length > 0 && (
-        <p className="race-ctx__jargon">
-          {extraJargon.map((j) => `${j.term}: ${j.meaning}`).join('. ')}.
-        </p>
-      )}
-      <details className="race-ctx__more">
-        <summary>What this means for you</summary>
-        <ul>
-          {explainer.localImpact.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-        <p>
-          Term: {explainer.term}. Seats: {explainer.seats}.
-        </p>
-        {now && <p>Now: {asSentence(now)}</p>}
-        <p>{explainer.controls}</p>
-        <p>
-          <a href={explainer.source.url} target="_blank" rel="noopener noreferrer">
-            {explainer.source.title}
-          </a>
-        </p>
-      </details>
+      <Explainer explainer={explainer} district={district} jargon={jargon} />
       <style>{`
         .race-ctx {
-          padding: 0 var(--space-5) var(--space-3);
+          padding: 0 var(--space-5) var(--space-2);
         }
         .race-ctx--compact {
           padding: 0;
           margin: var(--space-4) 0 var(--space-5);
           text-align: left;
         }
-        .race-ctx__line,
-        .race-ctx__jargon {
-          margin: 0 0 var(--space-2);
-          font-size: var(--text-sm);
-          color: var(--color-text-secondary);
-          line-height: var(--leading-snug);
-        }
-        .race-ctx__more summary {
-          cursor: pointer;
-          color: var(--color-accent);
-          font-size: var(--text-sm);
-          font-weight: 500;
-          min-height: 40px;
-          display: flex;
-          align-items: center;
-          list-style: none;
-        }
-        .race-ctx__more summary::-webkit-details-marker { display: none; }
-        .race-ctx__more ul {
-          margin: var(--space-2) 0;
-          padding-left: 1.15em;
-          font-size: var(--text-sm);
-          color: var(--color-text-secondary);
-        }
-        .race-ctx__more li { margin-bottom: var(--space-1); }
-        .race-ctx__more p {
-          margin: 0 0 var(--space-2);
-          font-size: var(--text-sm);
-          color: var(--color-text-secondary);
-        }
-        .race-ctx__more a { color: var(--color-accent); font-weight: 500; }
       `}</style>
     </div>
   );

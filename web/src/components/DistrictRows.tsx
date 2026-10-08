@@ -16,8 +16,6 @@ export default function DistrictRows({ location }: { location: UserLocation }) {
   const [open, setOpen] = useState<string | null>(null);
   const place = location.place || placeName(location);
   const rows: Row[] = [
-    { key: 'county', label: 'County', value: 'Mecklenburg', officeId: 'meck-commission-atlarge' },
-    { key: 'place', label: 'City/Town', value: place },
     {
       key: 'house',
       label: 'U.S. House',
@@ -37,6 +35,7 @@ export default function DistrictRows({ location }: { location: UserLocation }) {
       value: location.ncHouse ? `District ${location.ncHouse}` : 'Not matched',
       officeId: 'nc-house',
     },
+    { key: 'county', label: 'County', value: 'Mecklenburg', officeId: 'meck-commission-atlarge' },
     {
       key: 'commission',
       label: 'County Commission',
@@ -44,6 +43,7 @@ export default function DistrictRows({ location }: { location: UserLocation }) {
       officeId: 'meck-commission-district',
       district: location.commission,
     },
+    { key: 'place', label: 'City/Town', value: place },
   ];
 
   return (
@@ -112,8 +112,7 @@ export default function DistrictRows({ location }: { location: UserLocation }) {
           text-align: right;
         }
         .drows__panel {
-          padding: 0 var(--space-5) var(--space-4);
-          background: var(--color-surface-subtle);
+          padding: 0 var(--space-5) var(--space-3);
         }
       `}</style>
     </div>

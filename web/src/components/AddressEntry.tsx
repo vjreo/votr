@@ -288,7 +288,6 @@ export default function AddressEntry({ onSubmit }: Props) {
             <h1 className="entry__title">Your districts</h1>
             <p className="entry__result-address">{result.location.address}</p>
             <DistrictRows location={result.location} />
-            <p className="entry__hint">Tap a row to see what that office does.</p>
             {result.unmatched.length > 0 && (
               <p className="entry__error" role="status">
                 Unmatched: {result.unmatched.join(', ')}. You can still continue.
@@ -627,13 +626,6 @@ export default function AddressEntry({ onSubmit }: Props) {
           font-size: var(--text-sm);
           color: var(--color-text-secondary);
           margin: 0;
-          text-align: center;
-        }
-
-        .entry__hint {
-          margin: 0;
-          font-size: var(--text-xs);
-          color: var(--color-text-tertiary);
           text-align: center;
         }
 
