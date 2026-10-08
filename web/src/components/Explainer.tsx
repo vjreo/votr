@@ -1,5 +1,6 @@
 import type { OfficeExplainer } from '../data/offices';
 import { currentHolderFor } from '../data/offices';
+import JargonText from './Term';
 
 function asSentence(s: string) {
   return /[.!?]$/.test(s.trim()) ? s : `${s}.`;
@@ -8,19 +9,16 @@ function asSentence(s: string) {
 interface Props {
   explainer: OfficeExplainer;
   district?: string | null;
-  jargon?: { term: string; meaning: string }[];
 }
 
 /** One-liner as the summary; term, impact, and source stay collapsed. */
-export default function Explainer({ explainer, district, jargon = [] }: Props) {
+export default function Explainer({ explainer, district }: Props) {
   const now = currentHolderFor(explainer, district);
-  const meta = [
-    explainer.term,
-    explainer.seats,
-    now ? `Now: ${asSentence(now)}` : '',
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const meta = explainer.hideMeta
+    ? ''
+    : [explainer.term, explainer.seats, now ? `Now: ${asSentence(now)}` : '']
+        .filter(Boolean)
+        .join(' · ');
 
   return (
     <details className="xpl">
@@ -31,17 +29,16 @@ export default function Explainer({ explainer, district, jargon = [] }: Props) {
         </span>
       </summary>
       <div className="xpl__more">
-        {jargon.map((j) => (
-          <p key={j.term}>
-            {j.term}: {j.meaning}.
-          </p>
-        ))}
         <ul>
           {explainer.localImpact.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
-        {meta && <p className="xpl__meta">{meta}</p>}
+        {meta && (
+          <p className="xpl__meta">
+            <JargonText text={meta} />
+          </p>
+        )}
         <p className="xpl__src">
           <a href={explainer.source.url} target="_blank" rel="noopener noreferrer">
             {explainer.source.title}

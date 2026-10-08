@@ -42,11 +42,10 @@ export default function RaceContext({
   const explainer = explainerForOffice(office);
   if (!explainer) return null;
   const district = districtFor(candidate, office, location);
-  const jargon = candidate ? jargonForCandidate(candidate) : [];
 
   return (
     <div className={`race-ctx${compact ? ' race-ctx--compact' : ''}`}>
-      <Explainer explainer={explainer} district={district} jargon={jargon} />
+      <Explainer explainer={explainer} district={district} />
       <style>{`
         .race-ctx {
           padding: 0 var(--space-5) var(--space-2);

@@ -12,6 +12,8 @@ import {
   sortCandidatesAlphabetically,
   getNextCriticalDeadline,
   getDaysUntil,
+  formatDaysLeft,
+  formatDaysShort,
   formatDate,
   formatShortDate,
   formatMoney,
@@ -23,6 +25,7 @@ import CandidateDetail from './CandidateDetail';
 import ShareVotr from './ShareVotr';
 import RaceContext from './RaceContext';
 import { explainerForMeasure } from '../data/offices';
+import JargonText from './Term';
 
 interface Props {
   location: UserLocation;
@@ -173,7 +176,7 @@ export default function YourBallot({
                 {formatShortDate(nextDeadline.date)}
                 {nextDeadline.hours ? ` · ${nextDeadline.hours}` : ''}
                 {' · '}
-                {getDaysUntil(nextDeadline.date)} days left
+                {formatDaysLeft(getDaysUntil(nextDeadline.date))}
               </span>
             </div>
           </div>
@@ -205,7 +208,9 @@ export default function YourBallot({
             {group.contests.map((contest) => (
               <article key={contest.office} className="ballot__race" aria-label={contest.office}>
                 <div className="ballot__office-block">
-                  <h4 className="ballot__office">{contest.office}</h4>
+                  <h4 className="ballot__office">
+                    <JargonText text={contest.office} />
+                  </h4>
                   <RaceContext office={contest.office} location={location} />
                 </div>
                 <div className="ballot__candidates">
@@ -430,7 +435,6 @@ function DatesView({ onBack }: { onBack: () => void }) {
         {DEADLINES.map((d) => {
           const days = getDaysUntil(d.date);
           const isPast = days < 0;
-          const isToday = days === 0;
           const isSoon = days > 0 && days <= 3;
 
           return (
@@ -447,7 +451,7 @@ function DatesView({ onBack }: { onBack: () => void }) {
                 {d.hours && <span className="dates__hours">{d.hours}</span>}
                 {!isPast && (
                   <span className={`dates__countdown ${isSoon ? 'dates__countdown--soon' : ''}`}>
-                    {isToday ? 'Today' : `${days} days`}
+                    {formatDaysShort(days)}
                   </span>
                 )}
                 {isPast && <span className="dates__countdown">Passed</span>}

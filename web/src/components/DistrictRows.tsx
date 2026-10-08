@@ -12,6 +12,25 @@ interface Row {
   district?: string | null;
 }
 
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      className={`drows__chevron${open ? ' drows__chevron--open' : ''}`}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
 export default function DistrictRows({ location }: { location: UserLocation }) {
   const [open, setOpen] = useState<string | null>(null);
   const place = location.place || placeName(location);
@@ -35,7 +54,7 @@ export default function DistrictRows({ location }: { location: UserLocation }) {
       value: location.ncHouse ? `District ${location.ncHouse}` : 'Not matched',
       officeId: 'nc-house',
     },
-    { key: 'county', label: 'County', value: 'Mecklenburg', officeId: 'meck-commission-atlarge' },
+    { key: 'county', label: 'County', value: 'Mecklenburg', officeId: 'meck-county' },
     {
       key: 'commission',
       label: 'County Commission',
@@ -61,7 +80,10 @@ export default function DistrictRows({ location }: { location: UserLocation }) {
                 onClick={() => setOpen(isOpen ? null : row.key)}
               >
                 <span className="drows__label">{row.label}</span>
-                <span className="drows__value">{row.value}</span>
+                <span className="drows__end">
+                  <span className="drows__value">{row.value}</span>
+                  <Chevron open={isOpen} />
+                </span>
               </button>
             ) : (
               <div className="drows__row drows__row--static">
@@ -105,11 +127,24 @@ export default function DistrictRows({ location }: { location: UserLocation }) {
           font-size: var(--text-sm);
           color: var(--color-text-secondary);
         }
+        .drows__end {
+          display: flex;
+          align-items: center;
+          gap: var(--space-2);
+        }
         .drows__value {
           font-size: var(--text-sm);
           font-weight: 600;
           color: var(--color-text-primary);
           text-align: right;
+        }
+        .drows__chevron {
+          color: var(--color-text-tertiary);
+          flex-shrink: 0;
+          transition: transform var(--transition-fast);
+        }
+        .drows__chevron--open {
+          transform: rotate(90deg);
         }
         .drows__panel {
           padding: 0 var(--space-5) var(--space-3);
