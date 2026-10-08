@@ -31,7 +31,7 @@ export function Term({
         onToggle();
       }}
     >
-      {term}
+      <span className="term__label">{term}</span>
     </button>
   );
 }
@@ -95,13 +95,15 @@ export const termStyles = `
     font-weight: inherit;
     line-height: inherit;
     letter-spacing: inherit;
-    text-decoration: underline dotted;
-    text-decoration-color: currentColor;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 0.18em;
-    text-underline-position: under;
-    box-decoration-break: clone;
-    -webkit-box-decoration-break: clone;
+  }
+  .term__label {
+    display: inline-block;
+    line-height: 1.15;
+    vertical-align: baseline;
+    border-bottom: 1px dotted currentColor;
+  }
+  .term[aria-expanded="true"] .term__label {
+    border-bottom-style: solid;
   }
   .term::after {
     content: "";
@@ -111,9 +113,7 @@ export const termStyles = `
     width: max(100%, var(--tap-target-min));
     height: var(--tap-target-min);
     transform: translate(-50%, -50%);
-  }
-  .term[aria-expanded="true"] {
-    text-decoration-style: solid;
+    pointer-events: auto;
   }
   .term__def {
     display: inline;

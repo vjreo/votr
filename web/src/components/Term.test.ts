@@ -12,6 +12,7 @@ describe('jargon dictionary', () => {
     expect(termStyles).not.toMatch(/\.term\s*\{[^}]*min-height/);
     expect(termStyles).not.toMatch(/\.term\s*\{[^}]*min-width/);
     expect(termStyles).toMatch(/\.term::after\s*\{[^}]*height:\s*var\(--tap-target-min\)/);
+    expect(termStyles).toMatch(/\.term__label\s*\{[^}]*border-bottom:\s*1px dotted/);
     expect(termStyles).toMatch(/\.term__def\s*\{[^}]*display:\s*inline;/);
   });
 });
