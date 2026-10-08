@@ -1,6 +1,10 @@
 import type { OfficeExplainer } from '../data/offices';
 import { currentHolderFor } from '../data/offices';
 
+function asSentence(s: string) {
+  return /[.!?]$/.test(s.trim()) ? s : `${s}.`;
+}
+
 interface Props {
   explainer: OfficeExplainer;
   district?: string | null;
@@ -15,7 +19,7 @@ export function ExplainerBody({ explainer, district }: Props) {
       <p>
         Term: {explainer.term}. Seats: {explainer.seats}.
       </p>
-      {now && <p>Now: {now}.</p>}
+      {now && <p>Now: {asSentence(now)}</p>}
       {explainer.jargon?.map((j) => (
         <p key={j.term}>
           {j.term}: {j.meaning}.

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { Candidate } from '../data/ballot';
 import type { CandidatePick, UserLocation } from '../App';
 import RaceContext from './RaceContext';
@@ -13,6 +14,10 @@ interface Props {
 export default function CandidateDetail({ candidate, pick, location, onBack, onPick }: Props) {
   const hasPositions = candidate.positions.length > 0;
   const hasSources = candidate.sources.length > 0;
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [candidate.id]);
 
   const handlePick = (leaning: CandidatePick['leaning']) => {
     if (pick?.leaning === leaning) {

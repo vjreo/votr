@@ -2,6 +2,10 @@ import type { Candidate } from '../data/ballot';
 import { explainerForOffice, currentHolderFor } from '../data/offices';
 import type { UserLocation } from '../utils/storage';
 
+function asSentence(s: string) {
+  return /[.!?]$/.test(s.trim()) ? s : `${s}.`;
+}
+
 function districtFor(candidate: Candidate | undefined, office: string, location?: UserLocation | null): string | undefined {
   if (office.startsWith('U.S. House')) {
     return candidate?.district || location?.district;
@@ -60,7 +64,7 @@ export default function RaceContext({
         <p>
           Term: {explainer.term}. Seats: {explainer.seats}.
         </p>
-        {now && <p>Now: {now}.</p>}
+        {now && <p>Now: {asSentence(now)}</p>}
         <p>{explainer.controls}</p>
         <p>
           <a href={explainer.source.url} target="_blank" rel="noopener noreferrer">

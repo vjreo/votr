@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { UserLocation, CandidatePick, MeasurePick } from '../App';
 import {
   ELECTION,
@@ -88,6 +88,10 @@ export default function YourBallot({
 }: Props) {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [view, setView] = useState<'ballot' | 'dates' | 'settings'>('ballot');
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [view, selectedCandidate]);
 
   const candidates = getCandidatesForLocation(location);
   const contestGroups = groupCandidates(candidates);
@@ -832,6 +836,7 @@ const ballotStyles = `
     padding: var(--space-4) 0 var(--space-2);
     background: var(--color-surface-subtle);
     border-bottom: 1px solid var(--color-border-light);
+    scroll-margin-top: 8rem;
   }
 
   .ballot__office {
