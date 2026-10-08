@@ -36,7 +36,7 @@ export function Term({
   );
 }
 
-/** Wraps incumbent / at-large in a 44px dotted-underline control. Definition on tap. */
+/** Wraps incumbent / at-large inline. Definition on tap, as a muted parenthetical. */
 export default function JargonText({ text }: { text: string }) {
   const defId = useId();
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -49,64 +49,76 @@ export default function JargonText({ text }: { text: string }) {
     if (start > last) nodes.push(text.slice(last, start));
     const key = raw.toLowerCase();
     const tokenKey = `${key}-${i++}`;
+    const expanded = openKey === tokenKey;
+    const meaning = JARGON[key];
     nodes.push(
-      <Term
-        key={tokenKey}
-        term={raw}
-        expanded={openKey === tokenKey}
-        onToggle={() => setOpenKey((cur) => (cur === tokenKey ? null : tokenKey))}
-        defId={defId}
-      />
+      <span key={tokenKey} className="term-wrap">
+        <Term
+          term={raw}
+          expanded={expanded}
+          onToggle={() => setOpenKey((cur) => (cur === tokenKey ? null : tokenKey))}
+          defId={defId}
+        />
+        {expanded && meaning && (
+          <span id={defId} className="term__def" role="note">
+            {' '}
+            ({meaning})
+          </span>
+        )}
+      </span>
     );
     last = start + raw.length;
   }
   if (!i) return <>{text}</>;
   if (last < text.length) nodes.push(text.slice(last));
-  const openMeaning = openKey ? JARGON[openKey.replace(/-\d+$/, '')] : null;
 
   return (
     <span className="jargon">
       {nodes}
-      {openMeaning && (
-        <span id={defId} className="term__def" role="note">
-          {openMeaning}
-        </span>
-      )}
       <style>{termStyles}</style>
     </span>
   );
 }
 
 export const termStyles = `
+  .term-wrap {
+    display: inline;
+  }
   .term {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--tap-target-min);
-    min-width: var(--tap-target-min);
-    justify-content: center;
-    margin: -12px 0;
-    padding: 0 2px;
-    border: 0;
-    border-bottom: 1px dotted var(--color-text-secondary);
-    border-radius: 0;
-    background: transparent;
+    all: unset;
+    position: relative;
+    display: inline;
+    cursor: pointer;
     color: inherit;
     font: inherit;
+    font-size: inherit;
     font-weight: inherit;
     line-height: inherit;
-    cursor: pointer;
-    vertical-align: baseline;
+    letter-spacing: inherit;
+    text-decoration: underline dotted;
+    text-decoration-color: currentColor;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+    text-underline-position: under;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .term::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, var(--tap-target-min));
+    height: var(--tap-target-min);
+    transform: translate(-50%, -50%);
   }
   .term[aria-expanded="true"] {
-    border-bottom-style: solid;
-    color: var(--color-accent);
+    text-decoration-style: solid;
   }
   .term__def {
-    display: block;
-    margin-top: var(--space-2);
-    font-size: var(--text-sm);
+    display: inline;
+    font-size: 0.92em;
     font-weight: 400;
-    color: var(--color-text-secondary);
-    line-height: var(--leading-snug);
+    color: var(--color-text-tertiary);
   }
 `;

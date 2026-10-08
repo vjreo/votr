@@ -119,7 +119,7 @@ export const US_SENATE: Candidate[] = [
       {
         issueName: 'Healthcare',
         issueId: 'healthcare',
-        stance: 'Cites Medicaid expansion as governor; supports lowering healthcare costs.',
+        stance: 'Cites Medicaid expansion as governor; says he supports lowering healthcare costs.',
         source: 'https://roycooper.com/make-stuff-cost-less/',
       },
     ],
@@ -138,19 +138,19 @@ export const US_SENATE: Candidate[] = [
       {
         issueName: 'Public Safety',
         issueId: 'criminal_justice',
-        stance: '"Make North Carolina Safe Again" — criticizes Cooper on crime/pretrial policy.',
+        stance: 'Campaign theme "Make North Carolina Safe Again." Says he disagrees with Cooper on crime and pretrial policy.',
         source: 'https://michaelwhatley.com/issues/',
       },
       {
         issueName: 'Immigration',
         issueId: 'immigration',
-        stance: 'Fight illegal immigration, support ICE cooperation.',
+        stance: 'Says he would restrict illegal immigration and support ICE cooperation.',
         source: 'https://michaelwhatley.com/issues/',
       },
       {
         issueName: 'Economy',
         issueId: 'economy',
-        stance: 'America First economy & energy policy.',
+        stance: 'Campaign platform: America First economy and energy policy.',
         source: 'https://michaelwhatley.com/issues/',
       },
     ],
@@ -166,8 +166,8 @@ export const US_SENATE: Candidate[] = [
     district: null,
     bio: 'Navy veteran with cybersecurity background.',
     positions: [
-      { issueName: 'Government', issueId: 'government', stance: 'Limited enumerated federal powers; privacy/cybersecurity focus.' },
-      { issueName: 'Fiscal Policy', issueId: 'economy', stance: 'Fiscal restraint & debt reduction.' },
+      { issueName: 'Government', issueId: 'government', stance: 'Campaign platform: limited enumerated federal powers, with a focus on privacy and cybersecurity.' },
+      { issueName: 'Fiscal Policy', issueId: 'economy', stance: 'Campaign platform: fiscal restraint and debt reduction.' },
     ],
     sources: [{ url: 'https://www.shannonbray.us/', source_type: 'official_website', title: 'Campaign Site' }],
     dataStatus: 'complete',
@@ -197,10 +197,10 @@ export const US_HOUSE_NC12: Candidate[] = [
     district: 'NC-12',
     bio: 'Incumbent U.S. Representative since 2014. Former NC House member, teacher.',
     positions: [
-      { issueName: 'Housing', issueId: 'housing', stance: 'Champion of affordable housing, part of "4Hs" platform.' },
-      { issueName: 'Healthcare', issueId: 'healthcare', stance: 'Focus on Black maternal health as part of "4Hs" platform.' },
-      { issueName: 'Hunger', issueId: 'economy', stance: 'Fighting hunger and food insecurity.' },
-      { issueName: 'Higher Education', issueId: 'education', stance: 'Supporting HBCUs and higher education access.' },
+      { issueName: 'Housing', issueId: 'housing', stance: 'Says affordable housing is a priority; part of her "4Hs" platform.' },
+      { issueName: 'Healthcare', issueId: 'healthcare', stance: 'Campaign platform ("4Hs"): Black maternal health.' },
+      { issueName: 'Hunger', issueId: 'economy', stance: 'Campaign platform ("4Hs"): hunger and food insecurity.' },
+      { issueName: 'Higher Education', issueId: 'education', stance: 'Campaign platform ("4Hs"): HBCUs and higher-education access.' },
     ],
     sources: [{ url: 'https://www.wfae.org/2026-09-22/u-s-house-of-representatives-nc-12-candidates', source_type: 'news_article', title: 'WFAE NC-12 Candidates' }],
     dataStatus: 'complete',
@@ -214,8 +214,8 @@ export const US_HOUSE_NC12: Candidate[] = [
     district: 'NC-12',
     bio: 'Challenger, age ~28, finance/mortgage industry background. Moved to Charlotte 2021.',
     positions: [
-      { issueName: 'Housing', issueId: 'housing', stance: 'Addresses housing affordability.' },
-      { issueName: 'Economy', issueId: 'economy', stance: 'Free markets; end welfare including Social Security reform; sound money advocacy.' },
+      { issueName: 'Housing', issueId: 'housing', stance: 'Says housing affordability is a priority.' },
+      { issueName: 'Economy', issueId: 'economy', stance: 'Campaign platform: free markets, ending welfare including Social Security reform, and sound money.' },
     ],
     sources: [{ url: 'https://www.wfae.org/2026-09-22/u-s-house-of-representatives-nc-12-candidates', source_type: 'news_article', title: 'WFAE NC-12 Candidates' }],
     dataStatus: 'complete',
@@ -232,9 +232,9 @@ export const US_HOUSE_NC14: Candidate[] = [
     district: 'NC-14',
     bio: 'Incumbent U.S. Representative, former NC House Speaker. From Kings Mountain.',
     positions: [
-      { issueName: 'Immigration', issueId: 'immigration', stance: 'Opposed sanctuary cities.' },
-      { issueName: 'Elections', issueId: 'civil_rights', stance: 'Supports voter ID.' },
-      { issueName: 'Economy', issueId: 'economy', stance: 'Tax cuts; serves on Financial Services & Budget committees.' },
+      { issueName: 'Immigration', issueId: 'immigration', stance: 'Says he opposes sanctuary cities.' },
+      { issueName: 'Elections', issueId: 'civil_rights', stance: 'Says he supports voter ID.' },
+      { issueName: 'Economy', issueId: 'economy', stance: 'Says he supports tax cuts; serves on Financial Services and Budget committees.' },
     ],
     sources: [{ url: 'https://www.wfae.org/text/2026-09-22/u-s-house-of-representatives-nc-14-candidates', source_type: 'news_article', title: 'WFAE NC-14 Candidates' }],
     dataStatus: 'complete',
@@ -248,10 +248,10 @@ export const US_HOUSE_NC14: Candidate[] = [
     district: 'NC-14',
     bio: 'Challenger, CDFI strategy officer with Vanderbilt degrees.',
     positions: [
-      { issueName: 'Healthcare', issueId: 'healthcare', stance: 'Affordable healthcare access.' },
-      { issueName: 'Economy', issueId: 'economy', stance: 'Economic mobility — childcare, workforce, small business support. Corporate tax share.' },
-      { issueName: 'Education', issueId: 'education', stance: 'Public schools and affordable higher education.' },
-      { issueName: 'Housing', issueId: 'housing', stance: 'Limits on corporations buying affordable housing.' },
+      { issueName: 'Healthcare', issueId: 'healthcare', stance: 'Says affordable healthcare access is a priority.' },
+      { issueName: 'Economy', issueId: 'economy', stance: 'Campaign platform: economic mobility through childcare, workforce, and small-business support; a share of corporate taxes.' },
+      { issueName: 'Education', issueId: 'education', stance: 'Says she supports public schools and affordable higher education.' },
+      { issueName: 'Housing', issueId: 'housing', stance: 'Says she would limit corporations buying affordable housing.' },
     ],
     sources: [{ url: 'https://www.wfae.org/text/2026-09-22/u-s-house-of-representatives-nc-14-candidates', source_type: 'news_article', title: 'WFAE NC-14 Candidates' }],
     dataStatus: 'complete',
@@ -548,9 +548,8 @@ export function formatMoney(amount: number): string {
   return `$${amount}`;
 }
 
-/** Unique office titles on the bundled 2026 ballot. */
-export function allBallotOffices(): string[] {
-  const people = [
+export function allCandidates(): Candidate[] {
+  return [
     ...US_SENATE,
     ...US_HOUSE_NC8,
     ...US_HOUSE_NC12,
@@ -560,7 +559,11 @@ export function allBallotOffices(): string[] {
     ...STATE_LEGISLATURE,
     ...LOCAL_RACES,
   ];
-  return [...new Set(people.map((c) => c.office))].sort();
+}
+
+/** Unique office titles on the bundled 2026 ballot. */
+export function allBallotOffices(): string[] {
+  return [...new Set(allCandidates().map((c) => c.office))].sort();
 }
 
 export function allMeasureIds(): string[] {
