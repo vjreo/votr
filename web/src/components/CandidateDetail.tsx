@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import type { Candidate } from '../data/ballot';
+import { NO_PUBLIC_POSITIONS_NOTE, type Candidate } from '../data/ballot';
 import type { CandidatePick, UserLocation } from '../App';
 import RaceContext from './RaceContext';
 import JargonText from './Term';
@@ -127,9 +127,9 @@ export default function CandidateDetail({ candidate, pick, location, onBack, onP
           <section className="detail__section">
             <div className="detail__empty">
               <div className="detail__empty-icon">📋</div>
-              <h3 className="detail__empty-title">Positions coming soon</h3>
+              <h3 className="detail__empty-title">No sourced positions</h3>
               <p className="detail__empty-desc">
-                We're still gathering this candidate's positions from their campaign materials. Check back closer to Election Day.
+                {candidate.dataStatusNote || NO_PUBLIC_POSITIONS_NOTE}
               </p>
             </div>
           </section>
@@ -156,12 +156,12 @@ export default function CandidateDetail({ candidate, pick, location, onBack, onP
           </section>
         )}
 
-        {/* Data status notice */}
-        {candidate.dataStatus === 'incomplete' && (
+        {/* Data status notice — skip when the empty state already shows the same note */}
+        {candidate.dataStatus === 'incomplete' && hasPositions && (
           <div className="detail__notice">
             <InfoIcon />
             <p>
-              {candidate.dataStatusNote || 'Some information for this candidate is still being gathered from official sources.'}
+              {candidate.dataStatusNote || NO_PUBLIC_POSITIONS_NOTE}
             </p>
           </div>
         )}

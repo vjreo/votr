@@ -295,11 +295,7 @@ export default function YourBallot({
             <summary>Sources</summary>
             <p>
               Ballot data: {DATA_PROVENANCE.sources.join('; ')}. Last verified{' '}
-              {new Date(DATA_PROVENANCE.lastVerified).toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              })}.
+              {DATA_PROVENANCE.lastVerifiedLabel}.
             </p>
             <p>{DISTRICTS_ATTRIBUTION.summary} Last checked {DISTRICTS_ATTRIBUTION.lastCheckedLabel}.</p>
             <p className="ballot__data-links">

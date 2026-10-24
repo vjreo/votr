@@ -381,11 +381,7 @@ export default function AddressEntry({ onSubmit }: Props) {
             <h2 className="entry__about-h">Ballot data</h2>
             <p>
               Candidates and measures: {DATA_PROVENANCE.sources.join('; ')}. Last verified{' '}
-              {new Date(DATA_PROVENANCE.lastVerified).toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              })}.
+              {DATA_PROVENANCE.lastVerifiedLabel}.
             </p>
             <p className="entry__about-links">
               <a href={OFFICIAL_SOURCES.ncVoterSearch} target="_blank" rel="noopener noreferrer">
