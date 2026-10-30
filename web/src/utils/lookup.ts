@@ -382,3 +382,11 @@ export async function suggestAddresses(raw: string, limit = 8): Promise<AddressS
   }
   return out;
 }
+
+/** Clears lazy-loaded map and address caches. Used by unit tests. */
+export function resetLookupCaches(): void {
+  cache = null;
+  zipCache.clear();
+  streetIndex = null;
+  zipIndex = null;
+}

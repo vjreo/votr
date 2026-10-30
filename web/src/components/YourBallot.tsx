@@ -44,13 +44,14 @@ const LEVEL_CONFIG: Record<string, { label: string; order: number }> = {
   local: { label: 'County & Local', order: 4 },
 };
 
-interface ContestGroup {
+export interface ContestGroup {
   level: string;
   label: string;
   contests: { office: string; candidates: Candidate[] }[];
 }
 
-function groupCandidates(candidates: Candidate[]): ContestGroup[] {
+/** Group races by office level and sort candidates A–Z by last name. */
+export function groupCandidates(candidates: Candidate[]): ContestGroup[] {
   const byLevel: Record<string, Record<string, Candidate[]>> = {};
 
   for (const c of candidates) {

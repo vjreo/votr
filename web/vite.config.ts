@@ -28,6 +28,26 @@ export default defineConfig({
     port: 5173,
   },
   test: {
-    environment: 'node',
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json-summary', 'lcov'],
+      reportsDirectory: './coverage',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/main.tsx',
+        'src/vite-env.d.ts',
+        'src/**/*.test.ts',
+        'src/**/*.test.tsx',
+        'src/test/**',
+      ],
+      thresholds: {
+        lines: 80,
+        statements: 80,
+        functions: 70,
+        branches: 70,
+      },
+    },
   },
 });
