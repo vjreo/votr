@@ -60,6 +60,9 @@ expo-env.d.ts
 *.sqlite
 *.db
 
+# Test coverage
+coverage/
+
 # Temporary files
 tmp/
 temp/

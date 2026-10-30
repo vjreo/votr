@@ -25,7 +25,7 @@ const DISTRICTS: { id: 'NC-8' | 'NC-12' | 'NC-14'; name: string; desc: string }[
   { id: 'NC-8', name: 'NC-8', desc: 'East Mecklenburg' },
 ];
 
-function geoErrorMessage(err: unknown): string {
+export function geoErrorMessage(err: unknown): string {
   if (err && typeof err === 'object' && 'code' in err) {
     const code = (err as GeolocationPositionError).code;
     if (code === 1) {
