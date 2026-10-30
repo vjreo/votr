@@ -25,5 +25,13 @@ describe('placeName', () => {
   it('reads the trailing ZIP, not a 5-digit house number', () => {
     expect(zipFromAddress('12316 FOLKSTON DR, 28078')).toBe('28078');
     expect(zipFromAddress('12316 FOLKSTON DR')).toBeUndefined();
+    expect(zipFromAddress('100 MAIN ST, 28202-1234')).toBe('28202');
+    expect(zipFromAddress('28202')).toBe('28202');
+    expect(zipFromAddress('28202 MAIN')).toBeUndefined();
+  });
+
+  it('maps remaining town ZIPs', () => {
+    expect(placeName({ isCharlotte: false, zip: '28036' })).toBe('Davidson');
+    expect(placeName({ isCharlotte: false, zip: '28134' })).toBe('Pineville');
   });
 });

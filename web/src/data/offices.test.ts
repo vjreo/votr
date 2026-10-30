@@ -3,6 +3,7 @@ import { allBallotOffices, allMeasureIds } from './ballot';
 import {
   MEASURES,
   OFFICES,
+  currentHolderFor,
   explainerForMeasure,
   explainerForOffice,
   officeIdFromBallotOffice,
@@ -64,6 +65,16 @@ describe('office explainers', () => {
     expect(OFFICES['meck-county'].currentHolder).toBeUndefined();
     expect(OFFICES['meck-commission-district'].seats).toMatch(/at-large/);
     expect(OFFICES['meck-commission-atlarge'].currentHolder).toMatch(/Altman/);
+  });
+
+  it('resolves current holders by district and ignores unknown offices', () => {
+    expect(currentHolderFor(OFFICES['us-house'], 'NC-8')).toBe('Mark Harris');
+    expect(currentHolderFor(OFFICES['us-house'])).toBeUndefined();
+    expect(currentHolderFor(OFFICES['us-senate'])).toMatch(/Tillis/);
+    expect(officeIdFromBallotOffice('Not an office')).toBeNull();
+    expect(explainerForOffice('Not an office')).toBeNull();
+    expect(explainerForMeasure('missing')).toBeNull();
+    expect(officeIdFromBallotOffice('District Attorney')).toBe('meck-da');
   });
 
   it('does not repeat the one-liner as a bullet', () => {
