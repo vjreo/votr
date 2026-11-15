@@ -44,6 +44,25 @@ describe('on-device storage', () => {
     expect(loadData().location).toBeNull();
   });
 
+  it('drops a location or pick that cannot be shown', () => {
+    localStorage.setItem(
+      'votr_data',
+      JSON.stringify({
+        location: { address: '1 Main', district: 'NC-6', isCharlotte: true },
+        candidatePicks: [
+          { candidateId: 'ok', leaning: 'likely', timestamp: 1 },
+          { candidateId: 'bad', leaning: 'vote', timestamp: 2 },
+        ],
+        measurePicks: 'nope',
+        lastUpdated: 3,
+      })
+    );
+    const data = loadData();
+    expect(data.location).toBeNull();
+    expect(data.candidatePicks).toEqual([{ candidateId: 'ok', leaning: 'likely', timestamp: 1 }]);
+    expect(data.measurePicks).toEqual([]);
+  });
+
   it('clears the device key', () => {
     saveData({ location: charlotteLocation });
     clearAllData();

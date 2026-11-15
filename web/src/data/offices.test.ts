@@ -7,6 +7,7 @@ import {
   explainerForMeasure,
   explainerForOffice,
   officeIdFromBallotOffice,
+  pairedArguments,
 } from './offices';
 
 describe('office explainers', () => {
@@ -23,6 +24,23 @@ describe('office explainers', () => {
       }
     }
     expect(missing).toEqual([]);
+  });
+
+  it('shows each side of a measure only when both sides exist', () => {
+    const base = MEASURES['nc-amend-photo-id-2026'];
+    expect(pairedArguments(base)).toBeNull();
+    expect(pairedArguments({ ...base, caseFor: ['One sourced point.'] })).toBeNull();
+    expect(pairedArguments({ ...base, caseAgainst: [' '] })).toBeNull();
+    expect(
+      pairedArguments({
+        ...base,
+        caseFor: [' A sourced point for. '],
+        caseAgainst: ['A sourced point against.'],
+      })
+    ).toEqual({
+      caseFor: ['A sourced point for.'],
+      caseAgainst: ['A sourced point against.'],
+    });
   });
 
   it('covers every measure on the ballot', () => {

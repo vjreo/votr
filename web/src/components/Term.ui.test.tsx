@@ -14,6 +14,8 @@ describe('JargonText', () => {
     const user = userEvent.setup();
     render(<JargonText text="Incumbent at-large member." />);
     const incumbent = screen.getByRole('button', { name: 'Incumbent' });
+    const atLarge = screen.getByRole('button', { name: 'at-large' });
+    expect(incumbent.getAttribute('aria-controls')).not.toBe(atLarge.getAttribute('aria-controls'));
     await user.click(incumbent);
     expect(screen.getByText(/currently holds this seat/)).toBeInTheDocument();
     await user.click(incumbent);

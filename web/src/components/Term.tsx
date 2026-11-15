@@ -57,7 +57,7 @@ export default function JargonText({ text }: { text: string }) {
           term={raw}
           expanded={expanded}
           onToggle={() => setOpenKey((cur) => (cur === tokenKey ? null : tokenKey))}
-          defId={defId}
+          defId={`${defId}-${tokenKey}`}
         />
         {expanded && meaning && (
           <span id={defId} className="term__def" role="note">

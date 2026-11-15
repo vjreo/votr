@@ -34,9 +34,25 @@ export interface MeasureExplainer {
   yesMeans: string;
   noMeans: string;
   localImpact: string[];
+  /**
+   * Short sourced arguments. Shown only when both sides are non-empty,
+   * so a one-sided brief cannot appear alone.
+   */
+  caseFor?: string[];
+  caseAgainst?: string[];
   projectListUrl?: string;
   source: CivicSource;
   lastChecked: string;
+}
+
+/** Both sides, or nothing. A single side would be an endorsement by omission. */
+export function pairedArguments(
+  explainer: MeasureExplainer | null | undefined
+): { caseFor: string[]; caseAgainst: string[] } | null {
+  const caseFor = (explainer?.caseFor ?? []).map((item) => item.trim()).filter(Boolean);
+  const caseAgainst = (explainer?.caseAgainst ?? []).map((item) => item.trim()).filter(Boolean);
+  if (caseFor.length === 0 || caseAgainst.length === 0) return null;
+  return { caseFor, caseAgainst };
 }
 
 export const OFFICES_LAST_CHECKED = '2026-10-08';

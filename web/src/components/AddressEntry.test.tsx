@@ -30,6 +30,15 @@ describe('geoErrorMessage', () => {
 });
 
 describe('AddressEntry', () => {
+  it('says when election day has passed', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 10, 15));
+    render(<AddressEntry onSubmit={vi.fn()} />);
+    expect(screen.getByRole('status')).toHaveTextContent(/Tuesday, November 3, 2026/);
+    expect(screen.getByRole('status')).toHaveTextContent(/does not show results/);
+    expect(document.querySelector('.entry__date')).toHaveTextContent('Tuesday, November 3, 2026');
+  });
+
   beforeEach(() => {
     lookupFromAddress.mockReset();
     lookupFromGeolocation.mockReset();

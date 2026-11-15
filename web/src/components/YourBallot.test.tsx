@@ -88,6 +88,27 @@ describe('YourBallot', () => {
     expect(names).toEqual(['Tim Moore', 'Lakesha Womack']);
   });
 
+  it('says the election has passed and hides the countdown', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 10, 15));
+    renderBallot();
+    expect(screen.getByRole('status')).toHaveTextContent(/does not show results/);
+    expect(screen.queryByText(/days left/)).not.toBeInTheDocument();
+  });
+
+  it('shows what a yes or no vote does without another tap', () => {
+    renderBallot();
+    expect(screen.getByText(/amend the constitution so that all voters/)).toBeInTheDocument();
+    expect(screen.getByText(/leave the constitution as it is/)).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { name: 'Easy to miss' }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('heading', { name: "Each side's case" })).not.toBeInTheDocument();
+    const wording = screen.getAllByText('Official ballot wording')[0].closest('details');
+    expect(wording).not.toHaveAttribute('open');
+    expect(screen.getAllByText(/Estimated tax impact/)[0].className).toContain('measure__tax');
+    const forButton = screen.getAllByRole('button', { name: 'For' })[0];
+    expect(forButton).toHaveAttribute('type', 'button');
+  });
+
   it('shows Charlotte bonds in the city and hides them outside', () => {
     const { unmount } = renderBallot();
     expect(screen.getByText('Charlotte Bond Votes')).toBeInTheDocument();
@@ -135,7 +156,9 @@ describe('YourBallot', () => {
     });
 
     expect(screen.getByText('✓')).toBeInTheDocument();
-    await user.click(screen.getAllByRole('button', { name: 'For' })[0]);
+    const forButton = screen.getAllByRole('button', { name: 'For' })[0];
+    expect(forButton).toHaveAttribute('aria-pressed', 'true');
+    await user.click(forButton);
     expect(onMeasurePick).toHaveBeenCalledWith('nc-amend-photo-id-2026', null);
     await user.click(screen.getAllByRole('button', { name: 'Against' })[0]);
     expect(onMeasurePick).toHaveBeenCalledWith('nc-amend-photo-id-2026', 'against');
