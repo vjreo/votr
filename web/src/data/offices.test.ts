@@ -31,7 +31,6 @@ describe('office explainers', () => {
       ...MEASURES['nc-amend-photo-id-2026'],
       caseFor: undefined,
       caseAgainst: undefined,
-      argumentsDraft: false,
     };
     const forClaim = { text: ' A sourced point for. ', source: { title: 'For', url: 'https://example.com/for' } };
     const againstClaim = {

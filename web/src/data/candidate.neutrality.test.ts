@@ -1,28 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { allCandidates } from './ballot';
+import { LOADED_RE } from './loadedWords';
 import { MEASURES } from './offices';
-
-/** Praise/attack words VOTR should not use in its own voice. */
-export const LOADED_WORDS = [
-  'champion',
-  'fighter',
-  'fighting',
-  'fight',
-  'radical',
-  'extreme',
-  'failed',
-  'heroic',
-  'brave',
-  'courageous',
-  'visionary',
-  'corrupt',
-  'disastrous',
-  'unmatched',
-  'legendary',
-  'criticizes',
-];
-
-const LOADED_RE = new RegExp(`\\b(${LOADED_WORDS.join('|')})\\b`, 'i');
 
 describe('candidate copy neutrality', () => {
   it('does not use loaded praise or attack words in bios or issue stances', () => {

@@ -5,6 +5,8 @@
  * Last checked: October 8, 2026
  */
 
+import { auditPairedArguments } from './argumentAudit';
+
 export interface CivicSource {
   title: string;
   url: string;
@@ -45,7 +47,6 @@ export interface MeasureExplainer {
    */
   caseFor?: SourcedClaim[];
   caseAgainst?: SourcedClaim[];
-  argumentsDraft?: boolean;
   projectListUrl?: string;
   source: CivicSource;
   lastChecked: string;
@@ -65,7 +66,7 @@ export function pairedArguments(
   const forSide = keptClaims(explainer.caseFor);
   const againstSide = keptClaims(explainer.caseAgainst);
   if (!forSide.length || !againstSide.length) return null;
-  return { for: forSide, against: againstSide, draft: explainer.argumentsDraft === true };
+  return { for: forSide, against: againstSide, draft: !auditPairedArguments(explainer).ok };
 }
 
 export const OFFICES_LAST_CHECKED = '2026-10-08';
@@ -356,7 +357,6 @@ export const MEASURES: Record<string, MeasureExplainer> = {
         },
       },
     ],
-    argumentsDraft: true,
     source: {
       title: 'NCSBE statewide referendums, Nov. 3, 2026',
       url: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/statewide_referendums_20261103.pdf',
@@ -408,7 +408,6 @@ export const MEASURES: Record<string, MeasureExplainer> = {
         },
       },
     ],
-    argumentsDraft: true,
     source: {
       title: 'NCSBE statewide referendums, Nov. 3, 2026',
       url: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/statewide_referendums_20261103.pdf',
@@ -458,7 +457,6 @@ export const MEASURES: Record<string, MeasureExplainer> = {
         },
       },
     ],
-    argumentsDraft: true,
     source: {
       title: 'NCSBE statewide referendums, Nov. 3, 2026',
       url: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/statewide_referendums_20261103.pdf',
@@ -478,10 +476,10 @@ export const MEASURES: Record<string, MeasureExplainer> = {
     ],
     caseFor: [
       {
-        text: 'The bond question asks Charlotte voters to authorize $280,000,000, plus interest, for streets, sidewalks, bicycle paths, bridges, and related work. It states the city’s estimate of the property-tax increase to repay that debt is $0.00 a year for each $100,000 of property value.',
+        text: 'The bond question asks Charlotte voters to authorize $280,000,000, plus interest, for streets, sidewalks, bicycle paths, bridges, and related work. It also names storm drainage, traffic signals, and the acquisition of land and rights-of-way. It states the city’s estimate of the property-tax increase to repay that debt is $0.00 a year for each $100,000 of property value.',
         source: {
-          title: 'Charlotte transportation bond question, quoted by Ballotpedia',
-          url: 'https://ballotpedia.org/Charlotte,_North_Carolina,_Transportation_Bond_Measure_(November_2026)',
+          title: 'Mecklenburg County sample ballot, style B0001, November 3, 2026',
+          url: 'https://dl.ncsbe.gov/data/SampleBallots/2026-11-03/Mecklenburg-20261103-SAMPLE-E-0001_B.pdf',
         },
       },
     ],
@@ -489,12 +487,11 @@ export const MEASURES: Record<string, MeasureExplainer> = {
       {
         text: 'The same question says additional property taxes may be levied in an amount sufficient to pay the principal and the interest. It also states an estimated cost over the life of the bonds, using the highest interest rate charged for similar debt over the previous 20 years. A no vote would not authorize this borrowing.',
         source: {
-          title: 'Charlotte transportation bond question, quoted by Ballotpedia',
-          url: 'https://ballotpedia.org/Charlotte,_North_Carolina,_Transportation_Bond_Measure_(November_2026)',
+          title: 'Mecklenburg County sample ballot, style B0001, November 3, 2026',
+          url: 'https://dl.ncsbe.gov/data/SampleBallots/2026-11-03/Mecklenburg-20261103-SAMPLE-E-0001_B.pdf',
         },
       },
     ],
-    argumentsDraft: true,
     projectListUrl: 'https://www.charlottenc.gov/Growth-and-Development/Charlotte-Future/CIP/Bonds',
     source: {
       title: 'City of Charlotte bond orders (Aug. 10, 2026)',
@@ -517,8 +514,8 @@ export const MEASURES: Record<string, MeasureExplainer> = {
       {
         text: 'The bond question asks Charlotte voters to authorize $125,000,000, plus interest, for housing projects for people of low or moderate income, including related infrastructure and land. It states the city’s estimate of the property-tax increase to repay that debt is $0.00 a year for each $100,000 of property value.',
         source: {
-          title: 'Charlotte housing bond question, quoted by Ballotpedia',
-          url: 'https://ballotpedia.org/Charlotte,_North_Carolina,_Housing_Bond_Measure_(November_2026)',
+          title: 'Mecklenburg County sample ballot, style B0001, November 3, 2026',
+          url: 'https://dl.ncsbe.gov/data/SampleBallots/2026-11-03/Mecklenburg-20261103-SAMPLE-E-0001_B.pdf',
         },
       },
     ],
@@ -526,12 +523,11 @@ export const MEASURES: Record<string, MeasureExplainer> = {
       {
         text: 'The same question says additional property taxes may be levied in an amount sufficient to pay the principal and the interest. It also states an estimated cost over the life of the bonds, using the highest interest rate charged for similar debt over the previous 20 years. A no vote would not authorize this borrowing.',
         source: {
-          title: 'Charlotte housing bond question, quoted by Ballotpedia',
-          url: 'https://ballotpedia.org/Charlotte,_North_Carolina,_Housing_Bond_Measure_(November_2026)',
+          title: 'Mecklenburg County sample ballot, style B0001, November 3, 2026',
+          url: 'https://dl.ncsbe.gov/data/SampleBallots/2026-11-03/Mecklenburg-20261103-SAMPLE-E-0001_B.pdf',
         },
       },
     ],
-    argumentsDraft: true,
     projectListUrl: 'https://www.charlottenc.gov/Growth-and-Development/Charlotte-Future/CIP/Bonds',
     source: {
       title: 'City of Charlotte bond orders (Aug. 10, 2026)',
@@ -554,8 +550,8 @@ export const MEASURES: Record<string, MeasureExplainer> = {
       {
         text: 'The bond question asks Charlotte voters to authorize $20,000,000, plus interest, for neighborhood infrastructure, including curbs, gutters, drainage, sidewalks, paths, and related street work. It states the city’s estimate of the property-tax increase to repay that debt is $0.00 a year for each $100,000 of property value.',
         source: {
-          title: 'Charlotte neighborhood bond question, quoted by Ballotpedia',
-          url: 'https://ballotpedia.org/Charlotte,_North_Carolina,_Neighborhood_Improvements_Bond_Measure_(November_2026)',
+          title: 'Mecklenburg County sample ballot, style B0001, November 3, 2026',
+          url: 'https://dl.ncsbe.gov/data/SampleBallots/2026-11-03/Mecklenburg-20261103-SAMPLE-E-0001_B.pdf',
         },
       },
     ],
@@ -563,12 +559,11 @@ export const MEASURES: Record<string, MeasureExplainer> = {
       {
         text: 'The same question says additional property taxes may be levied in an amount sufficient to pay the principal and the interest. It also states an estimated cost over the life of the bonds, using the highest interest rate charged for similar debt over the previous 20 years. A no vote would not authorize this borrowing.',
         source: {
-          title: 'Charlotte neighborhood bond question, quoted by Ballotpedia',
-          url: 'https://ballotpedia.org/Charlotte,_North_Carolina,_Neighborhood_Improvements_Bond_Measure_(November_2026)',
+          title: 'Mecklenburg County sample ballot, style B0001, November 3, 2026',
+          url: 'https://dl.ncsbe.gov/data/SampleBallots/2026-11-03/Mecklenburg-20261103-SAMPLE-E-0001_B.pdf',
         },
       },
     ],
-    argumentsDraft: true,
     projectListUrl: 'https://www.charlottenc.gov/Growth-and-Development/Charlotte-Future/CIP/Bonds',
     source: {
       title: 'City of Charlotte CIP / city bonds',

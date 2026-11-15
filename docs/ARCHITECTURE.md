@@ -26,7 +26,7 @@ Cover **every U.S. election**: federal, state, county, municipal, school board, 
 
 ## Stack today (November 15, 2026)
 
-The live product is a static site. Election Day was November 3, 2026. The app is a record of that ballot. It does not show results.
+The live product is a static site. Election Day was November 3, 2026. The app is a record of that ballot. After the polls close it can show official totals from a `ResultsSource`. It does not project a winner.
 
 | Part | Status | What it is |
 |------|--------|------------|
@@ -168,6 +168,12 @@ Authority order:
 4. **Ballotpedia or Democracy Works** only after a paid license is accepted, and only to fill gaps. They must not overwrite official question text.
 
 Do not plan on Google Civic. It is deprecated.
+
+### Results
+
+`ResultsSource` in `web/src/results/types.ts` is one adapter per publisher. `covers(state, county, election)` decides who can answer. `load` returns contest totals, the publisher's own status word, a source URL, and that file's timestamp. It does not add a winner, a projection, or a party color.
+
+The Mecklenburg adapter reads the NC State Board of Elections ENR file for county 60. Another county or state implements the same interface and does not need a new screen. Before the polls close, the screen says results are not yet available and does not read the totals.
 
 A Cursor SDK agent may draft an explainer or a position summary. The draft is a pull request or a review item. It is not written to the live site. Publish rules, all required:
 
