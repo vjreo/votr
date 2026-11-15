@@ -35,7 +35,7 @@ describe('AddressEntry', () => {
     vi.setSystemTime(new Date(2026, 10, 15));
     render(<AddressEntry onSubmit={vi.fn()} />);
     expect(screen.getByRole('status')).toHaveTextContent(/Tuesday, November 3, 2026/);
-    expect(screen.getByRole('status')).toHaveTextContent(/does not show results/);
+    expect(screen.getByRole('status')).toHaveTextContent(/Official results are in a separate view/);
     expect(document.querySelector('.entry__date')).toHaveTextContent('Tuesday, November 3, 2026');
   });
 

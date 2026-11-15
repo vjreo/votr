@@ -137,11 +137,12 @@ describe('deadline and money formatting', () => {
     expect(electionPassedNote()).toBeNull();
   });
 
-  it('states that the election has passed without offering results', () => {
+  it('states that the election has passed and points to official results', () => {
     vi.setSystemTime(new Date(2026, 10, 15));
     expect(getDaysUntil('2026-11-03')).toBe(-12);
     expect(electionPassedNote()).toMatch(/Election Day was/);
-    expect(electionPassedNote()).toMatch(/does not show results/);
+    expect(electionPassedNote()).toMatch(/Official results are in a separate view/);
+    expect(electionPassedNote()).not.toMatch(/winner|leading|projected/i);
     expect(getNextCriticalDeadline()).toBeNull();
   });
 

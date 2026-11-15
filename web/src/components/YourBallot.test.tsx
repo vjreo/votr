@@ -92,9 +92,22 @@ describe('YourBallot', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 10, 15));
     renderBallot();
-    expect(screen.getByRole('status')).toHaveTextContent(/does not show results/);
+    expect(screen.getByRole('status')).toHaveTextContent(/Official results are in a separate view/);
     expect(screen.queryByText(/days left/)).not.toBeInTheDocument();
     vi.useRealTimers();
+  });
+
+  it('opens official results for this ballot and returns focus', async () => {
+    const user = userEvent.setup();
+    renderBallot();
+    await user.click(screen.getByRole('button', { name: 'Official results' }));
+    expect(screen.getByRole('heading', { name: 'Official results' })).toHaveFocus();
+    expect(await screen.findByText('Official')).toBeInTheDocument();
+    expect(screen.getByText('Roy Cooper')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /HOUSING BONDS/ })).toBeInTheDocument();
+    expect(screen.queryByText(/leading|winner/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Go back to ballot' }));
+    expect(document.getElementById('open-results')).toHaveFocus();
   });
 
   it('shows what a yes or no vote does without another tap', () => {
@@ -103,7 +116,8 @@ describe('YourBallot', () => {
     expect(screen.getByText(/leave the constitution as it is/)).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { name: 'Easy to miss' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('heading', { name: "Each side's case" }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Draft for review').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Draft for review')).not.toBeInTheDocument();
+    expect(screen.getAllByText('City of Charlotte Housing Bonds').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('heading', { name: 'Case for' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('heading', { name: 'Case against' }).length).toBeGreaterThan(0);
     const wording = screen.getAllByText('Official ballot wording')[0].closest('details');
@@ -116,8 +130,9 @@ describe('YourBallot', () => {
   it('shows Charlotte bonds in the city and hides them outside', () => {
     const { unmount } = renderBallot();
     expect(screen.getByText('Charlotte Bond Votes')).toBeInTheDocument();
-    expect(screen.getByText('Transportation ($280M)')).toBeInTheDocument();
-    expect(screen.getByText('Affordable Housing ($125M)')).toBeInTheDocument();
+    expect(screen.getByText('City of Charlotte Transportation Bonds')).toBeInTheDocument();
+    expect(screen.getByText('City of Charlotte Housing Bonds')).toBeInTheDocument();
+    expect(screen.getByText('City of Charlotte Neighborhood Improvement Bonds')).toBeInTheDocument();
     unmount();
     renderBallot({ location: huntersvilleLocation });
     expect(screen.queryByText('Charlotte Bond Votes')).not.toBeInTheDocument();

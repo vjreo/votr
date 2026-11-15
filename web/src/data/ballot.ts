@@ -73,6 +73,12 @@ export const ELECTION = {
   description: 'U.S. Senate, U.S. House, state courts, state legislature, county offices, and ballot measures',
 };
 
+/** Printed ballot for Mecklenburg County, style B0001, posted by the NC State Board of Elections. */
+export const MECKLENBURG_SAMPLE_BALLOT = {
+  title: 'Mecklenburg County sample ballot, style B0001, November 3, 2026',
+  url: 'https://dl.ncsbe.gov/data/SampleBallots/2026-11-03/Mecklenburg-20261103-SAMPLE-E-0001_B.pdf',
+};
+
 export const DEADLINES: ElectionDeadline[] = [
   { name: 'Voter Registration', date: '2026-10-09', hours: '5 p.m.', critical: true },
   { name: 'Early Voting Begins', date: '2026-10-15', critical: false },
@@ -1230,32 +1236,32 @@ export const AMENDMENTS: BallotMeasure[] = [
   {
     id: 'nc-amend-photo-id-2026',
     type: 'amendment',
-    title: 'Require Photo ID for Voting',
-    shortTitle: 'Photo ID for All Voting',
-    ballotQuestion: 'For/Against: Constitutional amendment to require all voters, not just those presenting in person, to present photo ID before voting.',
+    title: 'Constitutional amendment to require all voters, not just those presenting to vote in person, to present photo identification before voting.',
+    shortTitle: 'Constitutional amendment to require all voters, not just those presenting to vote in person, to present photo identification before voting.',
+    ballotQuestion: 'Constitutional amendment to require all voters, not just those presenting to vote in person, to present photo identification before voting.',
     explanation: 'Currently, photo ID is required for in-person voting. This amendment would extend that requirement to all forms of voting, including absentee ballots.',
     choices: ['For', 'Against'],
-    sources: [{ url: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/statewide_referendums_20261103.pdf', source_type: 'voting_resource', title: 'NCSBE Statewide Referendums' }],
+    sources: [{ url: MECKLENBURG_SAMPLE_BALLOT.url, source_type: 'voting_resource', title: MECKLENBURG_SAMPLE_BALLOT.title }],
   },
   {
     id: 'nc-amend-income-tax-2026',
     type: 'amendment',
-    title: 'Maximum Income Tax Rate of 3.5%',
-    shortTitle: 'Cap Income Tax at 3.5%',
-    ballotQuestion: 'For/Against: Constitutional amendment to keep State income tax rate from being raised higher than 3.5%.',
+    title: 'Constitutional amendment to keep the State income tax rate from being raised higher than three and one-half percent (3.5%).',
+    shortTitle: 'Constitutional amendment to keep the State income tax rate from being raised higher than three and one-half percent (3.5%).',
+    ballotQuestion: 'Constitutional amendment to keep the State income tax rate from being raised higher than three and one-half percent (3.5%).',
     explanation: 'The NC Constitution currently allows income tax rates up to 7%. This amendment would lower that cap to 3.5%, matching the current actual rate.',
     choices: ['For', 'Against'],
-    sources: [{ url: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/statewide_referendums_20261103.pdf', source_type: 'voting_resource', title: 'NCSBE Statewide Referendums' }],
+    sources: [{ url: MECKLENBURG_SAMPLE_BALLOT.url, source_type: 'voting_resource', title: MECKLENBURG_SAMPLE_BALLOT.title }],
   },
   {
     id: 'nc-amend-property-tax-2026',
     type: 'amendment',
-    title: 'Property Tax Levy Limit',
-    shortTitle: 'Limit Property Tax Increases',
-    ballotQuestion: 'For/Against: Constitutional amendment requiring limits on property tax increases by local governments.',
+    title: 'Constitutional amendment requiring limits on property tax increases by local governments.',
+    shortTitle: 'Constitutional amendment requiring limits on property tax increases by local governments.',
+    ballotQuestion: 'Constitutional amendment requiring limits on property tax increases by local governments.',
     explanation: 'This amendment would require the state legislature to pass laws limiting how much local governments can raise property taxes.',
     choices: ['For', 'Against'],
-    sources: [{ url: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/statewide_referendums_20261103.pdf', source_type: 'voting_resource', title: 'NCSBE Statewide Referendums' }],
+    sources: [{ url: MECKLENBURG_SAMPLE_BALLOT.url, source_type: 'voting_resource', title: MECKLENBURG_SAMPLE_BALLOT.title }],
   },
 ];
 
@@ -1263,41 +1269,41 @@ export const CHARLOTTE_BONDS: BallotMeasure[] = [
   {
     id: 'clt-bonds-transportation-2026',
     type: 'bond',
-    title: 'Transportation Bonds',
-    shortTitle: 'Transportation ($280M)',
+    title: 'City of Charlotte Transportation Bonds',
+    shortTitle: 'City of Charlotte Transportation Bonds',
     principal: 280_000_000,
-    ballotQuestion: 'Shall the City of Charlotte issue $280,000,000 in bonds for transportation improvements including streets, roads, sidewalks, bridges, bike paths, signals, and related infrastructure?',
+    ballotQuestion: 'Additional property taxes may be levied on property located in the City of Charlotte in an amount sufficient to pay the principal of and interest on bonds if approved by the following ballot question. Shall the order authorizing $280,000,000 of bonds plus interest to provide funds to pay the capital costs of constructing, reconstructing, enlarging, extending and improving certain streets, including streets and roads constituting a part of the State highway system or otherwise the responsibility of the State and including the cost of related studies, streetscape and pedestrian improvements, relocation of utilities, plans and design; acquiring, constructing, reconstructing, widening, extending, paving, milling, resurfacing, grading or improving streets, roads, intersections, parking lots and pedestrian and bicycle paths; acquiring, constructing, reconstructing or improving sidewalks, curbs, gutters, storm drainage, bridges, overpasses, underpasses and grade crossings and providing related landscaping, lighting and traffic controls, signals and markers; and the acquisition of interests in land and rights-of-way required therefor, and providing that additional taxes may be levied in an amount sufficient to pay the principal of and interest on the bonds be approved, in light of the following: (1) The estimated cumulative cost over the life of the bond, using the highest interest rate charged for similar debt over the last 20 years, would be $437,113,600 (consisting of $280,000,000 principal amount of bonds plus $157,113,600 of interest). (2) The estimated amount of property tax liability increase for each one hundred thousand dollars ($100,000) of property tax value to service the cumulative cost over the life of the bond provided above would be $0.00 per year.',
     explanation: 'This bond would fund various transportation projects across Charlotte. The city estimates no property tax increase to service this debt.',
     estimatedTaxImpact: '$0.00 per $100,000 assessed value',
     choices: ['Yes', 'No'],
     city: 'Charlotte',
-    sources: [{ url: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/referendums_20261103.pdf', source_type: 'voting_resource', title: 'NCSBE County Referendums' }],
+    sources: [{ url: MECKLENBURG_SAMPLE_BALLOT.url, source_type: 'voting_resource', title: MECKLENBURG_SAMPLE_BALLOT.title }],
   },
   {
     id: 'clt-bonds-housing-2026',
     type: 'bond',
-    title: 'Housing Bonds',
-    shortTitle: 'Affordable Housing ($125M)',
+    title: 'City of Charlotte Housing Bonds',
+    shortTitle: 'City of Charlotte Housing Bonds',
     principal: 125_000_000,
-    ballotQuestion: 'Shall the City of Charlotte issue $125,000,000 in bonds for housing projects for low and/or moderate income residents and related infrastructure?',
-    explanation: 'This bond would fund affordable housing development. The city estimates no property tax increase to service this debt.',
+    ballotQuestion: 'Additional property taxes may be levied on property located in the City of Charlotte in an amount sufficient to pay the principal of and interest on bonds if approved by the following ballot question. Shall the order authorizing $125,000,000 of bonds plus interest to provide funds to pay the capital costs of housing projects for the benefit of persons of low income, or moderate income, or low and moderate income, including construction of infrastructure improvements related thereto and the acquisition of land and rights-of-way required therefor, and providing that additional taxes may be levied in an amount sufficient to pay the principal of and interest on the bonds be approved, in light of the following: (1) The estimated cumulative cost over the life of the bond, using the highest interest rate charged for similar debt over the last 20 years, would be $198,396,313 (consisting of $125,000,000 principal amount of bonds plus $73,396,313 of interest). (2) The estimated amount of property tax liability increase for each one hundred thousand dollars ($100,000) of property tax value to service the cumulative cost over the life of the bond provided above would be $0.00 per year.',
+    explanation: 'This bond would pay capital costs of housing projects for people of low or moderate income, including related infrastructure and land. The question states an estimated tax increase of $0.00 per $100,000 of value per year, and also says taxes may be levied to pay the debt.',
     estimatedTaxImpact: '$0.00 per $100,000 assessed value',
     choices: ['Yes', 'No'],
     city: 'Charlotte',
-    sources: [{ url: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/referendums_20261103.pdf', source_type: 'voting_resource', title: 'NCSBE County Referendums' }],
+    sources: [{ url: MECKLENBURG_SAMPLE_BALLOT.url, source_type: 'voting_resource', title: MECKLENBURG_SAMPLE_BALLOT.title }],
   },
   {
     id: 'clt-bonds-neighborhood-2026',
     type: 'bond',
-    title: 'Neighborhood Improvement Bonds',
-    shortTitle: 'Neighborhood Improvements ($20M)',
+    title: 'City of Charlotte Neighborhood Improvement Bonds',
+    shortTitle: 'City of Charlotte Neighborhood Improvement Bonds',
     principal: 20_000_000,
-    ballotQuestion: 'Shall the City of Charlotte issue $20,000,000 in bonds for neighborhood infrastructure improvements including curbs, gutters, drainage, sidewalks, and related improvements?',
+    ballotQuestion: 'Additional property taxes may be levied on property located in the City of Charlotte in an amount sufficient to pay the principal of and interest on bonds if approved by the following ballot question. Shall the order authorizing $20,000,000 of bonds plus interest to provide funds to pay the capital costs of infrastructure improvements for various neighborhoods of the City, including the cost of related studies, plans and design, acquiring, constructing, reconstructing, improving, installing or providing curbs, gutters, storm drainage, sidewalks, pedestrian and bicycle paths, and relocation of utilities; paving, milling, resurfacing, grading or improving streets, roads and intersections, providing public open space, landscaping, lighting and traffic controls, signals and markers, and acquiring any necessary equipment, land, interests in land and rights-of-way therefor, and providing that additional taxes may be levied in an amount sufficient to pay the principal of and interest on the bonds be approved, in light of the following: (1) The estimated cumulative cost over the life of the bond, using the highest interest rate charged for similar debt over the last 20 years, would be $31,222,400 (consisting of $20,000,000 principal amount of bonds plus $11,222,400 of interest). (2) The estimated amount of property tax liability increase for each one hundred thousand dollars ($100,000) of property tax value to service the cumulative cost over the life of the bond provided above would be $0.00 per year.',
     explanation: 'This bond would fund neighborhood-level infrastructure improvements. The city estimates no property tax increase to service this debt.',
     estimatedTaxImpact: '$0.00 per $100,000 assessed value',
     choices: ['Yes', 'No'],
     city: 'Charlotte',
-    sources: [{ url: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/referendums_20261103.pdf', source_type: 'voting_resource', title: 'NCSBE County Referendums' }],
+    sources: [{ url: MECKLENBURG_SAMPLE_BALLOT.url, source_type: 'voting_resource', title: MECKLENBURG_SAMPLE_BALLOT.title }],
   },
 ];
 
@@ -1411,7 +1417,7 @@ export function formatDaysShort(days: number): string {
 /** Shown once Election Day is in the past. Factual; no results and no advice. */
 export function electionPassedNote(now = new Date()): string | null {
   if (getDaysUntil(ELECTION.date, now) >= 0) return null;
-  return `Election Day was ${formatDate(ELECTION.date)}. This guide does not show results.`;
+  return `Election Day was ${formatDate(ELECTION.date)}. Official results are in a separate view. They are the board's totals, with no projection.`;
 }
 
 export function formatDate(dateString: string): string {

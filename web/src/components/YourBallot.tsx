@@ -11,6 +11,7 @@ import {
   getCandidatesForLocation,
   sortCandidatesAlphabetically,
   electionPassedNote,
+  MECKLENBURG_SAMPLE_BALLOT,
   getNextCriticalDeadline,
   getDaysUntil,
   formatDaysLeft,
@@ -24,6 +25,7 @@ import {
 import { DISTRICTS_ATTRIBUTION } from '../utils/lookup';
 import CandidateDetail from './CandidateDetail';
 import ShareVotr from './ShareVotr';
+import ResultsView from './ResultsView';
 import RaceContext from './RaceContext';
 import { explainerForMeasure, pairedArguments } from '../data/offices';
 import JargonText from './Term';
@@ -92,7 +94,7 @@ export default function YourBallot({
   onClearAll,
 }: Props) {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
-  const [view, setView] = useState<'ballot' | 'dates' | 'settings'>('ballot');
+  const [view, setView] = useState<'ballot' | 'dates' | 'settings' | 'results'>('ballot');
   const returnFocusId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -107,8 +109,10 @@ export default function YourBallot({
     const focusTarget = () => {
       const node = document.getElementById(id);
       if (!node) return;
-      // focusVisible keeps the ring after a mouse click on Back. A plain
-      // focus() lands on the button but the ring stays off.
+      node.classList.add('is-focus-restored');
+      node.addEventListener('blur', () => node.classList.remove('is-focus-restored'), { once: true });
+      // A mouse click on Back would otherwise hide the ring. The class
+      // draws it even when the browser treats the focus as a pointer.
       node.focus({ focusVisible: true } as FocusOptions);
     };
     focusTarget();
@@ -145,6 +149,10 @@ export default function YourBallot({
     return <DatesView onBack={() => setView('ballot')} />;
   }
 
+  if (view === 'results') {
+    return <ResultsView location={location} onBack={() => setView('ballot')} />;
+  }
+
   if (view === 'settings') {
     return (
       <SettingsView
@@ -162,6 +170,17 @@ export default function YourBallot({
         <div className="ballot__header-top">
           <h1 className="ballot__title">Your Ballot</h1>
           <div className="ballot__header-actions">
+            <button
+              id="open-results"
+              className="ballot__action-btn"
+              onClick={() => {
+                returnFocusId.current = 'open-results';
+                setView('results');
+              }}
+              aria-label="Official results"
+            >
+              <ResultsIcon />
+            </button>
             <button 
               id="open-dates"
               className="ballot__action-btn"
@@ -544,6 +563,13 @@ function MeasureCard({
           <span className="measure__amount">{formatMoney(measure.principal)}</span>
         )}
       </div>
+      <p className="measure__title-source">
+        Title as printed on the{' '}
+        <a href={MECKLENBURG_SAMPLE_BALLOT.url} target="_blank" rel="noopener noreferrer">
+          {MECKLENBURG_SAMPLE_BALLOT.title}
+        </a>
+        .
+      </p>
 
       <p className="measure__lead">{civic?.oneLiner || measure.ballotQuestion}</p>
 
@@ -669,6 +695,19 @@ function MeasureCard({
 }
 
 // Icons
+function ResultsIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="8" y1="6" x2="21" y2="6" />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <line x1="3" y1="6" x2="3.01" y2="6" />
+      <line x1="3" y1="12" x2="3.01" y2="12" />
+      <line x1="3" y1="18" x2="3.01" y2="18" />
+    </svg>
+  );
+}
+
 function MapPinIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -789,6 +828,12 @@ const ballotStyles = `
   .ballot__action-btn:active {
     background: var(--color-border-light);
     transform: scale(0.95);
+  }
+
+  .ballot__action-btn.is-focus-restored:focus,
+  .ballot__candidate.is-focus-restored:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
   }
 
   .ballot__location {
@@ -1121,6 +1166,17 @@ const ballotStyles = `
     font-weight: 600;
     color: var(--color-text-primary);
     margin: 0;
+  }
+
+  .measure__title-source {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+  }
+
+  .measure__title-source a {
+    color: var(--color-accent);
+    font-weight: 500;
   }
 
   .measure__amount {

@@ -13,8 +13,8 @@ The technical design for the north star is in [ARCHITECTURE.md](ARCHITECTURE.md)
 ## Where the product is today
 
 - Live app: [vjreo.github.io/votr](https://vjreo.github.io/votr/). Vite, React, TypeScript, GitHub Pages. No server. Address lookup and picks stay on the device.
-- One election, already held (November 3, 2026). The app is a record of that ballot. It does not show results.
-- Ballot: statewide and local candidates with sourced positions, three constitutional amendments, three Charlotte bonds. Measures show what a for/yes vote does and what an against/no vote does, then easy-to-miss facts and a source. Each side's case renders only when both sides exist. They do not exist yet.
+- One election, already held (November 3, 2026). The app is a record of that ballot. After the polls close, a results view shows the NC State Board of Elections file for Mecklenburg. It does not project a winner.
+- Ballot: statewide and local candidates with sourced positions, three constitutional amendments, three Charlotte bonds. Measure titles are the words printed on the Mecklenburg sample ballot. Each side's case renders only when both sides exist.
 - Office explainers, district maps, and ZIP address packs are Mecklenburg-specific TypeScript and JSON, not a jurisdiction model.
 - `backend/` (Express, Postgres, Open States, OpenAI) and `mobile/` (Expo) are frozen and unused by the live site. They are not the scaling plan. Match scores, media-bias ratings, and gamification stay out of the voter-facing product.
 - No chat. No accounts on the web.
@@ -24,8 +24,8 @@ The technical design for the north star is in [ARCHITECTURE.md](ARCHITECTURE.md)
 Keep the proving ground accurate. Do not start the national build.
 
 - **Write paired, sourced arguments for the six measures.** Why: voters can see what a yes or no does, and they still cannot see each side's case. The screen hides the section until both sides exist. **M**
-- **Decide results, then either link NCSBE or show certified totals with no commentary.** Why: the app now says it does not show results, and people will ask for them. **M**
-- **Confirm the housing-bond label.** The card says "Affordable Housing ($125M)"; the ballot question says housing for low- and moderate-income residents. Why: the short title should not add a frame the official text does not use. **S**
+- **Decide results, then either link NCSBE or show certified totals with no commentary.** Done in the results view: the NCSBE file, the file's own status word, no winner badge. **M**
+- **Confirm the housing-bond label.** Done. The card uses "City of Charlotte Housing Bonds," the heading on the Mecklenburg sample ballot. **S**
 - **Do not label an unmatched U.S. House point as NC-12.** Why: the fallback can attach the wrong House race while the screen says the district was unmatched. **S**
 - **Move focus when opening a candidate, dates, or settings.** Why: keyboard and screen-reader users are left on a control that is no longer on screen. **S**
 - **Re-check the October 24, 2026 position sources against the pages they cite.** Why: a record of the ballot still has to be true after the election. **M**
@@ -89,8 +89,8 @@ This phase is the north star. Mecklenburg remains the first corpus the new pipel
 
 ## Open questions for Vince
 
-1. After certification, should VOTR show official results, or stay a ballot record with a link to NCSBE?
-2. Is the housing bond's public title "Affordable Housing," or should the card use the bond-order name?
+1. After certification, should VOTR show official results, or stay a ballot record with a link to NCSBE? Decided: show the board's file, with its status word, and no projection.
+2. Is the housing bond's public title "Affordable Housing," or should the card use the bond-order name? Decided: use the sample-ballot heading, "City of Charlotte Housing Bonds."
 3. Which county is second, and is it still in North Carolina?
 4. When is the move from GitHub Pages to Vercel actually worth doing?
 5. Is there budget for Ballotpedia or Democracy Works, or do we stay on official files until there is?
