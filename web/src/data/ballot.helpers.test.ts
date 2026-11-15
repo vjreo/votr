@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { candidate } from '../test/fixtures';
 import {
   AMENDMENTS,
   CHARLOTTE_BONDS,
@@ -14,8 +15,10 @@ import {
   allBallotOffices,
   allCandidates,
   allMeasureIds,
+  electionPassedNote,
   formatDate,
   formatMoney,
+  lastNameKey,
   formatShortDate,
   getCandidatesForLocation,
   getDaysUntil,
@@ -85,6 +88,21 @@ describe('sortCandidatesAlphabetically', () => {
     expect(house14[0].party).toBe('Republican');
   });
 
+  it('sorts Jr. and Sr. under the surname', () => {
+    expect(lastNameKey('Arthur Griffin, Jr.')).toBe('Griffin');
+    expect(lastNameKey('Ann Hale Sr.')).toBe('Hale');
+    const people = [
+      candidate({ id: 'i', name: 'Helen Ivers' }),
+      candidate({ id: 'g', name: 'Arthur Griffin, Jr.' }),
+      candidate({ id: 'h', name: 'Ann Hale Sr.' }),
+    ];
+    expect(sortCandidatesAlphabetically(people).map((c) => c.name)).toEqual([
+      'Arthur Griffin, Jr.',
+      'Ann Hale Sr.',
+      'Helen Ivers',
+    ]);
+  });
+
   it('does not mutate the input list', () => {
     const original = US_SENATE.map((c) => c.id);
     sortCandidatesAlphabetically(US_SENATE);
@@ -107,6 +125,20 @@ describe('deadline and money formatting', () => {
     expect(getDaysUntil('2026-10-31')).toBe(1);
     expect(getDaysUntil('2026-11-03')).toBe(4);
     expect(getDaysUntil('2026-10-09')).toBeLessThan(0);
+  });
+
+  it('does not add a day across the November daylight-saving fallback', () => {
+    vi.setSystemTime(new Date(2026, 9, 31));
+    expect(getDaysUntil('2026-11-03')).toBe(3);
+    expect(electionPassedNote()).toBeNull();
+  });
+
+  it('states that the election has passed without offering results', () => {
+    vi.setSystemTime(new Date(2026, 10, 15));
+    expect(getDaysUntil('2026-11-03')).toBe(-12);
+    expect(electionPassedNote()).toMatch(/Election Day was/);
+    expect(electionPassedNote()).toMatch(/does not show results/);
+    expect(getNextCriticalDeadline()).toBeNull();
   });
 
   it('returns the next future critical deadline', () => {

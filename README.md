@@ -8,10 +8,12 @@ VOTR helps you see what is on your ballot. We show candidate positions from thei
 
 ## Current product
 
-Through Election Day, **the static web app is the product**.
+The 2026 general election was November 3. **The static web app is still the product**: a record of the Mecklenburg ballot. It does not show results or say how to vote.
 
 - **Web** (`web/`): Vite + React. Deploys to GitHub Pages. Bundles Mecklenburg 2026 races, office explainers, maps, and address points. No backend. Address and GPS lookup stay on the device.
-- **Backend** (`backend/`) and **native app** (`mobile/`): Frozen. Keep CI passing. No new features until after November 3.
+- **Backend** (`backend/`) and **native app** (`mobile/`): Frozen. Keep CI passing. They are not the live product. See [docs/ROADMAP.md](docs/ROADMAP.md).
+
+Mecklenburg is the proving ground. The long-term goal is every U.S. election. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Unbiased rules
 
@@ -60,6 +62,7 @@ votr/
 ├── mobile/              # Frozen Expo app (CI only)
 └── docs/
     ├── ARCHITECTURE.md
+    ├── ROADMAP.md
     └── SECURITY.md
 ```
 
