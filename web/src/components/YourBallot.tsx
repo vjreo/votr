@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { UserLocation, CandidatePick, MeasurePick } from '../App';
 import {
   ELECTION,
@@ -24,7 +24,7 @@ import { DISTRICTS_ATTRIBUTION } from '../utils/lookup';
 import CandidateDetail from './CandidateDetail';
 import ShareVotr from './ShareVotr';
 import RaceContext from './RaceContext';
-import { explainerForMeasure } from '../data/offices';
+import { explainerForMeasure, pairedArguments } from '../data/offices';
 import JargonText from './Term';
 
 interface Props {
@@ -92,9 +92,18 @@ export default function YourBallot({
 }: Props) {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [view, setView] = useState<'ballot' | 'dates' | 'settings'>('ballot');
+  const returnFocusId = useRef<string | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, [view, selectedCandidate]);
+
+  useLayoutEffect(() => {
+    if (selectedCandidate || view !== 'ballot') return;
+    const id = returnFocusId.current;
+    if (!id) return;
+    returnFocusId.current = null;
+    document.getElementById(id)?.focus();
   }, [view, selectedCandidate]);
 
   const candidates = getCandidatesForLocation(location);
@@ -141,15 +150,23 @@ export default function YourBallot({
           <h1 className="ballot__title">Your Ballot</h1>
           <div className="ballot__header-actions">
             <button 
+              id="open-dates"
               className="ballot__action-btn"
-              onClick={() => setView('dates')}
+              onClick={() => {
+                returnFocusId.current = 'open-dates';
+                setView('dates');
+              }}
               aria-label="View key dates"
             >
               <CalendarIcon />
             </button>
             <button 
+              id="open-settings"
               className="ballot__action-btn"
-              onClick={() => setView('settings')}
+              onClick={() => {
+                returnFocusId.current = 'open-settings';
+                setView('settings');
+              }}
               aria-label="Settings"
             >
               <SettingsIcon />
@@ -220,8 +237,12 @@ export default function YourBallot({
                     return (
                       <button
                         key={candidate.id}
+                        id={`candidate-${candidate.id}`}
                         className={`ballot__candidate ${pick ? 'ballot__candidate--picked' : ''}`}
-                        onClick={() => setSelectedCandidate(candidate)}
+                        onClick={() => {
+                          returnFocusId.current = `candidate-${candidate.id}`;
+                          setSelectedCandidate(candidate);
+                        }}
                       >
                         <div className="ballot__candidate-info">
                           <span className="ballot__candidate-name">{candidate.name}</span>
@@ -320,6 +341,14 @@ export default function YourBallot({
   );
 }
 
+function useFocusHeading() {
+  const ref = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => {
+    ref.current?.focus();
+  }, []);
+  return ref;
+}
+
 function SettingsView({
   onBack,
   onClearAll,
@@ -330,6 +359,7 @@ function SettingsView({
   hasAnyPicks: boolean;
 }) {
   const [showConfirm, setShowConfirm] = useState(false);
+  const headingRef = useFocusHeading();
 
   const handleClear = () => {
     onClearAll();
@@ -343,7 +373,7 @@ function SettingsView({
           <ChevronLeftIcon />
           <span>Back to ballot</span>
         </button>
-        <h1 className="settings__title">Settings</h1>
+        <h1 ref={headingRef} tabIndex={-1} className="settings__title">Settings</h1>
       </header>
 
       <main className="settings__content">
@@ -417,6 +447,7 @@ function SettingsView({
 }
 
 function DatesView({ onBack }: { onBack: () => void }) {
+  const headingRef = useFocusHeading();
   return (
     <div className="dates">
       <header className="dates__header">
@@ -424,7 +455,7 @@ function DatesView({ onBack }: { onBack: () => void }) {
           <ChevronLeftIcon />
           <span>Back to ballot</span>
         </button>
-        <h1 className="dates__title">Key Dates</h1>
+        <h1 ref={headingRef} tabIndex={-1} className="dates__title">Key Dates</h1>
         <p className="dates__subtitle">From the NC State Board of Elections</p>
       </header>
 
@@ -476,6 +507,7 @@ function MeasureCard({
 }) {
   const isBond = measure.type === 'bond';
   const civic = explainerForMeasure(measure.id);
+  const cases = pairedArguments(civic);
 
   const handlePick = (leaning: MeasurePick['leaning']) => {
     if (pick?.leaning === leaning) {
@@ -511,6 +543,35 @@ function MeasureCard({
                   <li key={item}>{item}</li>
                 ))}
               </ul>
+              {cases && (
+                <div className="measure__cases">
+                  {cases.draft && (
+                    <p className="measure__draft">Draft for review</p>
+                  )}
+                  <section className="measure__case">
+                    <h5 className="measure__case-label">Case for</h5>
+                    {cases.for.map((claim) => (
+                      <p key={claim.text} className="measure__claim">
+                        {claim.text}{' '}
+                        <a href={claim.source.url} target="_blank" rel="noopener noreferrer">
+                          {claim.source.title}
+                        </a>
+                      </p>
+                    ))}
+                  </section>
+                  <section className="measure__case">
+                    <h5 className="measure__case-label">Case against</h5>
+                    {cases.against.map((claim) => (
+                      <p key={claim.text} className="measure__claim">
+                        {claim.text}{' '}
+                        <a href={claim.source.url} target="_blank" rel="noopener noreferrer">
+                          {claim.source.title}
+                        </a>
+                      </p>
+                    ))}
+                  </section>
+                </div>
+              )}
               {civic.projectListUrl && (
                 <p>
                   <a href={civic.projectListUrl} target="_blank" rel="noopener noreferrer">
@@ -1061,6 +1122,47 @@ const ballotStyles = `
     padding-left: 1.15em;
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
+  }
+
+  .measure__draft {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+  }
+
+  .measure__cases {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-3);
+  }
+
+  .measure__case {
+    margin: 0;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  .measure__case-label {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .measure__claim {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+    color: var(--color-text-secondary);
+  }
+
+  .measure__claim:last-child {
+    margin-bottom: 0;
   }
 
   .measure__detail a {

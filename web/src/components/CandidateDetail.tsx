@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { NO_PUBLIC_POSITIONS_NOTE, type Candidate } from '../data/ballot';
 import type { CandidatePick, UserLocation } from '../App';
 import RaceContext from './RaceContext';
@@ -15,9 +15,14 @@ interface Props {
 export default function CandidateDetail({ candidate, pick, location, onBack, onPick }: Props) {
   const hasPositions = candidate.positions.length > 0;
   const hasSources = candidate.sources.length > 0;
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, [candidate.id]);
+
+  useLayoutEffect(() => {
+    headingRef.current?.focus();
   }, [candidate.id]);
 
   const handlePick = (leaning: CandidatePick['leaning']) => {
@@ -47,7 +52,7 @@ export default function CandidateDetail({ candidate, pick, location, onBack, onP
           <div className="detail__avatar">
             {candidate.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
           </div>
-          <h1 className="detail__name">{candidate.name}</h1>
+          <h1 ref={headingRef} tabIndex={-1} className="detail__name">{candidate.name}</h1>
           <p className="detail__party">{candidate.party}</p>
           <p className="detail__office">
             <JargonText text={candidate.office} />

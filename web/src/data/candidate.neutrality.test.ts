@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { allCandidates } from './ballot';
+import { MEASURES } from './offices';
 
 /** Praise/attack words VOTR should not use in its own voice. */
 export const LOADED_WORDS = [
@@ -35,6 +36,18 @@ describe('candidate copy neutrality', () => {
         if (!text) continue;
         const match = text.match(LOADED_RE);
         if (match) hits.push(`${candidate.name} ${label}: "${match[0]}" in "${text}"`);
+      }
+    }
+    expect(hits).toEqual([]);
+  });
+
+  it('does not use loaded praise or attack words in draft measure arguments', () => {
+    const hits: string[] = [];
+    for (const measure of Object.values(MEASURES)) {
+      const claims = [...(measure.caseFor ?? []), ...(measure.caseAgainst ?? [])];
+      for (const claim of claims) {
+        const match = claim.text.match(LOADED_RE);
+        if (match) hits.push(`${measure.id}: "${match[0]}" in "${claim.text}"`);
       }
     }
     expect(hits).toEqual([]);

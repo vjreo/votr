@@ -88,10 +88,18 @@ describe('YourBallot', () => {
     expect(names).toEqual(['Tim Moore', 'Lakesha Womack']);
   });
 
-  it('shows Charlotte bonds in the city and hides them outside', () => {
+  it('shows Charlotte bonds in the city and hides them outside', async () => {
+    const user = userEvent.setup();
     const { unmount } = renderBallot();
     expect(screen.getByText('Charlotte Bond Votes')).toBeInTheDocument();
     expect(screen.getByText('Transportation ($280M)')).toBeInTheDocument();
+    expect(screen.getByText('Affordable Housing ($125M)')).toBeInTheDocument();
+    const photo = screen.getByText(/photo-ID rule/i).closest('details');
+    expect(photo).toBeTruthy();
+    await user.click(photo!.querySelector('summary')!);
+    expect(within(photo as HTMLElement).getByText('Draft for review')).toBeInTheDocument();
+    expect(within(photo as HTMLElement).getByRole('heading', { name: 'Case for' })).toBeInTheDocument();
+    expect(within(photo as HTMLElement).getByRole('heading', { name: 'Case against' })).toBeInTheDocument();
     unmount();
     renderBallot({ location: huntersvilleLocation });
     expect(screen.queryByText('Charlotte Bond Votes')).not.toBeInTheDocument();
@@ -105,22 +113,25 @@ describe('YourBallot', () => {
     renderBallot({ onCandidatePick, onChangeAddress });
 
     await user.click(screen.getByText('Tim Moore'));
-    expect(screen.getByRole('heading', { name: 'Tim Moore' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Tim Moore' })).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Go back to ballot' }));
     expect(screen.getByRole('heading', { name: 'Your Ballot' })).toBeInTheDocument();
+    expect(document.getElementById('candidate-nc-house-14-moore-2026')).toHaveFocus();
 
     await user.click(screen.getByRole('button', { name: /100 N TRYON ST/ }));
     expect(onChangeAddress).toHaveBeenCalled();
 
     await user.click(screen.getByRole('button', { name: 'Settings' }));
-    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Settings' })).toHaveFocus();
     expect(screen.getByText(/haven't saved any picks/i)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Go back to ballot' }));
+    expect(document.getElementById('open-settings')).toHaveFocus();
 
     await user.click(screen.getByRole('button', { name: 'View key dates' }));
-    expect(screen.getByRole('heading', { name: 'Key Dates' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Key Dates' })).toHaveFocus();
     expect(screen.getByText('Election Day')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Go back to ballot' }));
+    expect(document.getElementById('open-dates')).toHaveFocus();
   });
 
   it('toggles measure picks and confirms clearing saved data', async () => {

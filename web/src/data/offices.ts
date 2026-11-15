@@ -28,6 +28,11 @@ export interface OfficeExplainer {
   hideMeta?: boolean;
 }
 
+export interface SourcedClaim {
+  text: string;
+  source: CivicSource;
+}
+
 export interface MeasureExplainer {
   id: string;
   oneLiner: string;
@@ -37,6 +42,10 @@ export interface MeasureExplainer {
   projectListUrl?: string;
   source: CivicSource;
   lastChecked: string;
+  /** Draft paired arguments. Shown only when both sides have text. */
+  caseFor?: SourcedClaim[];
+  caseAgainst?: SourcedClaim[];
+  argumentsDraft?: boolean;
 }
 
 export const OFFICES_LAST_CHECKED = '2026-10-08';
@@ -290,33 +299,101 @@ export const MEASURES: Record<string, MeasureExplainer> = {
     yesMeans:
       'A “for” vote would amend the constitution so that all voters, not only those who vote in person, would have to show photo ID.',
     noMeans:
-      'An “against” vote would leave the constitution as it is. In-person photo ID would stay a statute, not this constitutional rule for every method of voting.',
+      'An “against” vote would leave the constitution as it is. Photo identification for in-person voting would remain in the constitution. Rules for other methods of voting would stay in statute.',
     localImpact: [
       'Would apply to every Mecklenburg voter, including those who vote by mail.',
-      'The General Assembly and NCSBE would still write the details of which IDs count.',
+      'The General Assembly would still write the laws that say which IDs count, and those laws may include exceptions.',
     ],
+    caseFor: [
+      {
+        text: 'Session Law 2024-58 would change the constitution so voters present photographic identification before voting, not only when voting in person. The General Assembly would still set which identification counts, and those laws may include exceptions. The question on the ballot is: Constitutional amendment to require all voters, not just those presenting to vote in person, to present photo identification before voting.',
+        source: {
+          title: 'Session Law 2024-58 (NCGA)',
+          url: 'https://www.ncleg.gov/EnactedLegislation/SessionLaws/HTML/2023-2024/SL2024-58.html',
+        },
+      },
+      {
+        text: 'Sen. Warren Daniel, a sponsor, said the requirement needs to apply equally to all voters and that the constitution should say so.',
+        source: {
+          title: 'Wilmington StarNews, Dec. 11, 2024, quoting Sen. Warren Daniel',
+          url: 'https://www.starnewsonline.com/story/news/politics/2024/12/11/what-is-the-photo-id-related-constitutional-amendment/76890603007/',
+        },
+      },
+    ],
+    caseAgainst: [
+      {
+        text: 'A nonpartisan staff summary of Senate Bill 921 says state law already requires a voter who returns an absentee ballot to include a copy of a photo ID or an exception affidavit. The summary lists in-person exceptions for a religious objection, a reasonable impediment, and a natural disaster.',
+        source: {
+          title: 'NCGA staff summary of Senate Bill 921',
+          url: 'https://dashboard.ncleg.gov/api/Services/BillSummary/2023/S921-SMCH-55(e1)-v-2',
+        },
+      },
+      {
+        text: 'The North Carolina Democratic Party, which opposes the amendment, said it would place the photo-identification requirement in the constitution without writing those existing safeguards into the constitution. The party said it is concerned this could add difficulty for military, student, rural, and older voters.',
+        source: {
+          title: 'North Carolina Democratic Party, Sept. 11, 2026',
+          url: 'https://www.ncdp.org/content/090926/',
+        },
+      },
+    ],
+    argumentsDraft: true,
     source: {
       title: 'NCSBE statewide referendums, Nov. 3, 2026',
       url: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/statewide_referendums_20261103.pdf',
     },
-    lastChecked: OFFICES_LAST_CHECKED,
+    lastChecked: '2026-11-15',
   },
   'nc-amend-income-tax-2026': {
     id: 'nc-amend-income-tax-2026',
     oneLiner: 'Would lower the constitution’s maximum state income-tax rate from 7% to 3.5%.',
     yesMeans:
-      'A “for” vote would cap the constitutional maximum at 3.5%. The current statutory rate is 3.5%; today’s constitutional ceiling is 7%.',
+      'A “for” vote would lower the constitutional maximum rate on income from 7% to 3.5%, beginning with tax years that start on or after January 1, 2027. It does not itself set the statutory rate.',
     noMeans:
       'An “against” vote would leave the constitutional maximum at 7%. The General Assembly could still set the actual rate by statute, up to that cap.',
     localImpact: [
-      'Limits how high the statewide personal income-tax rate could go without another amendment.',
+      'Lowers the constitutional ceiling on personal and corporate income taxes from 7% to 3.5% starting January 1, 2027. A rate above 3.5% would need another amendment.',
+      'The Fiscal Research Division note of May 19, 2026 says the personal rate is 3.99% in 2026. Its May 2026 forecast expected 3.49% in 2027 if a revenue trigger is met. If that trigger is missed, the note says the new ceiling would require the personal rate to come down.',
+      'The same note says the statutory corporate rate is already below 3.5% (2% in 2026 and 2027).',
       'Does not itself change the county property tax.',
     ],
+    caseFor: [
+      {
+        text: 'Session Law 2026-4 would lower the constitutional maximum rate on income from 7% to 3.5% for tax years beginning on or after January 1, 2027. The nonpartisan Legislative Services Office summary uses the same description. That summary was adopted on August 20, 2026, for county boards of elections and the press.',
+        source: {
+          title: 'Legislative Services Office summary, Aug. 20, 2026',
+          url: 'https://gofcsonc.com/elections/assets/documents/Summary_Explanation_of_2026_Constitutional_Amendments.pdf',
+        },
+      },
+      {
+        text: 'The General Assembly Fiscal Research Division says an approved amendment would keep the maximum rate on personal and corporate income at 3.5% from that date. A higher rate would require another constitutional amendment.',
+        source: {
+          title: 'NCGA Fiscal Research Division note on Senate Bill 1080, May 19, 2026',
+          url: 'https://www.ncleg.gov/Sessions/2025/FiscalNotes/Senate/PDF/SFN1080v1.pdf',
+        },
+      },
+    ],
+    caseAgainst: [
+      {
+        text: 'The same Fiscal Research Division note estimates no change to forecasted revenue, because the personal income-tax rate is 3.99% in 2026 and a May 2026 forecast expected 3.49% in 2027 if a revenue trigger is met. The note says the corporate rate is already below 3.5%.',
+        source: {
+          title: 'NCGA Fiscal Research Division note on Senate Bill 1080, May 19, 2026',
+          url: 'https://www.ncleg.gov/Sessions/2025/FiscalNotes/Senate/PDF/SFN1080v1.pdf',
+        },
+      },
+      {
+        text: 'A no vote would leave the constitutional maximum at 7%. The note also says that if the revenue trigger is missed, the personal rate would otherwise stay 3.99%, and a 3.5% ceiling would then require that rate to come down.',
+        source: {
+          title: 'NCGA Fiscal Research Division note on Senate Bill 1080, May 19, 2026',
+          url: 'https://www.ncleg.gov/Sessions/2025/FiscalNotes/Senate/PDF/SFN1080v1.pdf',
+        },
+      },
+    ],
+    argumentsDraft: true,
     source: {
       title: 'NCSBE statewide referendums, Nov. 3, 2026',
       url: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/statewide_referendums_20261103.pdf',
     },
-    lastChecked: OFFICES_LAST_CHECKED,
+    lastChecked: '2026-11-15',
   },
   'nc-amend-property-tax-2026': {
     id: 'nc-amend-property-tax-2026',
@@ -327,13 +404,46 @@ export const MEASURES: Record<string, MeasureExplainer> = {
       'An “against” vote would leave local property-tax limits as they are under current statutes.',
     localImpact: [
       'Could change how Mecklenburg County and towns raise the tax on your home or business.',
-      'The amendment itself does not set a new rate; the General Assembly would write the limit.',
+      'The amendment itself does not set a percentage or a date. The General Assembly would write the limit, and the law may include exceptions.',
     ],
+    caseFor: [
+      {
+        text: 'Session Law 2026-5 would require the General Assembly to pass general laws that limit how much a local property-tax levy may increase. Those laws may include exceptions.',
+        source: {
+          title: 'Session Law 2026-5 (NCGA)',
+          url: 'https://www.ncleg.gov/EnactedLegislation/SessionLaws/PDF/2025-2026/SL2026-5.pdf',
+        },
+      },
+      {
+        text: 'The official ballot question is: “Constitutional amendment requiring limits on property tax increases by local governments.” The nonpartisan Legislative Services Office summary, adopted August 20, 2026, says the amendment would require the General Assembly to set those limits.',
+        source: {
+          title: 'Legislative Services Office summary, Aug. 20, 2026',
+          url: 'https://gofcsonc.com/elections/assets/documents/Summary_Explanation_of_2026_Constitutional_Amendments.pdf',
+        },
+      },
+    ],
+    caseAgainst: [
+      {
+        text: 'The session law sets no percentage and no deadline. It says the laws the General Assembly passes may include exceptions, so the size of any limit is not on the ballot.',
+        source: {
+          title: 'Session Law 2026-5 (NCGA)',
+          url: 'https://www.ncleg.gov/EnactedLegislation/SessionLaws/PDF/2025-2026/SL2026-5.pdf',
+        },
+      },
+      {
+        text: 'A no vote would leave that section of the constitution unchanged. Session Law 2026-5 says the new sentence has no effect if a majority of votes on the question are against it.',
+        source: {
+          title: 'Session Law 2026-5 (NCGA)',
+          url: 'https://www.ncleg.gov/EnactedLegislation/SessionLaws/PDF/2025-2026/SL2026-5.pdf',
+        },
+      },
+    ],
+    argumentsDraft: true,
     source: {
       title: 'NCSBE statewide referendums, Nov. 3, 2026',
       url: 'https://s3.amazonaws.com/dl.ncsbe.gov/Elections/2026/Candidate%20Filing/statewide_referendums_20261103.pdf',
     },
-    lastChecked: OFFICES_LAST_CHECKED,
+    lastChecked: '2026-11-15',
   },
   'clt-bonds-transportation-2026': {
     id: 'clt-bonds-transportation-2026',
@@ -346,12 +456,31 @@ export const MEASURES: Record<string, MeasureExplainer> = {
       'Funds sidewalks, bike paths, bridges, drainage, lighting, and traffic signals.',
       'Applies to property in the City of Charlotte, not the rest of the county.',
     ],
+    caseFor: [
+      {
+        text: 'The bond question asks Charlotte voters to authorize $280,000,000, plus interest, for streets, sidewalks, bicycle paths, bridges, and related work. It states the city’s estimate of the property-tax increase to repay that debt is $0.00 a year for each $100,000 of property value.',
+        source: {
+          title: 'Charlotte transportation bond question, quoted by Ballotpedia',
+          url: 'https://ballotpedia.org/Charlotte,_North_Carolina,_Transportation_Bond_Measure_(November_2026)',
+        },
+      },
+    ],
+    caseAgainst: [
+      {
+        text: 'The same question says additional property taxes may be levied in an amount sufficient to pay the principal and the interest. It also states an estimated cost over the life of the bonds, using the highest interest rate charged for similar debt over the previous 20 years. A no vote would not authorize this borrowing.',
+        source: {
+          title: 'Charlotte transportation bond question, quoted by Ballotpedia',
+          url: 'https://ballotpedia.org/Charlotte,_North_Carolina,_Transportation_Bond_Measure_(November_2026)',
+        },
+      },
+    ],
+    argumentsDraft: true,
     projectListUrl: 'https://www.charlottenc.gov/Growth-and-Development/Charlotte-Future/CIP/Bonds',
     source: {
       title: 'City of Charlotte bond orders (Aug. 10, 2026)',
       url: 'https://charlottenc.legistar.com/LegislationDetail.aspx?GUID=9786730E-5540-4770-9F23-BA2E577D349C&ID=8149745',
     },
-    lastChecked: OFFICES_LAST_CHECKED,
+    lastChecked: '2026-11-15',
   },
   'clt-bonds-housing-2026': {
     id: 'clt-bonds-housing-2026',
@@ -364,12 +493,31 @@ export const MEASURES: Record<string, MeasureExplainer> = {
       'May include related infrastructure and land.',
       'Applies to property in the City of Charlotte.',
     ],
+    caseFor: [
+      {
+        text: 'The bond question asks Charlotte voters to authorize $125,000,000, plus interest, for housing projects for people of low or moderate income, including related infrastructure and land. It states the city’s estimate of the property-tax increase to repay that debt is $0.00 a year for each $100,000 of property value.',
+        source: {
+          title: 'Charlotte housing bond question, quoted by Ballotpedia',
+          url: 'https://ballotpedia.org/Charlotte,_North_Carolina,_Housing_Bond_Measure_(November_2026)',
+        },
+      },
+    ],
+    caseAgainst: [
+      {
+        text: 'The same question says additional property taxes may be levied in an amount sufficient to pay the principal and the interest. It also states an estimated cost over the life of the bonds, using the highest interest rate charged for similar debt over the previous 20 years. A no vote would not authorize this borrowing.',
+        source: {
+          title: 'Charlotte housing bond question, quoted by Ballotpedia',
+          url: 'https://ballotpedia.org/Charlotte,_North_Carolina,_Housing_Bond_Measure_(November_2026)',
+        },
+      },
+    ],
+    argumentsDraft: true,
     projectListUrl: 'https://www.charlottenc.gov/Growth-and-Development/Charlotte-Future/CIP/Bonds',
     source: {
       title: 'City of Charlotte bond orders (Aug. 10, 2026)',
       url: 'https://charlottenc.legistar.com/LegislationDetail.aspx?GUID=9786730E-5540-4770-9F23-BA2E577D349C&ID=8149745',
     },
-    lastChecked: OFFICES_LAST_CHECKED,
+    lastChecked: '2026-11-15',
   },
   'clt-bonds-neighborhood-2026': {
     id: 'clt-bonds-neighborhood-2026',
@@ -382,12 +530,31 @@ export const MEASURES: Record<string, MeasureExplainer> = {
       'May include street paving, lighting, open space, and related land.',
       'Applies to property in the City of Charlotte.',
     ],
+    caseFor: [
+      {
+        text: 'The bond question asks Charlotte voters to authorize $20,000,000, plus interest, for neighborhood infrastructure, including curbs, gutters, drainage, sidewalks, paths, and related street work. It states the city’s estimate of the property-tax increase to repay that debt is $0.00 a year for each $100,000 of property value.',
+        source: {
+          title: 'Charlotte neighborhood bond question, quoted by Ballotpedia',
+          url: 'https://ballotpedia.org/Charlotte,_North_Carolina,_Neighborhood_Improvements_Bond_Measure_(November_2026)',
+        },
+      },
+    ],
+    caseAgainst: [
+      {
+        text: 'The same question says additional property taxes may be levied in an amount sufficient to pay the principal and the interest. It also states an estimated cost over the life of the bonds, using the highest interest rate charged for similar debt over the previous 20 years. A no vote would not authorize this borrowing.',
+        source: {
+          title: 'Charlotte neighborhood bond question, quoted by Ballotpedia',
+          url: 'https://ballotpedia.org/Charlotte,_North_Carolina,_Neighborhood_Improvements_Bond_Measure_(November_2026)',
+        },
+      },
+    ],
+    argumentsDraft: true,
     projectListUrl: 'https://www.charlottenc.gov/Growth-and-Development/Charlotte-Future/CIP/Bonds',
     source: {
       title: 'City of Charlotte CIP / city bonds',
       url: 'https://www.charlottenc.gov/Growth-and-Development/Charlotte-Future/CIP/Bonds',
     },
-    lastChecked: OFFICES_LAST_CHECKED,
+    lastChecked: '2026-11-15',
   },
 };
 
@@ -421,6 +588,19 @@ export function explainerForOffice(office: string): OfficeExplainer | null {
 
 export function explainerForMeasure(id: string): MeasureExplainer | null {
   return MEASURES[id] ?? null;
+}
+
+/** Both sides, or nothing. A one-sided draft is not shown. */
+export function pairedArguments(explainer: MeasureExplainer | null): {
+  for: SourcedClaim[];
+  against: SourcedClaim[];
+  draft: boolean;
+} | null {
+  if (!explainer) return null;
+  const forSide = (explainer.caseFor ?? []).filter((claim) => claim.text.trim());
+  const againstSide = (explainer.caseAgainst ?? []).filter((claim) => claim.text.trim());
+  if (!forSide.length || !againstSide.length) return null;
+  return { for: forSide, against: againstSide, draft: explainer.argumentsDraft === true };
 }
 
 export function currentHolderFor(
