@@ -56,7 +56,7 @@ const DROP_TAIL = new Set([
 
 export function manualLocation(
   address: string,
-  district: UserLocation['district'],
+  district: 'NC-8' | 'NC-12' | 'NC-14',
   isCharlotte: boolean
 ): UserLocation {
   const trimmed = address.trim() || 'Picked by hand';
@@ -212,8 +212,12 @@ export function lookupPoint(lng: number, lat: number, address: string, source: U
   if (!house) unmatched.push('NC House');
   if (!commission) unmatched.push('County Commission');
 
-  const district = (congress?.properties.id || 'NC-12') as UserLocation['district'];
-  if (district !== 'NC-8' && district !== 'NC-12' && district !== 'NC-14') {
+  const rawDistrict = congress?.properties.id;
+  const district: UserLocation['district'] =
+    rawDistrict === 'NC-8' || rawDistrict === 'NC-12' || rawDistrict === 'NC-14'
+      ? rawDistrict
+      : null;
+  if (!district && !unmatched.includes('U.S. House')) {
     unmatched.push('U.S. House');
   }
 
@@ -221,7 +225,7 @@ export function lookupPoint(lng: number, lat: number, address: string, source: U
   const isCharlotte = Boolean(city);
   const location: UserLocation = {
     address,
-    district: district === 'NC-8' || district === 'NC-12' || district === 'NC-14' ? district : 'NC-12',
+    district,
     isCharlotte,
     ncSenate: senate?.properties.id,
     ncHouse: house?.properties.id,

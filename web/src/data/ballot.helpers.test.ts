@@ -34,6 +34,10 @@ describe('getCandidatesForLocation', () => {
     expect(nc14.some((c) => c.id === US_HOUSE_NC14[0].id)).toBe(true);
     expect(nc14.some((c) => c.id === US_HOUSE_NC8[0].id)).toBe(false);
     expect(nc8.some((c) => c.id === US_HOUSE_NC8[0].id)).toBe(true);
+
+    const unmatched = getCandidatesForLocation({ district: null });
+    expect(unmatched.some((c) => c.office.startsWith('U.S. House'))).toBe(false);
+    expect(unmatched.some((c) => c.office === 'U.S. Senate')).toBe(true);
   });
 
   it('always includes statewide races', () => {

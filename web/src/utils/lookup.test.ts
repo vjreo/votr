@@ -156,7 +156,7 @@ describe('on-device geocode and district lookup', () => {
     expect(result.unmatched).toEqual([]);
   });
 
-  it('records unmatched layers and falls back to NC-12 for unknown house districts', async () => {
+  it('leaves an unknown U.S. House district unmatched instead of labeling it NC-12', async () => {
     installFetch({
       ...maps,
       'districts/congress.json': jsonRes(
@@ -169,8 +169,9 @@ describe('on-device geocode and district lookup', () => {
     });
     await loadBoundaries();
     const result = lookupPoint(INSIDE.lng, INSIDE.lat, '100 MAIN ST, 28202', 'geolocation');
-    expect(result.location.district).toBe('NC-12');
+    expect(result.location.district).toBeNull();
     expect(result.location.isCharlotte).toBe(false);
+    expect(result.unmatched.filter((layer) => layer === 'U.S. House')).toHaveLength(1);
     expect(result.unmatched).toEqual(
       expect.arrayContaining(['U.S. House', 'NC Senate', 'NC House', 'County Commission'])
     );

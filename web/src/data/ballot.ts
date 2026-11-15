@@ -1305,7 +1305,7 @@ export const CHARLOTTE_BONDS: BallotMeasure[] = [
 
 /** Filter races to the voter's districts when we know them. */
 export function getCandidatesForLocation(location: {
-  district: 'NC-8' | 'NC-12' | 'NC-14';
+  district: 'NC-8' | 'NC-12' | 'NC-14' | null;
   isCharlotte?: boolean;
   ncSenate?: string;
   ncHouse?: string;
@@ -1319,7 +1319,7 @@ export function getCandidatesForLocation(location: {
 
   if (location.district === 'NC-8') all.push(...US_HOUSE_NC8);
   else if (location.district === 'NC-12') all.push(...US_HOUSE_NC12);
-  else all.push(...US_HOUSE_NC14);
+  else if (location.district === 'NC-14') all.push(...US_HOUSE_NC14);
 
   const senate = location.ncSenate;
   const house = location.ncHouse;

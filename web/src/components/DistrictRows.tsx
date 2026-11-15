@@ -38,7 +38,7 @@ export default function DistrictRows({ location }: { location: UserLocation }) {
     {
       key: 'house',
       label: 'U.S. House',
-      value: location.district,
+      value: location.district ?? 'Not matched',
       officeId: 'us-house',
       district: location.district,
     },

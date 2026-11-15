@@ -10,7 +10,8 @@ const STORAGE_KEY = 'votr_data';
 
 export interface UserLocation {
   address: string;
-  district: 'NC-8' | 'NC-12' | 'NC-14';
+  /** Null when the point is not inside NC-8, NC-12, or NC-14. */
+  district: 'NC-8' | 'NC-12' | 'NC-14' | null;
   isCharlotte: boolean;
   ncSenate?: string;
   ncHouse?: string;
