@@ -39,13 +39,33 @@ export interface MeasureExplainer {
   yesMeans: string;
   noMeans: string;
   localImpact: string[];
-  projectListUrl?: string;
-  source: CivicSource;
-  lastChecked: string;
-  /** Draft paired arguments. Shown only when both sides have text. */
+  /**
+   * Draft paired arguments. Shown only when both sides have text,
+   * so a one-sided brief cannot appear alone.
+   */
   caseFor?: SourcedClaim[];
   caseAgainst?: SourcedClaim[];
   argumentsDraft?: boolean;
+  projectListUrl?: string;
+  source: CivicSource;
+  lastChecked: string;
+}
+
+function keptClaims(claims: SourcedClaim[] | undefined): SourcedClaim[] {
+  return (claims ?? [])
+    .map((claim) => ({ ...claim, text: claim.text.trim() }))
+    .filter((claim) => claim.text);
+}
+
+/** Both sides, or nothing. A single side would be an endorsement by omission. */
+export function pairedArguments(
+  explainer: MeasureExplainer | null | undefined
+): { for: SourcedClaim[]; against: SourcedClaim[]; draft: boolean } | null {
+  if (!explainer) return null;
+  const forSide = keptClaims(explainer.caseFor);
+  const againstSide = keptClaims(explainer.caseAgainst);
+  if (!forSide.length || !againstSide.length) return null;
+  return { for: forSide, against: againstSide, draft: explainer.argumentsDraft === true };
 }
 
 export const OFFICES_LAST_CHECKED = '2026-10-08';
@@ -588,19 +608,6 @@ export function explainerForOffice(office: string): OfficeExplainer | null {
 
 export function explainerForMeasure(id: string): MeasureExplainer | null {
   return MEASURES[id] ?? null;
-}
-
-/** Both sides, or nothing. A one-sided draft is not shown. */
-export function pairedArguments(explainer: MeasureExplainer | null): {
-  for: SourcedClaim[];
-  against: SourcedClaim[];
-  draft: boolean;
-} | null {
-  if (!explainer) return null;
-  const forSide = (explainer.caseFor ?? []).filter((claim) => claim.text.trim());
-  const againstSide = (explainer.caseAgainst ?? []).filter((claim) => claim.text.trim());
-  if (!forSide.length || !againstSide.length) return null;
-  return { for: forSide, against: againstSide, draft: explainer.argumentsDraft === true };
 }
 
 export function currentHolderFor(

@@ -53,5 +53,7 @@ describe('unbiased presentation rules', () => {
     expect(detail).not.toMatch(PARTY_COLOR_RE);
     expect(ballot).toContain('ballot__candidate-party');
     expect(ballot).toContain('sortCandidatesAlphabetically');
+    expect(ballot).not.toMatch(/\.measure__tax\s*\{[^}]*color-success/);
+    expect(ballot).toContain('pairedArguments');
   });
 });

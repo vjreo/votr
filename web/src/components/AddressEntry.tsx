@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { UserLocation } from '../utils/storage';
-import { DATA_PROVENANCE, NC_VOTER_SEARCH_URL, OFFICIAL_SOURCES } from '../data/ballot';
+import { DATA_PROVENANCE, ELECTION, NC_VOTER_SEARCH_URL, OFFICIAL_SOURCES, electionPassedNote, formatDate } from '../data/ballot';
 import ShareVotr from './ShareVotr';
 import DistrictRows from './DistrictRows';
 import {
@@ -148,6 +148,7 @@ export default function AddressEntry({ onSubmit }: Props) {
   };
 
   const compactFooter = step !== 'about';
+  const passedNote = electionPassedNote();
 
   return (
     <div className="entry">
@@ -158,7 +159,10 @@ export default function AddressEntry({ onSubmit }: Props) {
           <>
             <header className="entry__header">
               <h1 className="entry__title">Find your ballot</h1>
-              <p className="entry__date">Tuesday, November 3, 2026</p>
+              <p className="entry__date">{formatDate(ELECTION.date)}</p>
+              {passedNote && (
+                <p className="entry__passed" role="status">{passedNote}</p>
+              )}
             </header>
 
             <main id="main-content">
@@ -459,6 +463,14 @@ export default function AddressEntry({ onSubmit }: Props) {
           font-size: var(--text-sm);
           color: var(--color-text-tertiary);
           margin: var(--space-2) 0 0;
+        }
+
+        .entry__passed {
+          font-size: var(--text-sm);
+          color: var(--color-text-secondary);
+          text-align: center;
+          line-height: var(--leading-snug);
+          margin: var(--space-3) 0 0;
         }
 
         .entry__search-wrap {

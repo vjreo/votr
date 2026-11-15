@@ -10,6 +10,7 @@ import {
   DATA_PROVENANCE,
   getCandidatesForLocation,
   sortCandidatesAlphabetically,
+  electionPassedNote,
   getNextCriticalDeadline,
   getDaysUntil,
   formatDaysLeft,
@@ -103,13 +104,25 @@ export default function YourBallot({
     const id = returnFocusId.current;
     if (!id) return;
     returnFocusId.current = null;
-    document.getElementById(id)?.focus();
+    const focusTarget = () => {
+      const node = document.getElementById(id);
+      if (!node) return;
+      // focusVisible keeps the ring after a mouse click on Back. A plain
+      // focus() lands on the button but the ring stays off.
+      node.focus({ focusVisible: true } as FocusOptions);
+    };
+    focusTarget();
+    // A mouse click removes the Back button. Browsers then move focus
+    // after this layout effect, so restore the trigger once more.
+    const timer = window.setTimeout(focusTarget, 0);
+    return () => window.clearTimeout(timer);
   }, [view, selectedCandidate]);
 
   const candidates = getCandidatesForLocation(location);
   const contestGroups = groupCandidates(candidates);
   const bonds = location.isCharlotte ? CHARLOTTE_BONDS : [];
   const nextDeadline = getNextCriticalDeadline();
+  const passedNote = electionPassedNote();
 
   const getCandidatePick = (id: string) => candidatePicks.find(p => p.candidateId === id);
   const getMeasurePick = (id: string) => measurePicks.find(p => p.measureId === id);
@@ -198,6 +211,9 @@ export default function YourBallot({
               </span>
             </div>
           </div>
+        )}
+        {!nextDeadline && passedNote && (
+          <p className="ballot__passed" role="status">{passedNote}</p>
         )}
       </header>
 
@@ -508,118 +524,147 @@ function MeasureCard({
   const isBond = measure.type === 'bond';
   const civic = explainerForMeasure(measure.id);
   const cases = pairedArguments(civic);
+  const yesLabel = isBond ? 'A yes vote' : 'A for vote';
+  const noLabel = isBond ? 'A no vote' : 'An against vote';
+  const titleId = `measure-${measure.id}`;
 
   const handlePick = (leaning: MeasurePick['leaning']) => {
     if (pick?.leaning === leaning) {
-      onPick(null); // toggle off
+      onPick(null);
     } else {
       onPick(leaning);
     }
   };
 
   return (
-    <div className="measure">
+    <article className="measure" aria-labelledby={titleId}>
       <div className="measure__header">
-        <h4 className="measure__title">{measure.shortTitle}</h4>
+        <h4 id={titleId} className="measure__title">{measure.shortTitle}</h4>
         {showAmount && measure.principal && (
           <span className="measure__amount">{formatMoney(measure.principal)}</span>
         )}
       </div>
 
-      <details className="measure__xpl">
-        <summary className="measure__summary">
-          <span>
-            {civic?.oneLiner || measure.ballotQuestion}{' '}
-            <span className="measure__more-label">More</span>
-          </span>
-        </summary>
-        <div className="measure__detail">
-          {civic ? (
-            <>
-              <p className="measure__fact">{civic.yesMeans}</p>
-              <p className="measure__fact">{civic.noMeans}</p>
-              <ul className="measure__impact">
-                {civic.localImpact.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              {cases && (
-                <div className="measure__cases">
-                  {cases.draft && (
-                    <p className="measure__draft">Draft for review</p>
-                  )}
-                  <section className="measure__case">
-                    <h5 className="measure__case-label">Case for</h5>
-                    {cases.for.map((claim) => (
-                      <p key={claim.text} className="measure__claim">
-                        {claim.text}{' '}
-                        <a href={claim.source.url} target="_blank" rel="noopener noreferrer">
-                          {claim.source.title}
-                        </a>
-                      </p>
-                    ))}
-                  </section>
-                  <section className="measure__case">
-                    <h5 className="measure__case-label">Case against</h5>
-                    {cases.against.map((claim) => (
-                      <p key={claim.text} className="measure__claim">
-                        {claim.text}{' '}
-                        <a href={claim.source.url} target="_blank" rel="noopener noreferrer">
-                          {claim.source.title}
-                        </a>
-                      </p>
-                    ))}
-                  </section>
-                </div>
-              )}
-              {civic.projectListUrl && (
-                <p>
-                  <a href={civic.projectListUrl} target="_blank" rel="noopener noreferrer">
-                    City project list
-                  </a>
-                </p>
-              )}
-              <p>
-                <a href={civic.source.url} target="_blank" rel="noopener noreferrer">
-                  {civic.source.title}
+      <p className="measure__lead">{civic?.oneLiner || measure.ballotQuestion}</p>
+
+      {civic && (civic.yesMeans || civic.noMeans) && (
+        <dl className="measure__effects">
+          {civic.yesMeans && (
+            <div>
+              <dt>{yesLabel}</dt>
+              <dd>{civic.yesMeans}</dd>
+            </div>
+          )}
+          {civic.noMeans && (
+            <div>
+              <dt>{noLabel}</dt>
+              <dd>{civic.noMeans}</dd>
+            </div>
+          )}
+        </dl>
+      )}
+
+      {cases && (
+        <div className="measure__cases">
+          {cases.draft && <p className="measure__draft">Draft for review</p>}
+          <h5 className="measure__kicker">Each side&apos;s case</h5>
+          <section className="measure__case">
+            <h5 className="measure__case-label">Case for</h5>
+            {cases.for.map((claim) => (
+              <p key={claim.text} className="measure__claim">
+                {claim.text}{' '}
+                <a href={claim.source.url} target="_blank" rel="noopener noreferrer">
+                  {claim.source.title}
                 </a>
               </p>
-            </>
-          ) : (
-            <p className="measure__explanation">{measure.explanation}</p>
-          )}
-          {measure.estimatedTaxImpact && (
-            <p className="measure__tax">Estimated tax impact: {measure.estimatedTaxImpact}</p>
-          )}
+            ))}
+          </section>
+          <section className="measure__case">
+            <h5 className="measure__case-label">Case against</h5>
+            {cases.against.map((claim) => (
+              <p key={claim.text} className="measure__claim">
+                {claim.text}{' '}
+                <a href={claim.source.url} target="_blank" rel="noopener noreferrer">
+                  {claim.source.title}
+                </a>
+              </p>
+            ))}
+          </section>
         </div>
+      )}
+
+      {civic && civic.localImpact.length > 0 && (
+        <>
+          <h5 className="measure__kicker">Easy to miss</h5>
+          <ul className="measure__impact">
+            {civic.localImpact.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {!civic && measure.explanation && (
+        <p className="measure__explanation">{measure.explanation}</p>
+      )}
+
+      {measure.estimatedTaxImpact && (
+        <p className="measure__tax">Estimated tax impact: {measure.estimatedTaxImpact}</p>
+      )}
+
+      {civic?.projectListUrl && (
+        <p className="measure__source-line">
+          <a href={civic.projectListUrl} target="_blank" rel="noopener noreferrer">
+            City project list
+          </a>
+        </p>
+      )}
+
+      {civic && (
+        <p className="measure__source-line">
+          <a href={civic.source.url} target="_blank" rel="noopener noreferrer">
+            {civic.source.title}
+          </a>
+          <span className="measure__checked">Checked {civic.lastChecked}</span>
+        </p>
+      )}
+
+      <details className="measure__official">
+        <summary>Official ballot wording</summary>
+        <p>{measure.ballotQuestion}</p>
       </details>
-      
+
       <div className="measure__picks">
-        <span className="measure__picks-label">I'm leaning:</span>
-        <div className="measure__pick-buttons">
-          {(isBond ? ['for', 'against'] : ['for', 'against']).map((option) => {
-            const leaning = option as MeasurePick['leaning'];
-            const isSelected = pick?.leaning === leaning;
-            const label = isBond ? (option === 'for' ? 'Yes' : 'No') : (option === 'for' ? 'For' : 'Against');
+        <span className="measure__picks-label" id={`${titleId}-lean`}>I&apos;m leaning:</span>
+        <div className="measure__pick-buttons" role="group" aria-labelledby={`${titleId}-lean`}>
+          {(['for', 'against'] as const).map((option) => {
+            const isSelected = pick?.leaning === option;
+            const label = isBond
+              ? (option === 'for' ? 'Yes' : 'No')
+              : (option === 'for' ? 'For' : 'Against');
             return (
               <button
                 key={option}
+                type="button"
                 className={`measure__pick-btn ${isSelected ? 'measure__pick-btn--selected' : ''}`}
-                onClick={() => handlePick(leaning)}
+                aria-pressed={isSelected}
+                onClick={() => handlePick(option)}
               >
                 {label}
               </button>
             );
           })}
           <button
+            type="button"
             className={`measure__pick-btn ${pick?.leaning === 'undecided' ? 'measure__pick-btn--selected' : ''}`}
+            aria-pressed={pick?.leaning === 'undecided'}
             onClick={() => handlePick('undecided')}
           >
             Not sure
           </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -824,6 +869,13 @@ const ballotStyles = `
     color: var(--color-text-secondary);
   }
 
+  .ballot__passed {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+    color: var(--color-text-secondary);
+  }
+
   .ballot__content {
     max-width: 540px;
     margin: 0 auto;
@@ -857,7 +909,7 @@ const ballotStyles = `
   }
 
   .ballot__section-title {
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1074,53 +1126,51 @@ const ballotStyles = `
   .measure__amount {
     font-size: var(--text-base);
     font-weight: 700;
-    color: var(--color-accent);
+    color: var(--color-text-primary);
     flex-shrink: 0;
   }
 
-  .measure__summary {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    line-height: var(--leading-snug);
-    cursor: pointer;
-    list-style: none;
-    min-height: var(--tap-target-min);
-    display: flex;
-    align-items: center;
-    margin: 0 0 var(--space-2);
-  }
-  .measure__summary::-webkit-details-marker { display: none; }
-  .measure__more-label {
-    color: var(--color-accent);
-    font-weight: 500;
-    font-size: var(--text-sm);
-    white-space: nowrap;
-  }
-  .measure__xpl[open] .measure__more-label { display: none; }
-
-  .measure__detail {
-    padding: 0 0 var(--space-3);
-  }
-
+  .measure__lead,
+  .measure__effects dd,
   .measure__explanation {
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--color-text-secondary);
-    font-style: italic;
     line-height: var(--leading-relaxed);
-    margin: 0;
+    margin: 0 0 var(--space-3);
+    overflow-wrap: anywhere;
   }
 
-  .measure__fact {
+  .measure__effects {
+    margin: 0 0 var(--space-3);
+  }
+
+  .measure__effects div + div {
+    margin-top: var(--space-3);
+  }
+
+  .measure__effects dt,
+  .measure__kicker,
+  .measure__side-label {
     font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    line-height: var(--leading-snug);
-    margin: 0 0 var(--space-2);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-1);
+  }
+
+  .measure__kicker {
+    margin-top: var(--space-2);
+  }
+
+  .measure__side-label {
+    margin-top: var(--space-2);
+    font-weight: 500;
   }
 
   .measure__impact {
     margin: 0 0 var(--space-3);
     padding-left: 1.15em;
     font-size: var(--text-sm);
+    line-height: var(--leading-snug);
     color: var(--color-text-secondary);
   }
 
@@ -1165,16 +1215,48 @@ const ballotStyles = `
     margin-bottom: 0;
   }
 
-  .measure__detail a {
+  .measure__claim a,
+  .measure__source-line a {
     color: var(--color-accent);
     font-weight: 500;
+  }
+
+  .measure__source-line {
+    margin: 0 0 var(--space-2);
     font-size: var(--text-sm);
+  }
+
+  .measure__checked {
+    display: block;
+    margin-top: 2px;
+    color: var(--color-text-tertiary);
+    font-size: var(--text-xs);
+  }
+
+  .measure__official {
+    margin: var(--space-2) 0 var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+
+  .measure__official summary {
+    cursor: pointer;
+    color: var(--color-accent);
+    font-weight: 500;
+    min-height: var(--tap-target-min);
+    display: flex;
+    align-items: center;
+  }
+
+  .measure__official p {
+    margin: var(--space-2) 0 0;
+    line-height: var(--leading-relaxed);
   }
 
   .measure__tax {
     font-size: var(--text-sm);
-    color: var(--color-success);
-    margin: var(--space-3) 0 0;
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--space-3);
   }
 
   .measure__picks {

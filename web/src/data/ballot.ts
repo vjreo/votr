@@ -1348,15 +1348,30 @@ export function getCandidatesForLocation(location: {
   return all;
 }
 
+const NAME_SUFFIXES = new Set(['JR', 'SR', 'II', 'III', 'IV', 'V']);
+
+/** Surname for neutral A–Z order. Ignores Jr., Sr., and roman-numeral suffixes. */
+export function lastNameKey(name: string): string {
+  const tokens = name
+    .replace(/,/g, ' ')
+    .split(/\s+/)
+    .map((token) => token.replace(/\./g, ''))
+    .filter(Boolean);
+  while (tokens.length > 1 && NAME_SUFFIXES.has(tokens[tokens.length - 1].toUpperCase())) {
+    tokens.pop();
+  }
+  return tokens[tokens.length - 1] || name;
+}
+
 /**
  * Sort candidates alphabetically by last name.
  * Used to ensure neutral display order (no party advantage).
  */
 export function sortCandidatesAlphabetically(candidates: Candidate[]): Candidate[] {
   return [...candidates].sort((a, b) => {
-    const lastNameA = a.name.split(' ').pop() || a.name;
-    const lastNameB = b.name.split(' ').pop() || b.name;
-    return lastNameA.localeCompare(lastNameB);
+    const byLast = lastNameKey(a.name).localeCompare(lastNameKey(b.name), 'en');
+    if (byLast !== 0) return byLast;
+    return a.name.localeCompare(b.name, 'en');
   });
 }
 
@@ -1365,26 +1380,38 @@ function localDay(dateString: string): Date {
   return new Date(year, month - 1, day);
 }
 
-export function getDaysUntil(dateString: string): number {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+/**
+ * Whole calendar days from today to dateString in the viewer's local timezone.
+ * Uses the year/month/day numbers, not elapsed milliseconds, so the November
+ * daylight-saving fallback in US Eastern time does not add a phantom day.
+ */
+export function getDaysUntil(dateString: string, now = new Date()): number {
   const target = localDay(dateString);
-  target.setHours(0, 0, 0, 0);
-  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const utcToday = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const utcTarget = Date.UTC(target.getFullYear(), target.getMonth(), target.getDate());
+  return Math.round((utcTarget - utcToday) / 86_400_000);
 }
 
-/** Deadline banner: "Last day", "1 day left", "12 days left". */
+/** Deadline banner: "Passed", "Last day", "1 day left", "12 days left". */
 export function formatDaysLeft(days: number): string {
-  if (days <= 0) return 'Last day';
+  if (days < 0) return 'Passed';
+  if (days === 0) return 'Last day';
   if (days === 1) return '1 day left';
   return `${days} days left`;
 }
 
-/** Dates list: "Today", "1 day", "12 days". */
+/** Dates list: "Passed", "Today", "1 day", "12 days". */
 export function formatDaysShort(days: number): string {
-  if (days <= 0) return 'Today';
+  if (days < 0) return 'Passed';
+  if (days === 0) return 'Today';
   if (days === 1) return '1 day';
   return `${days} days`;
+}
+
+/** Shown once Election Day is in the past. Factual; no results and no advice. */
+export function electionPassedNote(now = new Date()): string | null {
+  if (getDaysUntil(ELECTION.date, now) >= 0) return null;
+  return `Election Day was ${formatDate(ELECTION.date)}. This guide does not show results.`;
 }
 
 export function formatDate(dateString: string): string {

@@ -7,6 +7,7 @@ import {
   explainerForMeasure,
   explainerForOffice,
   officeIdFromBallotOffice,
+  pairedArguments,
 } from './offices';
 
 describe('office explainers', () => {
@@ -23,6 +24,28 @@ describe('office explainers', () => {
       }
     }
     expect(missing).toEqual([]);
+  });
+
+  it('shows each side of a measure only when both sides exist', () => {
+    const base = {
+      ...MEASURES['nc-amend-photo-id-2026'],
+      caseFor: undefined,
+      caseAgainst: undefined,
+      argumentsDraft: false,
+    };
+    const forClaim = { text: ' A sourced point for. ', source: { title: 'For', url: 'https://example.com/for' } };
+    const againstClaim = {
+      text: 'A sourced point against.',
+      source: { title: 'Against', url: 'https://example.com/against' },
+    };
+    expect(pairedArguments(base)).toBeNull();
+    expect(pairedArguments({ ...base, caseFor: [{ ...forClaim, text: 'One sourced point.' }] })).toBeNull();
+    expect(pairedArguments({ ...base, caseAgainst: [{ ...againstClaim, text: ' ' }] })).toBeNull();
+    expect(pairedArguments({ ...base, caseFor: [forClaim], caseAgainst: [againstClaim] })).toEqual({
+      for: [{ ...forClaim, text: 'A sourced point for.' }],
+      against: [againstClaim],
+      draft: false,
+    });
   });
 
   it('covers every measure on the ballot', () => {

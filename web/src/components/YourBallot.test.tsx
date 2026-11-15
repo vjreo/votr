@@ -88,18 +88,36 @@ describe('YourBallot', () => {
     expect(names).toEqual(['Tim Moore', 'Lakesha Womack']);
   });
 
-  it('shows Charlotte bonds in the city and hides them outside', async () => {
-    const user = userEvent.setup();
+  it('says the election has passed and hides the countdown', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 10, 15));
+    renderBallot();
+    expect(screen.getByRole('status')).toHaveTextContent(/does not show results/);
+    expect(screen.queryByText(/days left/)).not.toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it('shows what a yes or no vote does without another tap', () => {
+    renderBallot();
+    expect(screen.getByText(/amend the constitution so that all voters/)).toBeInTheDocument();
+    expect(screen.getByText(/leave the constitution as it is/)).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { name: 'Easy to miss' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('heading', { name: "Each side's case" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Draft for review').length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('heading', { name: 'Case for' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('heading', { name: 'Case against' }).length).toBeGreaterThan(0);
+    const wording = screen.getAllByText('Official ballot wording')[0].closest('details');
+    expect(wording).not.toHaveAttribute('open');
+    expect(screen.getAllByText(/Estimated tax impact/)[0].className).toContain('measure__tax');
+    const forButton = screen.getAllByRole('button', { name: 'For' })[0];
+    expect(forButton).toHaveAttribute('type', 'button');
+  });
+
+  it('shows Charlotte bonds in the city and hides them outside', () => {
     const { unmount } = renderBallot();
     expect(screen.getByText('Charlotte Bond Votes')).toBeInTheDocument();
     expect(screen.getByText('Transportation ($280M)')).toBeInTheDocument();
     expect(screen.getByText('Affordable Housing ($125M)')).toBeInTheDocument();
-    const photo = screen.getByText(/photo-ID rule/i).closest('details');
-    expect(photo).toBeTruthy();
-    await user.click(photo!.querySelector('summary')!);
-    expect(within(photo as HTMLElement).getByText('Draft for review')).toBeInTheDocument();
-    expect(within(photo as HTMLElement).getByRole('heading', { name: 'Case for' })).toBeInTheDocument();
-    expect(within(photo as HTMLElement).getByRole('heading', { name: 'Case against' })).toBeInTheDocument();
     unmount();
     renderBallot({ location: huntersvilleLocation });
     expect(screen.queryByText('Charlotte Bond Votes')).not.toBeInTheDocument();
@@ -146,7 +164,9 @@ describe('YourBallot', () => {
     });
 
     expect(screen.getByText('✓')).toBeInTheDocument();
-    await user.click(screen.getAllByRole('button', { name: 'For' })[0]);
+    const forButton = screen.getAllByRole('button', { name: 'For' })[0];
+    expect(forButton).toHaveAttribute('aria-pressed', 'true');
+    await user.click(forButton);
     expect(onMeasurePick).toHaveBeenCalledWith('nc-amend-photo-id-2026', null);
     await user.click(screen.getAllByRole('button', { name: 'Against' })[0]);
     expect(onMeasurePick).toHaveBeenCalledWith('nc-amend-photo-id-2026', 'against');
