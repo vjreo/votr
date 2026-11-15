@@ -9,7 +9,7 @@ function districtFor(
   location?: UserLocation | null
 ): string | undefined {
   if (office.startsWith('U.S. House')) {
-    return candidate?.district || location?.district;
+    return candidate?.district || location?.district || undefined;
   }
   if (office.includes('Commission District')) {
     return candidate?.district || location?.commission;

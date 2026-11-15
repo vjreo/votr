@@ -63,6 +63,19 @@ describe('on-device storage', () => {
     expect(data.measurePicks).toEqual([]);
   });
 
+  it('keeps an unmatched U.S. House district instead of dropping the location', () => {
+    localStorage.setItem(
+      'votr_data',
+      JSON.stringify({
+        location: { address: '1 Main', district: null, isCharlotte: false },
+        candidatePicks: [],
+        measurePicks: [],
+        lastUpdated: 4,
+      })
+    );
+    expect(loadData().location?.district).toBeNull();
+  });
+
   it('clears the device key', () => {
     saveData({ location: charlotteLocation });
     clearAllData();

@@ -43,4 +43,12 @@ describe('DistrictRows', () => {
     expect(screen.getAllByText('Not matched')).toHaveLength(3);
     expect(screen.getByText('Huntersville')).toBeInTheDocument();
   });
+
+  it('shows an unmatched U.S. House point as not matched', () => {
+    render(<DistrictRows location={{ ...charlotteLocation, district: null }} />);
+    const house = screen.getByRole('button', { name: /U.S. House/ });
+    expect(house).toHaveTextContent('Not matched');
+    expect(house).not.toHaveTextContent('NC-12');
+    expect(house).not.toHaveTextContent('NC-14');
+  });
 });

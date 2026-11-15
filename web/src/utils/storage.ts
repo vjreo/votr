@@ -10,7 +10,8 @@ const STORAGE_KEY = 'votr_data';
 
 export interface UserLocation {
   address: string;
-  district: 'NC-8' | 'NC-12' | 'NC-14';
+  /** Null when the point is not inside NC-8, NC-12, or NC-14. */
+  district: 'NC-8' | 'NC-12' | 'NC-14' | null;
   isCharlotte: boolean;
   ncSenate?: string;
   ncHouse?: string;
@@ -61,12 +62,18 @@ export function sanitizeLocation(value: unknown): UserLocation | null {
   if (!value || typeof value !== 'object') return null;
   const loc = value as Record<string, unknown>;
   if (typeof loc.address !== 'string' || !loc.address.trim()) return null;
-  if (typeof loc.district !== 'string' || !HOUSE_DISTRICTS.has(loc.district)) return null;
+  const district: UserLocation['district'] | undefined =
+    loc.district === null
+      ? null
+      : typeof loc.district === 'string' && HOUSE_DISTRICTS.has(loc.district)
+        ? (loc.district as UserLocation['district'])
+        : undefined;
+  if (district === undefined) return null;
   if (typeof loc.isCharlotte !== 'boolean') return null;
 
   const next: UserLocation = {
     address: loc.address,
-    district: loc.district as UserLocation['district'],
+    district,
     isCharlotte: loc.isCharlotte,
   };
   const ncSenate = optionalString(loc.ncSenate);

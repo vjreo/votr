@@ -94,6 +94,7 @@ describe('YourBallot', () => {
     renderBallot();
     expect(screen.getByRole('status')).toHaveTextContent(/does not show results/);
     expect(screen.queryByText(/days left/)).not.toBeInTheDocument();
+    vi.useRealTimers();
   });
 
   it('shows what a yes or no vote does without another tap', () => {
@@ -101,7 +102,10 @@ describe('YourBallot', () => {
     expect(screen.getByText(/amend the constitution so that all voters/)).toBeInTheDocument();
     expect(screen.getByText(/leave the constitution as it is/)).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { name: 'Easy to miss' }).length).toBeGreaterThan(0);
-    expect(screen.queryByRole('heading', { name: "Each side's case" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { name: "Each side's case" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Draft for review').length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('heading', { name: 'Case for' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('heading', { name: 'Case against' }).length).toBeGreaterThan(0);
     const wording = screen.getAllByText('Official ballot wording')[0].closest('details');
     expect(wording).not.toHaveAttribute('open');
     expect(screen.getAllByText(/Estimated tax impact/)[0].className).toContain('measure__tax');
@@ -113,6 +117,7 @@ describe('YourBallot', () => {
     const { unmount } = renderBallot();
     expect(screen.getByText('Charlotte Bond Votes')).toBeInTheDocument();
     expect(screen.getByText('Transportation ($280M)')).toBeInTheDocument();
+    expect(screen.getByText('Affordable Housing ($125M)')).toBeInTheDocument();
     unmount();
     renderBallot({ location: huntersvilleLocation });
     expect(screen.queryByText('Charlotte Bond Votes')).not.toBeInTheDocument();
@@ -126,22 +131,25 @@ describe('YourBallot', () => {
     renderBallot({ onCandidatePick, onChangeAddress });
 
     await user.click(screen.getByText('Tim Moore'));
-    expect(screen.getByRole('heading', { name: 'Tim Moore' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Tim Moore' })).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Go back to ballot' }));
     expect(screen.getByRole('heading', { name: 'Your Ballot' })).toBeInTheDocument();
+    expect(document.getElementById('candidate-nc-house-14-moore-2026')).toHaveFocus();
 
     await user.click(screen.getByRole('button', { name: /100 N TRYON ST/ }));
     expect(onChangeAddress).toHaveBeenCalled();
 
     await user.click(screen.getByRole('button', { name: 'Settings' }));
-    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Settings' })).toHaveFocus();
     expect(screen.getByText(/haven't saved any picks/i)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Go back to ballot' }));
+    expect(document.getElementById('open-settings')).toHaveFocus();
 
     await user.click(screen.getByRole('button', { name: 'View key dates' }));
-    expect(screen.getByRole('heading', { name: 'Key Dates' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Key Dates' })).toHaveFocus();
     expect(screen.getByText('Election Day')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Go back to ballot' }));
+    expect(document.getElementById('open-dates')).toHaveFocus();
   });
 
   it('toggles measure picks and confirms clearing saved data', async () => {
